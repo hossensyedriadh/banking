@@ -1,6 +1,5 @@
 package io.github.hossensyedriadh.cbs.ledger.api;
 
-import io.github.hossensyedriadh.cbs.ledger.api.model.PostJournalEntryCommand;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
