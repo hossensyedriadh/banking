@@ -9,5 +9,7 @@ public enum AuditAction {
     UNBLOCKED,
     CLOSED,
     POSTED,
+    COMPLETED,
+    FAILED,
     REVERSED
 }
