@@ -8,6 +8,7 @@ import io.github.hossensyedriadh.cbs.ledger.api.LedgerService;
 import io.github.hossensyedriadh.cbs.product.api.CurrencyService;
 import io.github.hossensyedriadh.cbs.product.api.model.CurrencyView;
 import io.github.hossensyedriadh.cbs.transaction.api.TransactionService;
+import io.github.hossensyedriadh.cbs.transaction.api.enumerator.TransactionDirection;
 import io.github.hossensyedriadh.cbs.transaction.api.enumerator.TransactionStatus;
 import io.github.hossensyedriadh.cbs.transaction.api.enumerator.TransactionType;
 import io.github.hossensyedriadh.cbs.transaction.api.model.*;
@@ -18,6 +19,8 @@ import io.github.hossensyedriadh.cbs.transaction.internal.util.TransactionRefere
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +50,12 @@ public class TransactionServiceImpl implements TransactionService {
         this.ledgerService = ledgerService;
         this.currencyService = currencyService;
         this.httpServletRequest = httpServletRequest;
+    }
+
+    @Override
+    public Page<AccountTransactionView> getAccountTransactions(Long accountId, Pageable pageable) {
+        return this.transactionRepository.findAccountTransactions(accountId, pageable)
+                .map(transaction -> this.toAccountTransactionView(transaction, accountId));
     }
 
     @Override
@@ -315,5 +324,34 @@ public class TransactionServiceImpl implements TransactionService {
         this.transactionRepository.save(transaction);
 
         log.info("Transaction with ID: {} marked as completed", transaction.getId());
+    }
+
+    private TransactionDirection determineDirection(Transaction transaction, Long accountId) {
+        return switch (transaction.getTransactionType()) {
+            case DEPOSIT ->
+                    transaction.getReversalOfTransactionId() == null ? TransactionDirection.CREDIT : TransactionDirection.DEBIT;
+            case WITHDRAWAL ->
+                    transaction.getReversalOfTransactionId() == null ? TransactionDirection.DEBIT : TransactionDirection.CREDIT;
+            case TRANSFER -> {
+                boolean isSource = transaction.getAccountId().equals(accountId);
+
+                if (transaction.getReversalOfTransactionId() == null) {
+                    yield isSource ? TransactionDirection.DEBIT : TransactionDirection.CREDIT;
+                }
+
+                yield isSource ? TransactionDirection.CREDIT : TransactionDirection.DEBIT;
+            }
+            default -> null;
+        };
+    }
+
+    private AccountTransactionView toAccountTransactionView(Transaction transaction, Long accountId) {
+        return new AccountTransactionView(transaction.getId(), transaction.getTransactionReference(),
+                this.determineDirection(transaction, accountId),
+                transaction.getTransactionType(), transaction.getCurrencyId(),
+                transaction.getAmount(), transaction.getStatus(),
+                transaction.getDescription(), transaction.getCreatedAt(),
+                transaction.getCompletedAt()
+        );
     }
 }
