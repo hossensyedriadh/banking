@@ -28,7 +28,7 @@ spring:
       port: ${REDIS_PORT}
       username: "${REDIS_USER}"
       password: "${REDIS_PWD}"
-      timeout: ${REDIS_TIMEOUT}
+      timeout: ${REDIS_READ_TIMEOUT}
       connect-timeout: ${REDIS_CONN_TIMEOUT}
       ssl:
         enabled: true
@@ -45,6 +45,12 @@ spring:
           max-wait: "${REDIS_POOL_MAX_WAIT}"
       client-type: lettuce
       client-name: "cbs"
+  modulith:
+    events:
+      jdbc:
+        schema: "modulith"
+        schema-initialization:
+          enabled: false
 server:
   tomcat:
     connection-timeout: 15s

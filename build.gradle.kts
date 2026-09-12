@@ -56,7 +56,7 @@ dependencies {
     implementation("org.springframework.modulith:spring-modulith-events-api")
     implementation("org.springframework.modulith:spring-modulith-observability-api")
     implementation("org.springframework.modulith:spring-modulith-starter-core")
-    implementation("org.springframework.modulith:spring-modulith-starter-jpa")
+    implementation("org.springframework.modulith:spring-modulith-starter-jdbc")
     implementation("com.github.ua-parser:uap-java:1.6.1")
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-devtools")

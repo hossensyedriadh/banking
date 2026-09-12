@@ -20,6 +20,9 @@ spring:
       include-stacktrace: never
       include-message: always
       include-path: always
+server:
+  servlet:
+    context-path: /api
 management:
   endpoint:
     health:
@@ -40,5 +43,5 @@ info:
     url: "https://hossensyedriadh.github.io"
 springdoc:
   swagger-ui:
-    supported-submit-methods: []
+    supported-submit-methods: [ ]
     path: "/ui-docs.html"
