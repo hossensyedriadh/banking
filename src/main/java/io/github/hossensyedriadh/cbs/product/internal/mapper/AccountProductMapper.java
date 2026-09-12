@@ -1,6 +1,6 @@
 package io.github.hossensyedriadh.cbs.product.internal.mapper;
 
-import io.github.hossensyedriadh.cbs.configuration.MapperConfiguration;
+import io.github.hossensyedriadh.cbs.configuration.mapper.MapperConfiguration;
 import io.github.hossensyedriadh.cbs.product.api.model.AccountProductView;
 import io.github.hossensyedriadh.cbs.product.api.model.CreateAccountProductCommand;
 import io.github.hossensyedriadh.cbs.product.api.model.UpdateAccountProductCommand;

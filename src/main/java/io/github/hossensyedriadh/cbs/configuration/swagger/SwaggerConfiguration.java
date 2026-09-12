@@ -1,4 +1,4 @@
-package io.github.hossensyedriadh.cbs.configuration;
+package io.github.hossensyedriadh.cbs.configuration.swagger;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.SpecVersion;

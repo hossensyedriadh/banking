@@ -1,4 +1,4 @@
-package io.github.hossensyedriadh.cbs.configuration;
+package io.github.hossensyedriadh.cbs.configuration.audit;
 
 import org.jspecify.annotations.NonNull;
 import org.springframework.data.auditing.DateTimeProvider;

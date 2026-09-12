@@ -11,6 +11,7 @@ import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 @Getter
@@ -42,6 +43,10 @@ public class LedgerAccount {
     @ColumnDefault("true")
     @Column(name = "active", nullable = false)
     private Boolean active;
+
+    @ColumnDefault("0.0")
+    @Column(name = "balance", nullable = false, precision = 19, scale = 4)
+    private BigDecimal balance;
 
     @Setter(AccessLevel.NONE)
     @CreatedDate

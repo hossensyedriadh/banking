@@ -1,4 +1,4 @@
-package io.github.hossensyedriadh.cbs.configuration;
+package io.github.hossensyedriadh.cbs.configuration.rest;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;

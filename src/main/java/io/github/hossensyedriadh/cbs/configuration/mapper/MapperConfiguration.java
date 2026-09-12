@@ -1,4 +1,4 @@
-package io.github.hossensyedriadh.cbs.configuration;
+package io.github.hossensyedriadh.cbs.configuration.mapper;
 
 import org.mapstruct.MapperConfig;
 import org.mapstruct.NullValuePropertyMappingStrategy;

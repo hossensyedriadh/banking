@@ -35,8 +35,8 @@ info:
     version: "1.0.0-SNAPSHOT"
     description: "Mini CBS"
   developer:
-    name: "Syed Riadh Hossen",
-    email: "riadhhossen@gmail.com",
+    name: "Syed Riadh Hossen"
+    email: "riadhhossen@gmail.com"
     url: "https://hossensyedriadh.github.io"
 springdoc:
   swagger-ui:

@@ -5,9 +5,11 @@ import io.github.hossensyedriadh.cbs.ledger.api.LedgerService;
 import io.github.hossensyedriadh.cbs.ledger.api.enumerator.JournalEntryType;
 import io.github.hossensyedriadh.cbs.ledger.api.model.JournalEntryLine;
 import io.github.hossensyedriadh.cbs.ledger.api.model.PostJournalEntryCommand;
+import io.github.hossensyedriadh.cbs.ledger.api.model.SubLedgerAccountView;
 import io.github.hossensyedriadh.cbs.ledger.internal.domain.JournalEntry;
 import io.github.hossensyedriadh.cbs.ledger.internal.domain.LedgerAccount;
 import io.github.hossensyedriadh.cbs.ledger.internal.domain.SubLedgerAccount;
+import io.github.hossensyedriadh.cbs.ledger.internal.mapper.SubLedgerAccountMapper;
 import io.github.hossensyedriadh.cbs.ledger.internal.repository.JournalEntryRepository;
 import io.github.hossensyedriadh.cbs.ledger.internal.repository.LedgerAccountRepository;
 import io.github.hossensyedriadh.cbs.ledger.internal.repository.ProductLedgerAccountRepository;
@@ -36,22 +38,34 @@ public class LedgerServiceImpl implements LedgerService {
     private final LedgerAccountRepository ledgerAccountRepository;
     private final SubLedgerAccountRepository subLedgerAccountRepository;
     private final ProductLedgerAccountRepository productLedgerAccountRepository;
+    private final SubLedgerAccountMapper subLedgerAccountMapper;
     private final HttpServletRequest httpServletRequest;
 
     @Autowired
     public LedgerServiceImpl(JournalEntryRepository journalEntryRepository, LedgerAccountRepository ledgerAccountRepository,
                              SubLedgerAccountRepository subLedgerAccountRepository, ProductLedgerAccountRepository productLedgerAccountRepository,
-                             HttpServletRequest httpServletRequest) {
+                             SubLedgerAccountMapper subLedgerAccountMapper, HttpServletRequest httpServletRequest) {
         this.journalEntryRepository = journalEntryRepository;
         this.ledgerAccountRepository = ledgerAccountRepository;
         this.subLedgerAccountRepository = subLedgerAccountRepository;
         this.productLedgerAccountRepository = productLedgerAccountRepository;
+        this.subLedgerAccountMapper = subLedgerAccountMapper;
         this.httpServletRequest = httpServletRequest;
     }
 
     @Override
     public Optional<Long> getLedgerAccountByAccountId(Long accountId) {
-        return this.subLedgerAccountRepository.findSubLedgerAccountByAccountId(accountId).map(sub -> sub.getLedgerAccount().getId());
+        return this.subLedgerAccountRepository.findLedgerAccountIdByAccountId(accountId);
+    }
+
+    @Override
+    public Optional<Long> getSubLedgerAccountIdByAccountId(Long accountId) {
+        return this.subLedgerAccountRepository.findSubLedgerAccountIdByAccountId(accountId);
+    }
+
+    @Override
+    public Optional<SubLedgerAccountView> getSubLedgerAccountByAccountId(Long accountId) {
+        return this.subLedgerAccountRepository.findSubLedgerAccountByAccountId(accountId).map(this.subLedgerAccountMapper::toView);
     }
 
     @Transactional
@@ -90,6 +104,21 @@ public class LedgerServiceImpl implements LedgerService {
     }
 
     private void postJournalEntry(PostJournalEntryCommand command) {
+        BigDecimal totalDebit = command.getEntries().stream()
+                .filter(line -> line.getEntryType() == JournalEntryType.DEBIT)
+                .map(JournalEntryLine::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalCredit = command.getEntries().stream()
+                .filter(line -> line.getEntryType() == JournalEntryType.CREDIT)
+                .map(JournalEntryLine::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (totalDebit.compareTo(totalCredit) != 0) {
+            log.warn("Journal entry is not balanced for transaction: {}", command.getTransactionId());
+            throw new ApiResourceException("Journal entry is not balanced", HttpStatus.INTERNAL_SERVER_ERROR, this.httpServletRequest);
+        }
+
         Set<Long> ledgerAccountIds = command.getEntries().stream().map(JournalEntryLine::getLedgerAccountId).collect(Collectors.toSet());
 
         Map<Long, LedgerAccount> ledgerAccounts = this.ledgerAccountRepository.findAllById(ledgerAccountIds).stream()
@@ -124,8 +153,14 @@ public class LedgerServiceImpl implements LedgerService {
         Long cashLedgerAccountId = this.getCashLedgerAccountId();
 
         this.postJournalEntry(new PostJournalEntryCommand(transactionId,
-                List.of(new JournalEntryLine(cashLedgerAccountId, JournalEntryType.DEBIT, amount),
-                        new JournalEntryLine(customerLedgerAccountId, JournalEntryType.CREDIT, amount))));
+                List.of(
+                        new JournalEntryLine(cashLedgerAccountId, JournalEntryType.DEBIT, amount),
+                        new JournalEntryLine(customerLedgerAccountId, JournalEntryType.CREDIT, amount)
+                )
+        ));
+
+        this.adjustGLAccountBalance(cashLedgerAccountId, amount);
+        this.adjustSubLedgerAccountBalance(customerLedgerAccountId, amount);
     }
 
     @Transactional
@@ -134,22 +169,54 @@ public class LedgerServiceImpl implements LedgerService {
         Long cashLedgerAccountId = this.getCashLedgerAccountId();
 
         this.postJournalEntry(new PostJournalEntryCommand(transactionId,
-                List.of(new JournalEntryLine(customerLedgerAccountId, JournalEntryType.DEBIT, amount),
-                        new JournalEntryLine(cashLedgerAccountId, JournalEntryType.CREDIT, amount))));
+                List.of(
+                        new JournalEntryLine(customerLedgerAccountId, JournalEntryType.DEBIT, amount),
+                        new JournalEntryLine(cashLedgerAccountId, JournalEntryType.CREDIT, amount)
+                )
+        ));
+
+        this.adjustGLAccountBalance(cashLedgerAccountId, amount.negate());
+        this.adjustSubLedgerAccountBalance(customerLedgerAccountId, amount.negate());
     }
 
     @Transactional
     @Override
-    public void postTransfer(Long transactionId, Long sourceLedgerAccountId, Long destinationLedgerAccountId, BigDecimal amount) {
-        this.postJournalEntry(new PostJournalEntryCommand(transactionId, List.of(
-                new JournalEntryLine(sourceLedgerAccountId, JournalEntryType.DEBIT, amount),
-                new JournalEntryLine(destinationLedgerAccountId, JournalEntryType.CREDIT, amount))));
+    public void postCustomerTransfer(Long transactionId, Long sourceLedgerAccountId, Long destinationLedgerAccountId, BigDecimal amount) {
+        this.postJournalEntry(new PostJournalEntryCommand(transactionId,
+                List.of(
+                        new JournalEntryLine(sourceLedgerAccountId, JournalEntryType.DEBIT, amount),
+                        new JournalEntryLine(destinationLedgerAccountId, JournalEntryType.CREDIT, amount)
+                )
+        ));
+
+        this.adjustSubLedgerAccountBalance(sourceLedgerAccountId, amount.negate());
+        this.adjustSubLedgerAccountBalance(destinationLedgerAccountId, amount);
     }
 
     private Long getCashLedgerAccountId() {
-        return ledgerAccountRepository.findByAccountCode(SystemLedgerAccountCodes.CASH).map(LedgerAccount::getId).orElseThrow(() -> {
+        return this.ledgerAccountRepository.findByAccountCode(SystemLedgerAccountCodes.CASH).map(LedgerAccount::getId).orElseThrow(() -> {
             log.warn("Cash ledger account not configured");
             return new ApiResourceException("Cash ledger account not configured");
         });
+    }
+
+    private void adjustGLAccountBalance(Long ledgerAccountId, BigDecimal delta) {
+        LedgerAccount ledgerAccount = this.ledgerAccountRepository.findByIdForUpdate(ledgerAccountId)
+                .orElseThrow(() -> {
+                    log.warn("GL account not found with ID: {}", ledgerAccountId);
+                    return new ApiResourceException("GL account not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+                });
+
+        ledgerAccount.setBalance(ledgerAccount.getBalance().add(delta));
+    }
+
+    private void adjustSubLedgerAccountBalance(Long subLedgerAccountId, BigDecimal delta) {
+        SubLedgerAccount subLedgerAccount = this.subLedgerAccountRepository.findByIdForUpdate(subLedgerAccountId)
+                .orElseThrow(() -> {
+                    log.warn("SubLedger account not found with ID: {}", subLedgerAccountId);
+                    return new ApiResourceException("SubLedger account not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+                });
+
+        subLedgerAccount.setBalance(subLedgerAccount.getBalance().add(delta));
     }
 }

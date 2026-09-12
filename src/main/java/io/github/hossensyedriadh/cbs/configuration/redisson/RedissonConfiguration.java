@@ -1,4 +1,4 @@
-package io.github.hossensyedriadh.cbs.configuration;
+package io.github.hossensyedriadh.cbs.configuration.redisson;
 
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;

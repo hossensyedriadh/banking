@@ -1,5 +1,5 @@
 @ApplicationModule(
-        allowedDependencies = {"exception"}
+        allowedDependencies = {"exception", "configuration :: mapper"}
 )
 package io.github.hossensyedriadh.cbs.product;
 

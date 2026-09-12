@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 @Getter
@@ -29,6 +30,8 @@ public class LedgerAccountView implements Serializable {
     private LedgerAccountType accountType;
 
     private boolean active;
+
+    private BigDecimal balance;
 
     @JsonProperty("created_at")
     private OffsetDateTime createdAt;

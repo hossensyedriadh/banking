@@ -1,4 +1,4 @@
-package io.github.hossensyedriadh.cbs.configuration;
+package io.github.hossensyedriadh.cbs.configuration.security;
 
 import jakarta.annotation.Nonnull;
 import org.springframework.context.annotation.Bean;

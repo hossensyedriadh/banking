@@ -76,9 +76,9 @@ public class TransactionServiceImpl implements TransactionService {
 
         log.info("Deposit transaction saved: {}", savedTransaction.getId());
 
-        Long customerLedgerAccountId = this.ledgerService.getLedgerAccountByAccountId(account.getId()).orElseThrow(() -> {
-            log.warn("No ledger account mapped to account: {}", account.getId());
-            return new ApiResourceException("No ledger account mapped to account", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        Long customerLedgerAccountId = this.ledgerService.getSubLedgerAccountIdByAccountId(account.getId()).orElseThrow(() -> {
+            log.warn("No sub-ledger account mapped to account: {}", account.getId());
+            return new ApiResourceException("No sub-ledger account mapped to account", HttpStatus.BAD_REQUEST, this.httpServletRequest);
         });
 
         this.ledgerService.postDeposit(savedTransaction.getId(), customerLedgerAccountId, command.getAmount());
@@ -102,9 +102,9 @@ public class TransactionServiceImpl implements TransactionService {
 
         log.info("Withdrawal transaction saved: {}", savedTransaction.getId());
 
-        Long customerLedgerAccountId = this.ledgerService.getLedgerAccountByAccountId(account.getId()).orElseThrow(() -> {
-            log.warn("No ledger account mapped to account: {}", account.getId());
-            return new ApiResourceException("No ledger account mapped to account", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        Long customerLedgerAccountId = this.ledgerService.getSubLedgerAccountIdByAccountId(account.getId()).orElseThrow(() -> {
+            log.warn("No sub-ledger account mapped to account: {}", account.getId());
+            return new ApiResourceException("No sub-ledger account mapped to account", HttpStatus.BAD_REQUEST, this.httpServletRequest);
         });
 
         this.ledgerService.postWithdrawal(savedTransaction.getId(), customerLedgerAccountId, command.getAmount());
@@ -135,17 +135,17 @@ public class TransactionServiceImpl implements TransactionService {
 
         log.info("Transfer transaction saved: {}", savedTransaction.getId());
 
-        Long sourceLedgerAccountId = this.ledgerService.getLedgerAccountByAccountId(sourceAccount.getId()).orElseThrow(() -> {
-            log.warn("No ledger account mapped to source account: {}", sourceAccount.getId());
-            return new ApiResourceException("No ledger account mapped to source account", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        Long sourceLedgerAccountId = this.ledgerService.getSubLedgerAccountIdByAccountId(sourceAccount.getId()).orElseThrow(() -> {
+            log.warn("No sub-ledger account mapped to source account: {}", sourceAccount.getId());
+            return new ApiResourceException("No sub-ledger account mapped to source account", HttpStatus.BAD_REQUEST, this.httpServletRequest);
         });
 
-        Long destinationLedgerAccountId = this.ledgerService.getLedgerAccountByAccountId(destinationAccount.getId()).orElseThrow(() -> {
-            log.warn("No ledger account mapped to destination account: {}", destinationAccount.getId());
-            return new ApiResourceException("No ledger account mapped to destination account");
+        Long destinationLedgerAccountId = this.ledgerService.getSubLedgerAccountIdByAccountId(destinationAccount.getId()).orElseThrow(() -> {
+            log.warn("No sub-ledger account mapped to destination account: {}", destinationAccount.getId());
+            return new ApiResourceException("No sub-ledger account mapped to destination account", HttpStatus.BAD_REQUEST, this.httpServletRequest);
         });
 
-        this.ledgerService.postTransfer(savedTransaction.getId(), sourceLedgerAccountId, destinationLedgerAccountId, command.getAmount());
+        this.ledgerService.postCustomerTransfer(savedTransaction.getId(), sourceLedgerAccountId, destinationLedgerAccountId, command.getAmount());
 
         this.completeTransaction(savedTransaction);
 
