@@ -53,6 +53,9 @@ public class Transaction {
     @Column(name = "description", length = Integer.MAX_VALUE)
     private String description;
 
+    @Column(name = "idempotency_key", nullable = false, unique = true, length = 100)
+    private String idempotencyKey;
+
     @Setter(AccessLevel.NONE)
     @CreatedDate
     @Column(name = "created_at", updatable = false, nullable = false)

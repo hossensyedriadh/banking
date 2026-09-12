@@ -40,6 +40,9 @@ public class TransactionView implements Serializable {
 
     private String description;
 
+    @JsonProperty("idempotency_key")
+    private String idempotencyKey;
+
     @JsonProperty("created_at")
     private OffsetDateTime createdAt;
 

@@ -9,4 +9,6 @@ import java.util.Optional;
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
     Optional<Transaction> findByTransactionReference(String ref);
+    
+    Optional<Transaction> findByIdempotencyKey(String idempotencyKey);
 }

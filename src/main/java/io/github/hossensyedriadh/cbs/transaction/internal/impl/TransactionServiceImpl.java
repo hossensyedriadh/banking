@@ -65,21 +65,26 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional
     public TransactionView deposit(CreateDepositCommand command) {
+        Optional<TransactionView> existingTransaction = this.getCompletedOrPendingTransaction(command.getIdempotencyKey());
+
+        if (existingTransaction.isPresent()) {
+            log.info("Duplicate deposit request detected for idempotency key: {}", command.getIdempotencyKey());
+
+            return existingTransaction.get();
+        }
+
         AccountView account = this.getActiveAccount(command.getAccountId());
 
         this.validateCurrency(command.getCurrencyId(), account.getCurrencyId());
 
         Transaction transaction = createTransaction(account.getId(), null, command.getCurrencyId(), TransactionType.DEPOSIT,
-                command.getAmount(), command.getDescription());
+                command.getAmount(), command.getDescription(), command.getIdempotencyKey());
 
         Transaction savedTransaction = this.transactionRepository.save(transaction);
 
         log.info("Deposit transaction saved: {}", savedTransaction.getId());
 
-        Long customerLedgerAccountId = this.ledgerService.getSubLedgerAccountIdByAccountId(account.getId()).orElseThrow(() -> {
-            log.warn("No sub-ledger account mapped to account: {}", account.getId());
-            return new ApiResourceException("No sub-ledger account mapped to account", HttpStatus.BAD_REQUEST, this.httpServletRequest);
-        });
+        Long customerLedgerAccountId = this.getCustomerLedgerAccountId(account.getId());
 
         this.ledgerService.postDeposit(savedTransaction.getId(), customerLedgerAccountId, command.getAmount());
 
@@ -91,21 +96,26 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional
     public TransactionView withdraw(CreateWithdrawalCommand command) {
+        Optional<TransactionView> existingTransaction = this.getCompletedOrPendingTransaction(command.getIdempotencyKey());
+
+        if (existingTransaction.isPresent()) {
+            log.info("Duplicate withdrawal request detected for idempotency key: {}", command.getIdempotencyKey());
+
+            return existingTransaction.get();
+        }
+
         AccountView account = this.getActiveAccount(command.getAccountId());
 
         this.validateCurrency(command.getCurrencyId(), account.getCurrencyId());
 
         Transaction transaction = this.createTransaction(account.getId(), null, command.getCurrencyId(),
-                TransactionType.WITHDRAWAL, command.getAmount(), command.getDescription());
+                TransactionType.WITHDRAWAL, command.getAmount(), command.getDescription(), command.getIdempotencyKey());
 
         Transaction savedTransaction = this.transactionRepository.save(transaction);
 
         log.info("Withdrawal transaction saved: {}", savedTransaction.getId());
 
-        Long customerLedgerAccountId = this.ledgerService.getSubLedgerAccountIdByAccountId(account.getId()).orElseThrow(() -> {
-            log.warn("No sub-ledger account mapped to account: {}", account.getId());
-            return new ApiResourceException("No sub-ledger account mapped to account", HttpStatus.BAD_REQUEST, this.httpServletRequest);
-        });
+        Long customerLedgerAccountId = this.getCustomerLedgerAccountId(account.getId());
 
         this.ledgerService.postWithdrawal(savedTransaction.getId(), customerLedgerAccountId, command.getAmount());
 
@@ -122,6 +132,14 @@ public class TransactionServiceImpl implements TransactionService {
             throw new ApiResourceException("Source and destination accounts must be different", HttpStatus.BAD_REQUEST, this.httpServletRequest);
         }
 
+        Optional<TransactionView> existingTransaction = this.getCompletedOrPendingTransaction(command.getIdempotencyKey());
+
+        if (existingTransaction.isPresent()) {
+            log.info("Duplicate transfer request detected for idempotency key: {}", command.getIdempotencyKey());
+
+            return existingTransaction.get();
+        }
+
         AccountView sourceAccount = this.getActiveAccount(command.getAccountId());
         AccountView destinationAccount = this.getActiveAccount(command.getDestinationAccountId());
 
@@ -129,27 +147,33 @@ public class TransactionServiceImpl implements TransactionService {
         this.validateCurrency(command.getCurrencyId(), destinationAccount.getCurrencyId());
 
         Transaction transaction = this.createTransaction(sourceAccount.getId(), destinationAccount.getId(),
-                command.getCurrencyId(), TransactionType.TRANSFER, command.getAmount(), command.getDescription());
+                command.getCurrencyId(), TransactionType.TRANSFER, command.getAmount(), command.getDescription(),
+                command.getIdempotencyKey());
 
         Transaction savedTransaction = this.transactionRepository.save(transaction);
 
         log.info("Transfer transaction saved: {}", savedTransaction.getId());
 
-        Long sourceLedgerAccountId = this.ledgerService.getSubLedgerAccountIdByAccountId(sourceAccount.getId()).orElseThrow(() -> {
-            log.warn("No sub-ledger account mapped to source account: {}", sourceAccount.getId());
-            return new ApiResourceException("No sub-ledger account mapped to source account", HttpStatus.BAD_REQUEST, this.httpServletRequest);
-        });
+        Long sourceLedgerAccountId = this.getCustomerLedgerAccountId(sourceAccount.getId());
 
-        Long destinationLedgerAccountId = this.ledgerService.getSubLedgerAccountIdByAccountId(destinationAccount.getId()).orElseThrow(() -> {
-            log.warn("No sub-ledger account mapped to destination account: {}", destinationAccount.getId());
-            return new ApiResourceException("No sub-ledger account mapped to destination account", HttpStatus.BAD_REQUEST, this.httpServletRequest);
-        });
+        Long destinationLedgerAccountId = this.getCustomerLedgerAccountId(destinationAccount.getId());
 
         this.ledgerService.postCustomerTransfer(savedTransaction.getId(), sourceLedgerAccountId, destinationLedgerAccountId, command.getAmount());
 
         this.completeTransaction(savedTransaction);
 
         return this.transactionMapper.toView(savedTransaction);
+    }
+
+    private Optional<TransactionView> getCompletedOrPendingTransaction(String idempotencyKey) {
+        return this.transactionRepository.findByIdempotencyKey(idempotencyKey).map(this.transactionMapper::toView);
+    }
+
+    private Long getCustomerLedgerAccountId(Long accountId) {
+        return this.ledgerService.getSubLedgerAccountIdByAccountId(accountId).orElseThrow(() -> {
+            log.warn("No sub-ledger account mapped to account: {}", accountId);
+            return new ApiResourceException("No sub-ledger account mapped to account", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        });
     }
 
     private AccountView getActiveAccount(Long accountId) {
@@ -179,8 +203,10 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     private Transaction createTransaction(Long accountId, Long destinationAccountId, Long currencyId,
-                                          TransactionType transactionType, BigDecimal amount, String description) {
+                                          TransactionType transactionType, BigDecimal amount, String description,
+                                          String idempotencyKey) {
         Transaction transaction = new Transaction();
+        transaction.setIdempotencyKey(idempotencyKey);
         transaction.setTransactionReference(TransactionReferenceGenerator.generate(transactionType));
         transaction.setAccountId(accountId);
         transaction.setDestinationAccountId(destinationAccountId);

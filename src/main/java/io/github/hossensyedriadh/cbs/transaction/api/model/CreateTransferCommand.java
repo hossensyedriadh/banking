@@ -1,6 +1,7 @@
 package io.github.hossensyedriadh.cbs.transaction.api.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Getter;
@@ -31,6 +32,10 @@ public class CreateTransferCommand implements Serializable {
     @NotNull
     @Positive
     private BigDecimal amount;
+
+    @NotBlank
+    @JsonProperty("idempotency_key")
+    private String idempotencyKey;
 
     private String description;
 }
