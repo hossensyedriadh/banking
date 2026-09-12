@@ -10,10 +10,7 @@ import io.github.hossensyedriadh.cbs.product.api.model.CurrencyView;
 import io.github.hossensyedriadh.cbs.transaction.api.TransactionService;
 import io.github.hossensyedriadh.cbs.transaction.api.enumerator.TransactionStatus;
 import io.github.hossensyedriadh.cbs.transaction.api.enumerator.TransactionType;
-import io.github.hossensyedriadh.cbs.transaction.api.model.CreateDepositCommand;
-import io.github.hossensyedriadh.cbs.transaction.api.model.CreateTransferCommand;
-import io.github.hossensyedriadh.cbs.transaction.api.model.CreateWithdrawalCommand;
-import io.github.hossensyedriadh.cbs.transaction.api.model.TransactionView;
+import io.github.hossensyedriadh.cbs.transaction.api.model.*;
 import io.github.hossensyedriadh.cbs.transaction.internal.domain.Transaction;
 import io.github.hossensyedriadh.cbs.transaction.internal.mapper.TransactionMapper;
 import io.github.hossensyedriadh.cbs.transaction.internal.repository.TransactionRepository;
@@ -163,6 +160,98 @@ public class TransactionServiceImpl implements TransactionService {
         this.completeTransaction(savedTransaction);
 
         return this.transactionMapper.toView(savedTransaction);
+    }
+
+    @Override
+    @Transactional
+    public TransactionView reverse(ReverseTransactionCommand command) {
+        Optional<TransactionView> existingTransaction = this.getCompletedOrPendingTransaction(command.getIdempotencyKey());
+
+        if (existingTransaction.isPresent()) {
+            log.info("Duplicate reversal request detected for idempotency key: {}", command.getIdempotencyKey());
+
+            return existingTransaction.get();
+        }
+
+        Transaction originalTransaction = this.transactionRepository.findById(command.getTransactionId())
+                .orElseThrow(() -> {
+                    log.warn("Transaction not found with ID {}", command.getTransactionId());
+                    return new ApiResourceException("Transaction not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+                });
+
+        if (originalTransaction.getStatus() != TransactionStatus.COMPLETED) {
+            log.warn("Transaction {} can not be reversed because it's status is {}", originalTransaction.getId(), originalTransaction.getStatus());
+            throw new ApiResourceException("Only completed transactions can be reversed", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        }
+
+        if (originalTransaction.getReversalOfTransactionId() != null) {
+            log.warn("Transaction {} is already a reversal", originalTransaction.getId());
+            throw new ApiResourceException("A reversal can not be reversed", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        }
+
+        boolean alreadyReversed = this.transactionRepository.existsByReversalOfTransactionId(originalTransaction.getId());
+
+        if (alreadyReversed) {
+            log.warn("Transaction {} has already been reversed", originalTransaction.getId());
+            throw new ApiResourceException("Transaction has already been reversed", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        }
+
+        Transaction reversal = this.createTransaction(originalTransaction.getAccountId(), originalTransaction.getDestinationAccountId(),
+                originalTransaction.getCurrencyId(), originalTransaction.getTransactionType(), originalTransaction.getAmount(),
+                command.getDescription(), command.getIdempotencyKey());
+        reversal.setReversalOfTransactionId(originalTransaction.getId());
+
+        Transaction savedReversal = this.transactionRepository.save(reversal);
+
+        log.info("Reversal transaction created: id={}, originalTransactionId={}", savedReversal.getId(), originalTransaction.getId());
+
+        this.postReversal(originalTransaction, savedReversal);
+
+        this.completeTransaction(savedReversal);
+
+        return this.transactionMapper.toView(savedReversal);
+    }
+
+    private void postReversal(Transaction originalTransaction, Transaction reversalTransaction) {
+        switch (originalTransaction.getTransactionType()) {
+            case DEPOSIT -> this.reverseDeposit(originalTransaction, reversalTransaction);
+            case WITHDRAWAL -> this.reverseWithdrawal(originalTransaction, reversalTransaction);
+            case TRANSFER -> this.reverseTransfer(originalTransaction, reversalTransaction);
+            default -> {
+                log.warn("Unsupported transaction type for reversal: {}", originalTransaction.getTransactionType());
+                throw new ApiResourceException("Unsupported transaction type for reversal", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            }
+        }
+    }
+
+    private void reverseDeposit(Transaction originalTransaction, Transaction reversalTransaction) {
+        Long customerLedgerAccountId = this.getCustomerLedgerAccountId(originalTransaction.getAccountId());
+
+        this.ledgerService.postWithdrawal(reversalTransaction.getId(), customerLedgerAccountId, originalTransaction.getAmount());
+    }
+
+    private void reverseWithdrawal(Transaction originalTransaction, Transaction reversalTransaction) {
+        Long customerLedgerAccountId = this.getCustomerLedgerAccountId(originalTransaction.getAccountId());
+
+        this.ledgerService.postDeposit(reversalTransaction.getId(), customerLedgerAccountId, originalTransaction.getAmount());
+    }
+
+    private void reverseTransfer(Transaction originalTransaction, Transaction reversalTransaction) {
+        Long sourceLedgerAccountId = this.getCustomerLedgerAccountId(originalTransaction.getAccountId());
+        Long destinationLedgerAccountId = this.getCustomerLedgerAccountId(originalTransaction.getDestinationAccountId());
+
+        /*
+         * Original:
+         * DR source
+         * CR destination
+         *
+         * Reversal:
+         * DR destination
+         * CR source
+         * */
+
+        this.ledgerService.postCustomerTransfer(reversalTransaction.getId(), destinationLedgerAccountId, sourceLedgerAccountId,
+                originalTransaction.getAmount());
     }
 
     private Optional<TransactionView> getCompletedOrPendingTransaction(String idempotencyKey) {

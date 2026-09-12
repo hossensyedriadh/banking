@@ -1,9 +1,6 @@
 package io.github.hossensyedriadh.cbs.transaction.api;
 
-import io.github.hossensyedriadh.cbs.transaction.api.model.CreateDepositCommand;
-import io.github.hossensyedriadh.cbs.transaction.api.model.CreateTransferCommand;
-import io.github.hossensyedriadh.cbs.transaction.api.model.CreateWithdrawalCommand;
-import io.github.hossensyedriadh.cbs.transaction.api.model.TransactionView;
+import io.github.hossensyedriadh.cbs.transaction.api.model.*;
 
 import java.util.Optional;
 
@@ -17,4 +14,6 @@ public interface TransactionService {
     TransactionView withdraw(CreateWithdrawalCommand command);
 
     TransactionView transfer(CreateTransferCommand command);
+
+    TransactionView reverse(ReverseTransactionCommand command);
 }

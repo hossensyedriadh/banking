@@ -8,7 +8,8 @@ import lombok.Getter;
 public enum TransactionType {
     DEPOSIT("D"),
     WITHDRAWAL("W"),
-    TRANSFER("T");
+    TRANSFER("T"),
+    REVERSAL ("R");
 
     private final String prefix;
 }

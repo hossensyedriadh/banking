@@ -22,7 +22,7 @@ public class TransactionView implements Serializable {
     @JsonProperty("transaction_ref")
     private String transactionReference;
 
-    @JsonProperty("account_id")
+    @JsonProperty("source_account_id")
     private Long accountId;
 
     @JsonProperty("destination_account_id")
@@ -42,6 +42,9 @@ public class TransactionView implements Serializable {
 
     @JsonProperty("idempotency_key")
     private String idempotencyKey;
+
+    @JsonProperty("reversal_of_trx_id")
+    private Long reversalOfTransactionId;
 
     @JsonProperty("created_at")
     private OffsetDateTime createdAt;

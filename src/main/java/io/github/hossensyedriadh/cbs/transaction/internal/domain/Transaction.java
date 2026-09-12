@@ -56,6 +56,9 @@ public class Transaction {
     @Column(name = "idempotency_key", nullable = false, unique = true, length = 100)
     private String idempotencyKey;
 
+    @Column(name = "reversal_of_trx_id")
+    private Long reversalOfTransactionId;
+
     @Setter(AccessLevel.NONE)
     @CreatedDate
     @Column(name = "created_at", updatable = false, nullable = false)
