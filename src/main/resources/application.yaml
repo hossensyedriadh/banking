@@ -31,12 +31,12 @@ management:
         add-additional-paths: true
   info:
     env:
-      enabled: false
+      enabled: true
 info:
   application:
     name: "${spring.application.name}"
     version: "1.0.0-SNAPSHOT"
-    description: "Mini CBS"
+    description: "Core Banking Solution"
   developer:
     name: "Syed Riadh Hossen"
     email: "riadhhossen@gmail.com"
