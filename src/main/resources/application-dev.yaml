@@ -34,7 +34,7 @@ spring:
         enabled: true
       repositories:
         enabled: false
-      database: 2
+      database: 1
       lettuce:
         pool:
           enabled: true
