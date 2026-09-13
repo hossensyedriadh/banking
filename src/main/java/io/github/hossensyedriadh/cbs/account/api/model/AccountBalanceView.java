@@ -24,6 +24,9 @@ public class AccountBalanceView implements Serializable {
     @JsonProperty("ledger_balance")
     private BigDecimal ledgerBalance;
 
+    @JsonProperty("held_amount")
+    private BigDecimal heldAmount;
+
     @JsonProperty("available_balance")
     private BigDecimal availableBalance;
 }

@@ -2,7 +2,9 @@ package io.github.hossensyedriadh.cbs.account.internal.impl;
 
 import io.github.hossensyedriadh.cbs.account.api.AccountBalanceService;
 import io.github.hossensyedriadh.cbs.account.api.AccountService;
+import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountHoldStatus;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountBalanceView;
+import io.github.hossensyedriadh.cbs.account.internal.repository.AccountHoldRepository;
 import io.github.hossensyedriadh.cbs.ledger.api.LedgerService;
 import io.github.hossensyedriadh.cbs.ledger.api.model.SubLedgerAccountView;
 import lombok.extern.log4j.Log4j2;
@@ -19,20 +21,27 @@ import java.util.Optional;
 public class AccountBalanceServiceImpl implements AccountBalanceService {
     private final AccountService accountService;
     private final LedgerService ledgerService;
+    private final AccountHoldRepository accountHoldRepository;
 
     @Autowired
-    public AccountBalanceServiceImpl(AccountService accountService, LedgerService ledgerService) {
+    public AccountBalanceServiceImpl(AccountService accountService, LedgerService ledgerService,
+                                     AccountHoldRepository accountHoldRepository) {
         this.accountService = accountService;
         this.ledgerService = ledgerService;
+        this.accountHoldRepository = accountHoldRepository;
     }
 
     @Override
     public Optional<AccountBalanceView> getBalance(Long accountId) {
         return this.accountService.getAccount(accountId).map(account -> {
-            BigDecimal balance = this.ledgerService.getSubLedgerAccountByAccountId(accountId)
+            BigDecimal ledgerBalance = this.ledgerService.getSubLedgerAccountByAccountId(accountId)
                     .map(SubLedgerAccountView::getBalance).orElse(BigDecimal.ZERO);
 
-            return new AccountBalanceView(accountId, balance, balance);
+            BigDecimal heldAmount = this.accountHoldRepository.sumAmountByAccountIdAndStatus(accountId, AccountHoldStatus.ACTIVE);
+
+            BigDecimal availableBalance = ledgerBalance.subtract(heldAmount);
+
+            return new AccountBalanceView(accountId, ledgerBalance, heldAmount, availableBalance);
         });
     }
 }
