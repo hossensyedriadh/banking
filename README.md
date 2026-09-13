@@ -1,2 +1,2 @@
 # cbs
-Mini CBS implementation
+Core Banking Solution implementation
