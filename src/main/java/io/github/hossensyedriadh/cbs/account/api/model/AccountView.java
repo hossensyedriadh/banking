@@ -36,4 +36,7 @@ public class AccountView implements Serializable {
 
     @JsonProperty("closed_at")
     private OffsetDateTime closedAt;
+
+    @JsonProperty("closure_reason")
+    private String closureReason;
 }

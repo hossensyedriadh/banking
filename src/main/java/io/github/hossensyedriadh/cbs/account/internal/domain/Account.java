@@ -53,6 +53,9 @@ public class Account {
     @Column(name = "closed_at", insertable = false)
     private OffsetDateTime closedAt;
 
+    @Column(name = "closure_reason", insertable = false)
+    private String closureReason;
+
     @PrePersist
     private void pre() {
         this.accountNumber = AccountNumberGenerator.generate(this.branchId, this.productId);

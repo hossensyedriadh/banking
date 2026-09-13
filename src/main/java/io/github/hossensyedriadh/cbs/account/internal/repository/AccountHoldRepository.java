@@ -23,4 +23,6 @@ public interface AccountHoldRepository extends JpaRepository<AccountHold, Long> 
 
     @Query(value = "select coalesce(sum(h.amount), 0.0) from AccountHold h where h.accountId = :accountId and h.status = :status")
     BigDecimal sumAmountByAccountIdAndStatus(@Param("accountId") Long accountId, @Param("status") AccountHoldStatus status);
+
+    boolean existsByAccountIdAndStatus(Long accountId, AccountHoldStatus status);
 }

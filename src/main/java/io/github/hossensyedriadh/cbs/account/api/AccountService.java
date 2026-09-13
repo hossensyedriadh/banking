@@ -1,6 +1,7 @@
 package io.github.hossensyedriadh.cbs.account.api;
 
 import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
+import io.github.hossensyedriadh.cbs.account.api.model.CloseAccountCommand;
 import io.github.hossensyedriadh.cbs.account.api.model.CreateAccountCommand;
 
 import java.util.List;
@@ -21,5 +22,5 @@ public interface AccountService {
 
     void unblockAccount(Long id);
 
-    void closeAccount(Long id);
+    AccountView closeAccount(CloseAccountCommand command);
 }

@@ -25,4 +25,6 @@ public interface AccountRestrictionRepository extends JpaRepository<AccountRestr
 
     @Query("select r.restrictionType from AccountRestriction r where r.accountId = :accountId and r.status = :status")
     List<AccountRestrictionType> findActiveRestrictionTypes(@Param("accountId") Long accountId, @Param("status") AccountRestrictionStatus status);
+
+    boolean existsByAccountIdAndStatus(Long accountId, AccountRestrictionStatus status);
 }

@@ -1,20 +1,26 @@
 package io.github.hossensyedriadh.cbs.account.internal.impl;
 
 import io.github.hossensyedriadh.cbs.account.api.AccountService;
+import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountHoldStatus;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountHolderType;
+import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountRestrictionStatus;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountStatus;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
+import io.github.hossensyedriadh.cbs.account.api.model.CloseAccountCommand;
 import io.github.hossensyedriadh.cbs.account.api.model.CreateAccountCommand;
 import io.github.hossensyedriadh.cbs.account.internal.domain.Account;
 import io.github.hossensyedriadh.cbs.account.internal.domain.AccountHolder;
 import io.github.hossensyedriadh.cbs.account.internal.domain.AccountHolderId;
 import io.github.hossensyedriadh.cbs.account.internal.mapper.AccountMapper;
+import io.github.hossensyedriadh.cbs.account.internal.repository.AccountHoldRepository;
 import io.github.hossensyedriadh.cbs.account.internal.repository.AccountHolderRepository;
 import io.github.hossensyedriadh.cbs.account.internal.repository.AccountRepository;
+import io.github.hossensyedriadh.cbs.account.internal.repository.AccountRestrictionRepository;
 import io.github.hossensyedriadh.cbs.branch.api.BranchService;
 import io.github.hossensyedriadh.cbs.customer.api.CustomerService;
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import io.github.hossensyedriadh.cbs.ledger.api.LedgerService;
+import io.github.hossensyedriadh.cbs.ledger.api.model.SubLedgerAccountView;
 import io.github.hossensyedriadh.cbs.product.api.AccountProductService;
 import io.github.hossensyedriadh.cbs.product.api.CurrencyService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,6 +30,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -34,6 +42,8 @@ import java.util.Optional;
 public class AccountServiceImpl implements AccountService {
     private final AccountRepository accountRepository;
     private final AccountHolderRepository accountHolderRepository;
+    private final AccountHoldRepository accountHoldRepository;
+    private final AccountRestrictionRepository accountRestrictionRepository;
     private final AccountMapper accountMapper;
     private final CustomerService customerService;
     private final AccountProductService accountProductService;
@@ -44,12 +54,15 @@ public class AccountServiceImpl implements AccountService {
 
     @Autowired
     public AccountServiceImpl(AccountRepository accountRepository, AccountHolderRepository accountHolderRepository,
+                              AccountHoldRepository accountHoldRepository, AccountRestrictionRepository accountRestrictionRepository,
                               AccountMapper accountMapper, CustomerService customerService,
                               AccountProductService accountProductService, BranchService branchService,
                               CurrencyService currencyService, LedgerService ledgerService,
                               HttpServletRequest httpServletRequest) {
         this.accountRepository = accountRepository;
         this.accountHolderRepository = accountHolderRepository;
+        this.accountHoldRepository = accountHoldRepository;
+        this.accountRestrictionRepository = accountRestrictionRepository;
         this.accountMapper = accountMapper;
         this.customerService = customerService;
         this.accountProductService = accountProductService;
@@ -133,7 +146,7 @@ public class AccountServiceImpl implements AccountService {
     @Transactional
     @Override
     public void blockAccount(Long id) {
-        this.accountRepository.findById(id).ifPresentOrElse(account -> {
+        this.accountRepository.findByIdForUpdate(id).ifPresentOrElse(account -> {
             if (account.getStatus().equals(AccountStatus.BLOCKED) || account.getStatus().equals(AccountStatus.CLOSED)) {
                 log.warn("Account with ID: {} already {}", id, account.getStatus().toString().toLowerCase());
                 throw new ApiResourceException(String.format("Account already %s", account.getStatus().toString().toLowerCase()),
@@ -153,7 +166,7 @@ public class AccountServiceImpl implements AccountService {
     @Transactional
     @Override
     public void unblockAccount(Long id) {
-        this.accountRepository.findById(id).ifPresentOrElse(account -> {
+        this.accountRepository.findByIdForUpdate(id).ifPresentOrElse(account -> {
             if (account.getStatus().equals(AccountStatus.ACTIVE) || account.getStatus().equals(AccountStatus.CLOSED)) {
                 log.warn("Account with ID: {} already {}", id, account.getStatus().toString().toLowerCase());
                 throw new ApiResourceException(String.format("Account already %s", account.getStatus().toString().toLowerCase()),
@@ -173,21 +186,48 @@ public class AccountServiceImpl implements AccountService {
 
     @Transactional
     @Override
-    public void closeAccount(Long id) {
-        this.accountRepository.findById(id).ifPresentOrElse(account -> {
-            if (account.getStatus().equals(AccountStatus.CLOSED)) {
-                log.warn("Account with ID: {} already closed", id);
-                throw new ApiResourceException("Account already closed", HttpStatus.BAD_REQUEST, this.httpServletRequest);
-            }
-
-            account.setStatus(AccountStatus.CLOSED);
-            Account saved = this.accountRepository.save(account);
-
-            log.info("Account with ID: {} successfully closed", saved.getId());
-        }, () -> {
-            log.warn("No account found with ID: {}", id);
-            throw new ApiResourceException("Account not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+    public AccountView closeAccount(CloseAccountCommand command) {
+        Account account = this.accountRepository.findByIdForUpdate(command.getAccountId()).orElseThrow(() -> {
+            log.warn("No account found with ID: {}", command.getAccountId());
+            return new ApiResourceException("Account not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
         });
+
+        if (account.getStatus() != AccountStatus.ACTIVE) {
+            log.warn("Account ID: {} is not active", command.getAccountId());
+            throw new ApiResourceException("Account is not active", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        }
+
+        BigDecimal ledgerBalance = this.ledgerService.getSubLedgerAccountByAccountId(account.getId())
+                .map(SubLedgerAccountView::getBalance).orElse(BigDecimal.ZERO);
+
+        if (ledgerBalance.compareTo(BigDecimal.ZERO) != 0) {
+            log.warn("Account ID: {} is not at zero balance", command.getAccountId());
+            throw new ApiResourceException("Account balance must be zero before closure", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        }
+
+        boolean hasActiveHolds = this.accountHoldRepository.existsByAccountIdAndStatus(account.getId(), AccountHoldStatus.ACTIVE);
+
+        if (hasActiveHolds) {
+            log.warn("Account with ID: {} has active holds", command.getAccountId());
+            throw new ApiResourceException("Account has active holds", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        }
+
+        boolean hasActiveRestrictions = this.accountRestrictionRepository.existsByAccountIdAndStatus(account.getId(), AccountRestrictionStatus.ACTIVE);
+
+        if (hasActiveRestrictions) {
+            log.warn("Account with ID: {} has active restrictions", command.getAccountId());
+            throw new ApiResourceException("Account has active restrictions", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        }
+
+        account.setStatus(AccountStatus.CLOSED);
+        account.setClosedAt(OffsetDateTime.now());
+        account.setClosureReason(command.getReason());
+
+        Account closed = this.accountRepository.save(account);
+
+        log.info("Account with ID: {} successfully closed", closed.getId());
+
+        return this.accountMapper.toView(closed);
     }
 
     private void validateCustomers(List<Long> customerIds) {
