@@ -1,5 +1,6 @@
 package io.github.hossensyedriadh.cbs.transaction.internal.impl;
 
+import io.github.hossensyedriadh.cbs.account.api.AccountRestrictionService;
 import io.github.hossensyedriadh.cbs.account.api.AccountService;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountStatus;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
@@ -36,17 +37,20 @@ public class TransactionServiceImpl implements TransactionService {
     private final TransactionRepository transactionRepository;
     private final TransactionMapper transactionMapper;
     private final AccountService accountService;
+    private final AccountRestrictionService accountRestrictionService;
     private final LedgerService ledgerService;
     private final CurrencyService currencyService;
     private final HttpServletRequest httpServletRequest;
 
     @Autowired
     public TransactionServiceImpl(TransactionRepository transactionRepository, TransactionMapper transactionMapper,
-                                  AccountService accountService, LedgerService ledgerService,
-                                  CurrencyService currencyService, HttpServletRequest httpServletRequest) {
+                                  AccountService accountService, AccountRestrictionService accountRestrictionService,
+                                  LedgerService ledgerService, CurrencyService currencyService,
+                                  HttpServletRequest httpServletRequest) {
         this.transactionRepository = transactionRepository;
         this.transactionMapper = transactionMapper;
         this.accountService = accountService;
+        this.accountRestrictionService = accountRestrictionService;
         this.ledgerService = ledgerService;
         this.currencyService = currencyService;
         this.httpServletRequest = httpServletRequest;
@@ -71,6 +75,8 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional
     public TransactionView deposit(CreateDepositCommand command) {
+        this.accountRestrictionService.validateCreditAllowed(command.getAccountId());
+
         Optional<TransactionView> existingTransaction = this.getCompletedOrPendingTransaction(command.getIdempotencyKey());
 
         if (existingTransaction.isPresent()) {
@@ -102,6 +108,8 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional
     public TransactionView withdraw(CreateWithdrawalCommand command) {
+        this.accountRestrictionService.validateDebitAllowed(command.getAccountId());
+
         Optional<TransactionView> existingTransaction = this.getCompletedOrPendingTransaction(command.getIdempotencyKey());
 
         if (existingTransaction.isPresent()) {
@@ -133,6 +141,9 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional
     public TransactionView transfer(CreateTransferCommand command) {
+        this.accountRestrictionService.validateDebitAllowed(command.getAccountId());
+        this.accountRestrictionService.validateCreditAllowed(command.getDestinationAccountId());
+
         if (command.getAccountId().equals(command.getDestinationAccountId())) {
             log.warn("Source and destination accounts must be different");
             throw new ApiResourceException("Source and destination accounts must be different", HttpStatus.BAD_REQUEST, this.httpServletRequest);
