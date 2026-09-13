@@ -64,6 +64,12 @@ public class AccountServiceImpl implements AccountService {
         return this.accountRepository.findById(id).map(this.accountMapper::toView);
     }
 
+    @Transactional
+    @Override
+    public Optional<AccountView> getAccountForUpdate(Long id) {
+        return this.accountRepository.findByIdForUpdate(id).map(this.accountMapper::toView);
+    }
+
     @Override
     public Optional<AccountView> getAccountByNumber(String accountNumber) {
         return this.accountRepository.findByAccountNumber(accountNumber).map(this.accountMapper::toView);

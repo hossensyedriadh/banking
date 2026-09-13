@@ -17,7 +17,7 @@ public interface LedgerAccountRepository extends JpaRepository<LedgerAccount, Lo
     Optional<LedgerAccount> findByAccountCode(String accountCode);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select 1 from LedgerAccount l where l.id = :id")
+    @Query("select l from LedgerAccount l where l.id = :id")
     Optional<LedgerAccount> findByIdForUpdate(@Param("id") Long id);
 
     @Query("""

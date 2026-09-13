@@ -9,6 +9,8 @@ import java.util.Optional;
 public interface AccountService {
     Optional<AccountView> getAccount(Long id);
 
+    Optional<AccountView> getAccountForUpdate(Long id);
+
     Optional<AccountView> getAccountByNumber(String accountNumber);
 
     List<AccountView> getAccountByCustomerId(Long customerId);

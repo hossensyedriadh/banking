@@ -24,7 +24,7 @@ public interface SubLedgerAccountRepository extends JpaRepository<SubLedgerAccou
     boolean existsByLedgerAccountId(Long ledgerAccountId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select 1 from SubLedgerAccount sl where sl.id = :id")
+    @Query("select sl from SubLedgerAccount sl where sl.id = :id")
     Optional<SubLedgerAccount> findByIdForUpdate(@Param("id") Long id);
 
     @Query("select coalesce(sum(s.balance), 0.0) from SubLedgerAccount s where s.ledgerAccount.id = :ledgerAccountId")
