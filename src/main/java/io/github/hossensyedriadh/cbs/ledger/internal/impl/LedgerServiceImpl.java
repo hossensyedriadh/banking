@@ -181,22 +181,35 @@ public class LedgerServiceImpl implements LedgerService {
 
     @Transactional
     @Override
-    public void postCustomerTransfer(Long transactionId, Long sourceLedgerAccountId, Long destinationLedgerAccountId, BigDecimal amount) {
+    public void postCustomerTransfer(Long transactionId, Long sourceLedgerAccountId, Long destinationLedgerAccountId, BigDecimal fee, BigDecimal amount) {
+        Long feeIncomeLedgerAccountId = this.getFeeIncomeLedgerAccountId();
+
         this.postJournalEntry(new PostJournalEntryCommand(transactionId,
                 List.of(
                         new JournalEntryLine(sourceLedgerAccountId, JournalEntryType.DEBIT, amount),
-                        new JournalEntryLine(destinationLedgerAccountId, JournalEntryType.CREDIT, amount)
+                        new JournalEntryLine(sourceLedgerAccountId, JournalEntryType.DEBIT, fee),
+                        new JournalEntryLine(destinationLedgerAccountId, JournalEntryType.CREDIT, amount),
+                        new JournalEntryLine(feeIncomeLedgerAccountId, JournalEntryType.CREDIT, amount)
                 )
         ));
 
         this.adjustSubLedgerAccountBalance(sourceLedgerAccountId, amount.negate());
+        this.adjustSubLedgerAccountBalance(sourceLedgerAccountId, fee.negate());
         this.adjustSubLedgerAccountBalance(destinationLedgerAccountId, amount);
+        this.adjustGLAccountBalance(feeIncomeLedgerAccountId, fee);
     }
 
     private Long getCashLedgerAccountId() {
         return this.ledgerAccountRepository.findByAccountCode(SystemLedgerAccountCodes.CASH).map(LedgerAccount::getId).orElseThrow(() -> {
             log.warn("Cash ledger account not configured");
-            return new ApiResourceException("Cash ledger account not configured");
+            return new ApiResourceException("Cash ledger account not configured", HttpStatus.INTERNAL_SERVER_ERROR, this.httpServletRequest);
+        });
+    }
+
+    private Long getFeeIncomeLedgerAccountId() {
+        return this.ledgerAccountRepository.findByAccountCode(SystemLedgerAccountCodes.FEE_INCOME).map(LedgerAccount::getId).orElseThrow(() -> {
+            log.warn("Fee income ledger account not configured");
+            return new ApiResourceException("Fee income account not configured", HttpStatus.INTERNAL_SERVER_ERROR, this.httpServletRequest);
         });
     }
 

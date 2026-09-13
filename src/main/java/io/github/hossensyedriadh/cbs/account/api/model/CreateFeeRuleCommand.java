@@ -39,7 +39,6 @@ public class CreateFeeRuleCommand implements Serializable {
     @Positive
     private BigDecimal percentage;
 
-    @NotNull
     @JsonProperty("currency_id")
     private Long currencyId;
 }

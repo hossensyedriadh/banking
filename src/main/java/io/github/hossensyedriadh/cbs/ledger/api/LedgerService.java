@@ -20,5 +20,5 @@ public interface LedgerService {
 
     void postWithdrawal(Long transactionId, Long customerLedgerAccountId, @NotNull @Positive BigDecimal amount);
 
-    void postCustomerTransfer(Long transactionId, Long sourceLedgerAccountId, Long destinationLedgerAccountId, @NotNull @Positive BigDecimal amount);
+    void postCustomerTransfer(Long transactionId, Long sourceLedgerAccountId, Long destinationLedgerAccountId, @NotNull BigDecimal fee, @NotNull @Positive BigDecimal amount);
 }

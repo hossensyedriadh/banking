@@ -2,7 +2,9 @@ package io.github.hossensyedriadh.cbs.transaction.internal.impl;
 
 import io.github.hossensyedriadh.cbs.account.api.AccountRestrictionService;
 import io.github.hossensyedriadh.cbs.account.api.AccountService;
+import io.github.hossensyedriadh.cbs.account.api.FeeCalculationService;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountStatus;
+import io.github.hossensyedriadh.cbs.account.api.utility.SystemFeeCodes;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import io.github.hossensyedriadh.cbs.ledger.api.LedgerService;
@@ -40,19 +42,21 @@ public class TransactionServiceImpl implements TransactionService {
     private final AccountRestrictionService accountRestrictionService;
     private final LedgerService ledgerService;
     private final CurrencyService currencyService;
+    private final FeeCalculationService feeCalculationService;
     private final HttpServletRequest httpServletRequest;
 
     @Autowired
     public TransactionServiceImpl(TransactionRepository transactionRepository, TransactionMapper transactionMapper,
                                   AccountService accountService, AccountRestrictionService accountRestrictionService,
                                   LedgerService ledgerService, CurrencyService currencyService,
-                                  HttpServletRequest httpServletRequest) {
+                                  FeeCalculationService feeCalculationService, HttpServletRequest httpServletRequest) {
         this.transactionRepository = transactionRepository;
         this.transactionMapper = transactionMapper;
         this.accountService = accountService;
         this.accountRestrictionService = accountRestrictionService;
         this.ledgerService = ledgerService;
         this.currencyService = currencyService;
+        this.feeCalculationService = feeCalculationService;
         this.httpServletRequest = httpServletRequest;
     }
 
@@ -175,7 +179,9 @@ public class TransactionServiceImpl implements TransactionService {
 
         Long destinationLedgerAccountId = this.getCustomerLedgerAccountId(destinationAccount.getId());
 
-        this.ledgerService.postCustomerTransfer(savedTransaction.getId(), sourceLedgerAccountId, destinationLedgerAccountId, command.getAmount());
+        BigDecimal fee = this.feeCalculationService.calculateFee("SAME_BANK_XFR_FEE", command.getAmount(), command.getCurrencyId());
+
+        this.ledgerService.postCustomerTransfer(savedTransaction.getId(), sourceLedgerAccountId, destinationLedgerAccountId, fee, command.getAmount());
 
         this.completeTransaction(savedTransaction);
 
@@ -270,8 +276,10 @@ public class TransactionServiceImpl implements TransactionService {
          * CR source
          * */
 
+        BigDecimal fee = this.feeCalculationService.calculateFee(SystemFeeCodes.SAME_BANK_TRANSFER, originalTransaction.getAmount(), originalTransaction.getCurrencyId());
+
         this.ledgerService.postCustomerTransfer(reversalTransaction.getId(), destinationLedgerAccountId, sourceLedgerAccountId,
-                originalTransaction.getAmount());
+                fee, originalTransaction.getAmount());
     }
 
     private Optional<TransactionView> getCompletedOrPendingTransaction(String idempotencyKey) {
