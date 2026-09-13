@@ -33,7 +33,7 @@ public class AccountBalanceServiceImpl implements AccountBalanceService {
 
     @Override
     public Optional<AccountBalanceView> getBalance(Long accountId) {
-        return this.accountService.getAccount(accountId).map(account -> {
+        return this.accountService.getAccount(accountId).map(_ -> {
             BigDecimal ledgerBalance = this.ledgerService.getSubLedgerAccountByAccountId(accountId)
                     .map(SubLedgerAccountView::getBalance).orElse(BigDecimal.ZERO);
 
