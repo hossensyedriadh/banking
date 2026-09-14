@@ -1,17 +1,7 @@
 package io.github.hossensyedriadh.cbs.account.internal.impl;
 
-import io.github.hossensyedriadh.cbs.account.api.AccountService;
 import io.github.hossensyedriadh.cbs.account.api.InterestCalculationService;
-import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
-import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
-import io.github.hossensyedriadh.cbs.ledger.api.LedgerService;
-import io.github.hossensyedriadh.cbs.ledger.api.model.SubLedgerAccountView;
-import io.github.hossensyedriadh.cbs.product.api.AccountProductService;
-import io.github.hossensyedriadh.cbs.product.api.model.AccountProductView;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,12 +18,6 @@ public class InterestCalculationServiceImpl implements InterestCalculationServic
             return BigDecimal.ZERO;
         }
 
-        return balance
-                .multiply(interestRate)
-                .divide(
-                        BigDecimal.valueOf(36500),
-                        4,
-                        RoundingMode.HALF_UP
-                ); //36500 as "balance × rate / 100 / 365"
+        return balance.multiply(interestRate).divide(BigDecimal.valueOf(36500), 4, RoundingMode.HALF_UP); //36500 as "balance × rate / 100 / 365"
     }
 }
