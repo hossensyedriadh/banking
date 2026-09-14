@@ -1,6 +1,7 @@
 package io.github.hossensyedriadh.cbs.product.internal.domain;
 
 import io.github.hossensyedriadh.cbs.product.api.enumerator.AccountProductType;
+import io.github.hossensyedriadh.cbs.product.api.enumerator.InterestCalculationMethod;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -11,6 +12,7 @@ import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 @Getter
@@ -42,6 +44,16 @@ public class AccountProduct {
     @ColumnDefault("true")
     @Column(name = "active", nullable = false)
     private Boolean active;
+
+    @Column(name = "interest_bearing", nullable = false)
+    private boolean interestBearing;
+
+    @Column(name = "interest_rate", precision = 9, scale = 6)
+    private BigDecimal interestRate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "interest_calculation_method", length = 30)
+    private InterestCalculationMethod interestCalculationMethod;
 
     @Setter(AccessLevel.NONE)
     @CreatedDate

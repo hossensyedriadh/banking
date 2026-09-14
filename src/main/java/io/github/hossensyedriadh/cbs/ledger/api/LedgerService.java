@@ -16,9 +16,11 @@ public interface LedgerService {
 
     void createSubLedgerAccount(Long accountId, Long ledgerAccountId);
 
-    void postDeposit(Long transactionId, Long customerLedgerAccountId, @NotNull @Positive BigDecimal amount);
+    void postDeposit(@NotNull Long transactionId, @NotNull Long customerLedgerAccountId, @NotNull @Positive BigDecimal amount);
 
-    void postWithdrawal(Long transactionId, Long customerLedgerAccountId, @NotNull @Positive BigDecimal amount);
+    void postWithdrawal(@NotNull Long transactionId, @NotNull Long customerLedgerAccountId, @NotNull @Positive BigDecimal amount);
 
-    void postCustomerTransfer(Long transactionId, Long sourceLedgerAccountId, Long destinationLedgerAccountId, @NotNull BigDecimal fee, @NotNull @Positive BigDecimal amount);
+    void postCustomerTransfer(@NotNull Long transactionId, @NotNull Long sourceLedgerAccountId, @NotNull Long destinationLedgerAccountId, @NotNull BigDecimal fee, @NotNull @Positive BigDecimal amount);
+
+    void postInterest(@NotNull Long accrualId, @NotNull Long customerLedgerAccountId, @NotNull @Positive BigDecimal amount);
 }

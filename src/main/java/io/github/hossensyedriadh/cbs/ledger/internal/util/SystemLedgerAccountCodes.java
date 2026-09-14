@@ -6,5 +6,6 @@ public final class SystemLedgerAccountCodes {
 
     public static final String CASH = "100000";
     public static final String FEE_INCOME = "150000";
+    public static final String INTEREST_EXPENSE = "160000";
     public static final String CUSTOMER_DEPOSITS = "200000";
 }

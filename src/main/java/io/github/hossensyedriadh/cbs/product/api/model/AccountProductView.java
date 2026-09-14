@@ -2,11 +2,13 @@ package io.github.hossensyedriadh.cbs.product.api.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.github.hossensyedriadh.cbs.product.api.enumerator.AccountProductType;
+import io.github.hossensyedriadh.cbs.product.api.enumerator.InterestCalculationMethod;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 @Getter
 @Setter
@@ -27,4 +29,13 @@ public class AccountProductView implements Serializable {
     private AccountProductType productType;
 
     private boolean active;
+
+    @JsonProperty("interest_bearing")
+    private boolean interestBearing;
+
+    @JsonProperty("interest_rate")
+    private BigDecimal interestRate;
+
+    @JsonProperty("interest_calculation_method")
+    private InterestCalculationMethod interestCalculationMethod;
 }

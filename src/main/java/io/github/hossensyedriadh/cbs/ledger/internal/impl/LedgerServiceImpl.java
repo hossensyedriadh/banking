@@ -151,15 +151,17 @@ public class LedgerServiceImpl implements LedgerService {
     @Override
     public void postDeposit(Long transactionId, Long customerLedgerAccountId, BigDecimal amount) {
         Long cashLedgerAccountId = this.getCashLedgerAccountId();
+        Long customerDepositsLedgerAccountId = this.getCustomerDepositLedgerAccountId();
 
         this.postJournalEntry(new PostJournalEntryCommand(transactionId,
                 List.of(
                         new JournalEntryLine(cashLedgerAccountId, JournalEntryType.DEBIT, amount),
-                        new JournalEntryLine(customerLedgerAccountId, JournalEntryType.CREDIT, amount)
+                        new JournalEntryLine(customerDepositsLedgerAccountId, JournalEntryType.CREDIT, amount)
                 )
         ));
 
         this.adjustGLAccountBalance(cashLedgerAccountId, amount);
+        this.adjustGLAccountBalance(customerDepositsLedgerAccountId, amount);
         this.adjustSubLedgerAccountBalance(customerLedgerAccountId, amount);
     }
 
@@ -167,15 +169,17 @@ public class LedgerServiceImpl implements LedgerService {
     @Override
     public void postWithdrawal(Long transactionId, Long customerLedgerAccountId, BigDecimal amount) {
         Long cashLedgerAccountId = this.getCashLedgerAccountId();
+        Long customerDepositsLedgerAccountId = this.getCustomerDepositLedgerAccountId();
 
         this.postJournalEntry(new PostJournalEntryCommand(transactionId,
                 List.of(
-                        new JournalEntryLine(customerLedgerAccountId, JournalEntryType.DEBIT, amount),
+                        new JournalEntryLine(customerDepositsLedgerAccountId, JournalEntryType.DEBIT, amount),
                         new JournalEntryLine(cashLedgerAccountId, JournalEntryType.CREDIT, amount)
                 )
         ));
 
         this.adjustGLAccountBalance(cashLedgerAccountId, amount.negate());
+        this.adjustGLAccountBalance(customerDepositsLedgerAccountId, amount.negate());
         this.adjustSubLedgerAccountBalance(customerLedgerAccountId, amount.negate());
     }
 
@@ -183,20 +187,33 @@ public class LedgerServiceImpl implements LedgerService {
     @Override
     public void postCustomerTransfer(Long transactionId, Long sourceLedgerAccountId, Long destinationLedgerAccountId, BigDecimal fee, BigDecimal amount) {
         Long feeIncomeLedgerAccountId = this.getFeeIncomeLedgerAccountId();
+        Long customerDepositsLedgerAccountId = this.getCustomerDepositLedgerAccountId();
 
-        this.postJournalEntry(new PostJournalEntryCommand(transactionId,
-                List.of(
-                        new JournalEntryLine(sourceLedgerAccountId, JournalEntryType.DEBIT, amount),
-                        new JournalEntryLine(sourceLedgerAccountId, JournalEntryType.DEBIT, fee),
-                        new JournalEntryLine(destinationLedgerAccountId, JournalEntryType.CREDIT, amount),
-                        new JournalEntryLine(feeIncomeLedgerAccountId, JournalEntryType.CREDIT, amount)
-                )
+        this.postJournalEntry(new PostJournalEntryCommand(transactionId, List.of(
+                new JournalEntryLine(customerDepositsLedgerAccountId, JournalEntryType.DEBIT, fee),
+                new JournalEntryLine(feeIncomeLedgerAccountId, JournalEntryType.CREDIT, fee)
+        )));
+
+        this.adjustGLAccountBalance(customerDepositsLedgerAccountId, fee.negate());
+        this.adjustGLAccountBalance(feeIncomeLedgerAccountId, fee);
+        this.adjustSubLedgerAccountBalance(sourceLedgerAccountId, amount.add(fee).negate());
+        this.adjustSubLedgerAccountBalance(destinationLedgerAccountId, amount);
+    }
+
+    @Transactional
+    @Override
+    public void postInterest(Long accrualId, Long customerLedgerAccountId, BigDecimal amount) {
+        Long interestExpenseLedgerAccountId = this.getInterestExpenseLedgerAccountId();
+        Long customerDepositsLedgerAccountId = this.getCustomerDepositLedgerAccountId();
+
+        this.postJournalEntry(new PostJournalEntryCommand(accrualId, List.of(
+                new JournalEntryLine(interestExpenseLedgerAccountId, JournalEntryType.DEBIT, amount),
+                new JournalEntryLine(customerDepositsLedgerAccountId, JournalEntryType.CREDIT, amount))
         ));
 
-        this.adjustSubLedgerAccountBalance(sourceLedgerAccountId, amount.negate());
-        this.adjustSubLedgerAccountBalance(sourceLedgerAccountId, fee.negate());
-        this.adjustSubLedgerAccountBalance(destinationLedgerAccountId, amount);
-        this.adjustGLAccountBalance(feeIncomeLedgerAccountId, fee);
+        this.adjustGLAccountBalance(interestExpenseLedgerAccountId, amount.negate());
+        this.adjustGLAccountBalance(customerDepositsLedgerAccountId, amount);
+        this.adjustSubLedgerAccountBalance(customerLedgerAccountId, amount);
     }
 
     private Long getCashLedgerAccountId() {
@@ -206,10 +223,24 @@ public class LedgerServiceImpl implements LedgerService {
         });
     }
 
+    private Long getCustomerDepositLedgerAccountId() {
+        return this.ledgerAccountRepository.findByAccountCode(SystemLedgerAccountCodes.CUSTOMER_DEPOSITS).map(LedgerAccount::getId).orElseThrow(() -> {
+            log.warn("Customer deposits ledger account not configured");
+            return new ApiResourceException("Customer deposits ledger account not configured", HttpStatus.INTERNAL_SERVER_ERROR, this.httpServletRequest);
+        });
+    }
+
     private Long getFeeIncomeLedgerAccountId() {
         return this.ledgerAccountRepository.findByAccountCode(SystemLedgerAccountCodes.FEE_INCOME).map(LedgerAccount::getId).orElseThrow(() -> {
             log.warn("Fee income ledger account not configured");
             return new ApiResourceException("Fee income account not configured", HttpStatus.INTERNAL_SERVER_ERROR, this.httpServletRequest);
+        });
+    }
+
+    private Long getInterestExpenseLedgerAccountId() {
+        return this.ledgerAccountRepository.findByAccountCode(SystemLedgerAccountCodes.INTEREST_EXPENSE).map(LedgerAccount::getId).orElseThrow(() -> {
+            log.warn("Interest expense ledger account not configured");
+            return new ApiResourceException("Interest expense account not configured", HttpStatus.INTERNAL_SERVER_ERROR, this.httpServletRequest);
         });
     }
 
