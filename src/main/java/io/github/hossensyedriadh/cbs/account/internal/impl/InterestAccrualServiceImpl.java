@@ -10,17 +10,21 @@ import io.github.hossensyedriadh.cbs.account.api.model.InterestAccrualView;
 import io.github.hossensyedriadh.cbs.account.internal.domain.InterestAccrual;
 import io.github.hossensyedriadh.cbs.account.internal.mapper.InterestAccrualMapper;
 import io.github.hossensyedriadh.cbs.account.internal.repository.InterestAccrualRepository;
+import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import io.github.hossensyedriadh.cbs.ledger.api.LedgerService;
 import io.github.hossensyedriadh.cbs.ledger.api.model.SubLedgerAccountView;
 import io.github.hossensyedriadh.cbs.product.api.AccountProductService;
 import io.github.hossensyedriadh.cbs.product.api.model.AccountProductView;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 
 @Log4j2
 @Service
@@ -32,17 +36,20 @@ public class InterestAccrualServiceImpl implements InterestAccrualService {
     private final AccountProductService accountProductService;
     private final LedgerService ledgerService;
     private final InterestAccrualMapper interestAccrualMapper;
+    private final HttpServletRequest httpServletRequest;
 
     @Autowired
     public InterestAccrualServiceImpl(InterestAccrualRepository interestAccrualRepository, InterestCalculationService interestCalculationService,
                                       AccountService accountService, AccountProductService accountProductService,
-                                      LedgerService ledgerService, InterestAccrualMapper interestAccrualMapper) {
+                                      LedgerService ledgerService, InterestAccrualMapper interestAccrualMapper,
+                                      HttpServletRequest httpServletRequest) {
         this.interestAccrualRepository = interestAccrualRepository;
         this.interestCalculationService = interestCalculationService;
         this.accountService = accountService;
         this.accountProductService = accountProductService;
         this.ledgerService = ledgerService;
         this.interestAccrualMapper = interestAccrualMapper;
+        this.httpServletRequest = httpServletRequest;
     }
 
     @Transactional
@@ -58,29 +65,34 @@ public class InterestAccrualServiceImpl implements InterestAccrualService {
         AccountView account = this.accountService.getAccount(accountId)
                 .orElseThrow(() -> {
                     log.warn("Account not found with id {}", accountId);
-                    return new IllegalStateException("Account not found with id " + accountId);
+                    return new ApiResourceException("Account not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
                 });
 
         if (account.getStatus() != AccountStatus.ACTIVE) {
             log.warn("Account with id {} is not active", accountId);
-            throw new IllegalStateException("Account with id " + accountId + " is not active");
+            throw new ApiResourceException("Account is not active", HttpStatus.BAD_REQUEST, this.httpServletRequest);
         }
 
         AccountProductView accountProduct = this.accountProductService.getProduct(account.getProductId())
                 .orElseThrow(() -> {
-                    log.warn("Product not found with id {}", account.getProductId());
-                    return new IllegalStateException("Product not found with id " + account.getProductId());
+                    log.warn("Account Product not found with id {}", account.getProductId());
+                    return new ApiResourceException("Account Product not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
                 });
+
+        if (!accountProduct.isActive()) {
+            log.warn("Account Product with id {} is not active", accountId);
+            throw new ApiResourceException("Account product is not active", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        }
 
         if (!accountProduct.isInterestBearing()) {
             log.warn("Account with id {} is not interest bearing", accountId);
-            throw new IllegalStateException("Account with id " + accountId + " is not interest bearing");
+            throw new ApiResourceException("Account is not interest bearing", HttpStatus.BAD_REQUEST, this.httpServletRequest);
         }
 
         BigDecimal baseAmount = this.ledgerService.getSubLedgerAccountByAccountId(accountId)
                 .map(SubLedgerAccountView::getBalance).orElseThrow(() -> {
-                    log.warn("Sub ledger account not found with id {}", accountId);
-                    return new IllegalStateException("Sub ledger account not found with id " + accountId);
+                    log.warn("Sub-ledger account not found with id {}", accountId);
+                    return new ApiResourceException("Sub-ledger account not found for account", HttpStatus.INTERNAL_SERVER_ERROR, this.httpServletRequest);
                 });
 
         BigDecimal interestAmount = this.interestCalculationService.calculateDailyInterest(baseAmount, accountProduct.getInterestRate());
@@ -95,7 +107,37 @@ public class InterestAccrualServiceImpl implements InterestAccrualService {
 
         InterestAccrual saved = this.interestAccrualRepository.save(accrual);
 
-        log.info("Saved interest for product: {}, account: {}", accountProduct.getId(), accountId);
+        log.info("Accrued interest for account product: {}, account: {}", accountProduct.getId(), accountId);
+
+        return this.interestAccrualMapper.toView(saved);
+    }
+
+    @Transactional
+    @Override
+    public InterestAccrualView post(Long accrualId) {
+        InterestAccrual accrual = this.interestAccrualRepository.findByIdForUpdate(accrualId).orElseThrow(() -> {
+            log.warn("Interest accrual not found with id {}", accrualId);
+            return new ApiResourceException("Interest accrual not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        });
+
+        if (accrual.getStatus() != InterestAccrualStatus.ACCRUED) {
+            log.warn("Interest accrual with id {} is not accrued", accrualId);
+            throw new ApiResourceException("Interest accrual is not yet ACCRUED", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        }
+
+        Long customerLedgerAccountId = this.ledgerService.getSubLedgerAccountIdByAccountId(accrual.getAccountId()).orElseThrow(() -> {
+            log.warn("Sub-ledger account not found with id {}", accrual.getAccountId());
+            return new ApiResourceException("Sub-ledger account not found for account", HttpStatus.INTERNAL_SERVER_ERROR, this.httpServletRequest);
+        });
+
+        this.ledgerService.postInterest(accrual.getId(), customerLedgerAccountId, accrual.getInterestAmount());
+
+        accrual.setStatus(InterestAccrualStatus.POSTED);
+        accrual.setPostedAt(OffsetDateTime.now());
+
+        InterestAccrual saved = this.interestAccrualRepository.save(accrual);
+
+        log.info("Interest accrual posted with id: {}", saved.getId());
 
         return this.interestAccrualMapper.toView(saved);
     }

@@ -6,4 +6,6 @@ import java.time.LocalDate;
 
 public interface InterestAccrualService {
     InterestAccrualView accrue(Long accountId, LocalDate calculationDate);
+
+    InterestAccrualView post(Long accrualId);
 }
