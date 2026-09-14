@@ -91,7 +91,7 @@ public class InterestAccrualServiceImpl implements InterestAccrualService {
 
         BigDecimal baseAmount = this.ledgerService.getSubLedgerAccountByAccountId(accountId)
                 .map(SubLedgerAccountView::getBalance).orElseThrow(() -> {
-                    log.warn("Sub-ledger account not found with id {}", accountId);
+                    log.warn("Sub-ledger account not found for account id: {}", accountId);
                     return new ApiResourceException("Sub-ledger account not found for account", HttpStatus.INTERNAL_SERVER_ERROR, this.httpServletRequest);
                 });
 
@@ -126,7 +126,7 @@ public class InterestAccrualServiceImpl implements InterestAccrualService {
         }
 
         Long customerLedgerAccountId = this.ledgerService.getSubLedgerAccountIdByAccountId(accrual.getAccountId()).orElseThrow(() -> {
-            log.warn("Sub-ledger account not found with id {}", accrual.getAccountId());
+            log.warn("Sub-ledger account not found for account id: {}", accrual.getAccountId());
             return new ApiResourceException("Sub-ledger account not found for account", HttpStatus.INTERNAL_SERVER_ERROR, this.httpServletRequest);
         });
 

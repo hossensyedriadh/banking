@@ -288,8 +288,8 @@ public class TransactionServiceImpl implements TransactionService {
 
     private Long getCustomerLedgerAccountId(Long accountId) {
         return this.ledgerService.getSubLedgerAccountIdByAccountId(accountId).orElseThrow(() -> {
-            log.warn("No sub-ledger account mapped to account: {}", accountId);
-            return new ApiResourceException("No sub-ledger account mapped to account", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            log.warn("Sub-ledger account not found for account id: {}", accountId);
+            return new ApiResourceException("Sub-ledger account not found for account", HttpStatus.INTERNAL_SERVER_ERROR, this.httpServletRequest);
         });
     }
 
