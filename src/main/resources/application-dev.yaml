@@ -69,3 +69,9 @@ springdoc:
     enabled: true
   swagger-ui:
     enabled: true
+
+#custom properties
+card:
+  security:
+    crypto:
+      pan-hmac-secret: "${PAN_HASH_HMAC_SECRET_KEY}"

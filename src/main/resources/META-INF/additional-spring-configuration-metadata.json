@@ -1,0 +1,9 @@
+{
+  "properties": [
+    {
+      "name": "card.security.crypto.pan-hmac-secret",
+      "type": "java.lang.String",
+      "description": "HMAC secret key for card PAN hashing."
+    }
+  ]
+}
