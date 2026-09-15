@@ -14,6 +14,7 @@ import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import io.github.hossensyedriadh.cbs.ledger.api.LedgerService;
 import io.github.hossensyedriadh.cbs.ledger.api.model.SubLedgerAccountView;
 import io.github.hossensyedriadh.cbs.product.api.AccountProductService;
+import io.github.hossensyedriadh.cbs.product.api.enumerator.AccountProductStatus;
 import io.github.hossensyedriadh.cbs.product.api.model.AccountProductView;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
@@ -79,7 +80,7 @@ public class InterestAccrualServiceImpl implements InterestAccrualService {
                     return new ApiResourceException("Account Product not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
                 });
 
-        if (!accountProduct.isActive()) {
+        if (accountProduct.getStatus() != AccountProductStatus.ACTIVE) {
             log.warn("Account Product with id {} is not active", accountId);
             throw new ApiResourceException("Account product is not active", HttpStatus.BAD_REQUEST, this.httpServletRequest);
         }

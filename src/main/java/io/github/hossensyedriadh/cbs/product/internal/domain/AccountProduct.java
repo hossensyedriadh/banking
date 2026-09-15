@@ -1,5 +1,6 @@
 package io.github.hossensyedriadh.cbs.product.internal.domain;
 
+import io.github.hossensyedriadh.cbs.product.api.enumerator.AccountProductStatus;
 import io.github.hossensyedriadh.cbs.product.api.enumerator.AccountProductType;
 import io.github.hossensyedriadh.cbs.product.api.enumerator.InterestCalculationMethod;
 import jakarta.persistence.*;
@@ -41,9 +42,10 @@ public class AccountProduct {
     @Column(name = "product_type", nullable = false, length = 30)
     private AccountProductType productType;
 
-    @ColumnDefault("true")
-    @Column(name = "active", nullable = false)
-    private Boolean active;
+    @Enumerated(EnumType.STRING)
+    @ColumnDefault("'ACTIVE'")
+    @Column(name = "status", nullable = false)
+    private AccountProductStatus status;
 
     @Column(name = "interest_bearing", nullable = false)
     private boolean interestBearing;

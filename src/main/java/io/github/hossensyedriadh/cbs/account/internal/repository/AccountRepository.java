@@ -2,6 +2,7 @@ package io.github.hossensyedriadh.cbs.account.internal.repository;
 
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountStatus;
 import io.github.hossensyedriadh.cbs.account.internal.domain.Account;
+import io.github.hossensyedriadh.cbs.product.api.enumerator.AccountProductStatus;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -25,6 +26,6 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     @Query("""
             select a.id from Account a join AccountProduct p on p.id = a.productId
-                        where a.status = :accountStatus and p.active = :productActive and p.interestBearing = true""")
-    List<Long> findEligibleInterestBearingAccountIds(@Param("accountStatus") AccountStatus status, @Param("productActive") boolean isProductActive);
+                        where a.status = :accountStatus and p.status = :productStatus and p.interestBearing = true""")
+    List<Long> findEligibleInterestBearingAccountIds(@Param("accountStatus") AccountStatus status, @Param("productStatus") AccountProductStatus productStatus);
 }

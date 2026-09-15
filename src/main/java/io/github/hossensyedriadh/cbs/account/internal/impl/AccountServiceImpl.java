@@ -23,6 +23,7 @@ import io.github.hossensyedriadh.cbs.ledger.api.LedgerService;
 import io.github.hossensyedriadh.cbs.ledger.api.model.SubLedgerAccountView;
 import io.github.hossensyedriadh.cbs.product.api.AccountProductService;
 import io.github.hossensyedriadh.cbs.product.api.CurrencyService;
+import io.github.hossensyedriadh.cbs.product.api.enumerator.AccountProductStatus;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,7 +100,7 @@ public class AccountServiceImpl implements AccountService {
         this.validateCustomers(command.getCustomerIds());
 
         this.accountProductService.getProduct(command.getProductId()).ifPresentOrElse(product -> {
-            if (!product.isActive()) {
+            if (product.getStatus() != AccountProductStatus.ACTIVE) {
                 log.warn("Account product ID: {} is not active", product.getId());
                 throw new ApiResourceException("Account product is not active", HttpStatus.BAD_REQUEST, this.httpServletRequest);
             }

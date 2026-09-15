@@ -2,6 +2,7 @@ package io.github.hossensyedriadh.cbs.product.internal.impl;
 
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import io.github.hossensyedriadh.cbs.product.api.AccountProductService;
+import io.github.hossensyedriadh.cbs.product.api.enumerator.AccountProductStatus;
 import io.github.hossensyedriadh.cbs.product.api.model.AccountProductView;
 import io.github.hossensyedriadh.cbs.product.api.model.CreateAccountProductCommand;
 import io.github.hossensyedriadh.cbs.product.api.model.UpdateAccountProductCommand;
@@ -69,8 +70,8 @@ public class AccountProductServiceImpl implements AccountProductService {
     @Transactional
     @Override
     public Optional<AccountProductView> updateProduct(Long id, UpdateAccountProductCommand command) {
-        this.accountProductRepository.findById(id).map(product -> {
-            if (product.getActive() == Boolean.FALSE) {
+        this.accountProductRepository.findByIdForUpdate(id).map(product -> {
+            if (product.getStatus() != AccountProductStatus.ACTIVE) {
                 log.warn("Account product with code {} is not active", product.getProductCode());
                 throw new ApiResourceException("Account product not active", HttpStatus.BAD_REQUEST, this.httpServletRequest);
             }
@@ -90,13 +91,13 @@ public class AccountProductServiceImpl implements AccountProductService {
     @Transactional
     @Override
     public void activateProduct(Long id) {
-        this.accountProductRepository.findById(id).ifPresentOrElse(product -> {
-            if (product.getActive() == Boolean.TRUE) {
+        this.accountProductRepository.findByIdForUpdate(id).ifPresentOrElse(product -> {
+            if (product.getStatus() == AccountProductStatus.ACTIVE) {
                 log.warn("Account product with code {} is already active", product.getProductCode());
                 throw new ApiResourceException("Account product is already active", HttpStatus.BAD_REQUEST, this.httpServletRequest);
             }
 
-            product.setActive(Boolean.TRUE);
+            product.setStatus(AccountProductStatus.ACTIVE);
             this.accountProductRepository.save(product);
 
             log.info("Account product activated with code: {}", product.getProductCode());
@@ -109,13 +110,13 @@ public class AccountProductServiceImpl implements AccountProductService {
     @Transactional
     @Override
     public void deactivateProduct(Long id) {
-        this.accountProductRepository.findById(id).ifPresentOrElse(product -> {
-            if (product.getActive() == Boolean.FALSE) {
+        this.accountProductRepository.findByIdForUpdate(id).ifPresentOrElse(product -> {
+            if (product.getStatus() == AccountProductStatus.INACTIVE) {
                 log.warn("Account product with code {} is already inactive", product.getProductCode());
                 throw new ApiResourceException("Account product is already inactive", HttpStatus.BAD_REQUEST, this.httpServletRequest);
             }
 
-            product.setActive(Boolean.FALSE);
+            product.setStatus(AccountProductStatus.INACTIVE);
             this.accountProductRepository.save(product);
 
             log.info("Account product deactivated with code: {}", product.getProductCode());

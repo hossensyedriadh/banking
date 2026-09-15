@@ -1,6 +1,7 @@
 package io.github.hossensyedriadh.cbs.product.api.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.github.hossensyedriadh.cbs.product.api.enumerator.AccountProductStatus;
 import io.github.hossensyedriadh.cbs.product.api.enumerator.AccountProductType;
 import io.github.hossensyedriadh.cbs.product.api.enumerator.InterestCalculationMethod;
 import lombok.Getter;
@@ -28,7 +29,7 @@ public class AccountProductView implements Serializable {
     @JsonProperty("product_type")
     private AccountProductType productType;
 
-    private boolean active;
+    private AccountProductStatus status;
 
     @JsonProperty("interest_bearing")
     private boolean interestBearing;

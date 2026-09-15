@@ -1,6 +1,7 @@
 package io.github.hossensyedriadh.cbs.product.api.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.github.hossensyedriadh.cbs.product.api.enumerator.AccountProductStatus;
 import io.github.hossensyedriadh.cbs.product.api.enumerator.AccountProductType;
 import io.github.hossensyedriadh.cbs.product.api.enumerator.InterestCalculationMethod;
 import io.github.hossensyedriadh.cbs.product.api.validation.ValidInterestConfiguration;
@@ -34,6 +35,9 @@ public class CreateAccountProductCommand implements Serializable {
     @NotNull
     @JsonProperty("product_type")
     private AccountProductType productType;
+
+    @NotNull
+    private AccountProductStatus status;
 
     @NotNull
     private boolean interestBearing;

@@ -5,6 +5,7 @@ import io.github.hossensyedriadh.cbs.account.api.InterestBatchService;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountStatus;
 import io.github.hossensyedriadh.cbs.account.api.model.InterestAccrualView;
 import io.github.hossensyedriadh.cbs.account.internal.repository.AccountRepository;
+import io.github.hossensyedriadh.cbs.product.api.enumerator.AccountProductStatus;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,7 +29,7 @@ public class InterestBatchServiceImpl implements InterestBatchService {
 
     @Override
     public void processDailyInterest(LocalDate calculationDate) {
-        List<Long> accountIds = this.accountRepository.findEligibleInterestBearingAccountIds(AccountStatus.ACTIVE, true);
+        List<Long> accountIds = this.accountRepository.findEligibleInterestBearingAccountIds(AccountStatus.ACTIVE, AccountProductStatus.ACTIVE);
 
         String formattedDate = calculationDate.format(DateTimeFormatter.ISO_DATE);
 
