@@ -163,6 +163,8 @@ public class LedgerServiceImpl implements LedgerService {
         this.adjustGLAccountBalance(cashLedgerAccountId, amount);
         this.adjustGLAccountBalance(customerDepositsLedgerAccountId, amount);
         this.adjustSubLedgerAccountBalance(customerLedgerAccountId, amount);
+
+        log.info("Deposit posted for transaction id: {}, amount: {}", transactionId, amount);
     }
 
     @Transactional
@@ -181,6 +183,8 @@ public class LedgerServiceImpl implements LedgerService {
         this.adjustGLAccountBalance(cashLedgerAccountId, amount.negate());
         this.adjustGLAccountBalance(customerDepositsLedgerAccountId, amount.negate());
         this.adjustSubLedgerAccountBalance(customerLedgerAccountId, amount.negate());
+
+        log.info("Withdrawal posted for transaction id: {}, amount: {}", transactionId, amount);
     }
 
     @Transactional
@@ -198,6 +202,8 @@ public class LedgerServiceImpl implements LedgerService {
         this.adjustGLAccountBalance(feeIncomeLedgerAccountId, fee);
         this.adjustSubLedgerAccountBalance(sourceLedgerAccountId, amount.add(fee).negate());
         this.adjustSubLedgerAccountBalance(destinationLedgerAccountId, amount);
+
+        log.info("Customer transfer posted for transaction id: {}, amount: {}", transactionId, amount);
     }
 
     @Transactional
@@ -214,6 +220,25 @@ public class LedgerServiceImpl implements LedgerService {
         this.adjustGLAccountBalance(interestExpenseLedgerAccountId, amount.negate());
         this.adjustGLAccountBalance(customerDepositsLedgerAccountId, amount);
         this.adjustSubLedgerAccountBalance(customerLedgerAccountId, amount);
+
+        log.info("Interest posted for accrual id: {}, amount: {}", accrualId, amount);
+    }
+
+    @Override
+    public void postFee(Long transactionId, Long customerLedgerAccountId, BigDecimal amount) {
+        Long feeIncomeLedgerAccountId = this.getFeeIncomeLedgerAccountId();
+        Long customerDepositsLedgerAccountId = this.getCustomerDepositLedgerAccountId();
+
+        this.postJournalEntry(new PostJournalEntryCommand(transactionId, List.of(
+                new JournalEntryLine(customerDepositsLedgerAccountId, JournalEntryType.DEBIT, amount),
+                new JournalEntryLine(feeIncomeLedgerAccountId, JournalEntryType.CREDIT, amount)
+        )));
+
+        this.adjustGLAccountBalance(customerDepositsLedgerAccountId, amount.negate());
+        this.adjustGLAccountBalance(feeIncomeLedgerAccountId, amount);
+        this.adjustSubLedgerAccountBalance(customerLedgerAccountId, amount.negate());
+
+        log.info("Fee posted for transaction id: {}, amount: {}", transactionId, amount);
     }
 
     private Long getCashLedgerAccountId() {

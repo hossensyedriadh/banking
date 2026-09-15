@@ -20,4 +20,6 @@ public interface TransactionService {
     TransactionView transfer(CreateTransferCommand command);
 
     TransactionView reverse(ReverseTransactionCommand command);
+
+    TransactionView charge(ChargeFeeCommand command);
 }

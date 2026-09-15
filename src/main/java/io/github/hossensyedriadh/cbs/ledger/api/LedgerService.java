@@ -23,4 +23,6 @@ public interface LedgerService {
     void postCustomerTransfer(@NotNull Long transactionId, @NotNull Long sourceLedgerAccountId, @NotNull Long destinationLedgerAccountId, @NotNull BigDecimal fee, @NotNull @Positive BigDecimal amount);
 
     void postInterest(@NotNull Long accrualId, @NotNull Long customerLedgerAccountId, @NotNull @Positive BigDecimal amount);
+
+    void postFee(@NotNull Long transactionId, @NotNull Long customerLedgerAccountId, @NotNull @Positive BigDecimal amount);
 }

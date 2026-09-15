@@ -9,7 +9,8 @@ public enum TransactionType {
     DEPOSIT("D"),
     WITHDRAWAL("W"),
     TRANSFER("T"),
-    REVERSAL ("R");
+    REVERSAL ("R"),
+    FEE ("F");
 
     private final String prefix;
 }

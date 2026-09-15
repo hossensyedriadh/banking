@@ -238,6 +238,36 @@ public class TransactionServiceImpl implements TransactionService {
         return this.transactionMapper.toView(savedReversal);
     }
 
+    @Override
+    public TransactionView charge(ChargeFeeCommand command) {
+        Optional<TransactionView> existingTransaction = this.getCompletedOrPendingTransaction(command.getIdempotencyKey());
+
+        if (existingTransaction.isPresent()) {
+            log.info("Duplicate fee charge request detected for idempotency key: {}", command.getIdempotencyKey());
+
+            return existingTransaction.get();
+        }
+
+        AccountView account = this.getActiveAccount(command.getAccountId());
+
+        this.validateCurrency(command.getCurrencyId(), account.getCurrencyId());
+
+        Transaction transaction = this.createTransaction(account.getId(), null, command.getCurrencyId(),
+                TransactionType.FEE, command.getAmount(), command.getDescription(), command.getIdempotencyKey());
+
+        Transaction savedTransaction = this.transactionRepository.save(transaction);
+
+        log.info("Fee charge transaction saved: {}", savedTransaction.getId());
+
+        Long customerLedgerAccountId = this.getCustomerLedgerAccountId(account.getId());
+
+        this.ledgerService.postFee(savedTransaction.getId(), customerLedgerAccountId, command.getAmount());
+
+        this.completeTransaction(savedTransaction);
+
+        return transactionMapper.toView(savedTransaction);
+    }
+
     private void postReversal(Transaction originalTransaction, Transaction reversalTransaction) {
         switch (originalTransaction.getTransactionType()) {
             case DEPOSIT -> this.reverseDeposit(originalTransaction, reversalTransaction);
