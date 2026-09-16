@@ -33,11 +33,6 @@ public class ActivateCardCommand implements Serializable {
     @JsonProperty("expiry_date")
     private LocalDate expiryDate;
 
-    @NotBlank
-    @Pattern(regexp = "^[0-9]+$", message = "Only digits (0-9) allowed")
-    @Size(min = 3, max = 4)
-    private String cvv;
-
     @ValidCardPin
     @NotBlank
     @JsonProperty("card_pin")

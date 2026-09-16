@@ -8,8 +8,8 @@ import io.github.hossensyedriadh.cbs.card.api.CardService;
 import io.github.hossensyedriadh.cbs.card.api.enumerator.CardStatus;
 import io.github.hossensyedriadh.cbs.card.api.model.ActivateCardCommand;
 import io.github.hossensyedriadh.cbs.card.api.model.CardView;
-import io.github.hossensyedriadh.cbs.card.api.model.ChangeCardPinCommand;
 import io.github.hossensyedriadh.cbs.card.api.model.IssueCardCommand;
+import io.github.hossensyedriadh.cbs.card.api.model.SetCardPinCommand;
 import io.github.hossensyedriadh.cbs.card.internal.domain.Card;
 import io.github.hossensyedriadh.cbs.card.internal.domain.CardStatusHistory;
 import io.github.hossensyedriadh.cbs.card.internal.mapper.CardMapper;
@@ -30,6 +30,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.OffsetDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
@@ -42,6 +44,7 @@ public class CardServiceImpl implements CardService {
     private final CardRepository cardRepository;
     private final CardStatusHistoryRepository cardStatusHistoryRepository;
     private final CardProductService cardProductService;
+    private final CardPinServiceImpl cardPinService;
     private final AccountService accountService;
     private final TransactionService transactionService;
     private final CardNumberHasher cardNumberHasher;
@@ -50,11 +53,13 @@ public class CardServiceImpl implements CardService {
 
     @Autowired
     public CardServiceImpl(CardRepository cardRepository, CardStatusHistoryRepository cardStatusHistoryRepository,
-                           CardProductService cardProductService, AccountService accountService, TransactionService transactionService,
+                           CardProductService cardProductService, CardPinServiceImpl cardPinService,
+                           AccountService accountService, TransactionService transactionService,
                            CardNumberHasher cardNumberHasher, CardMapper cardMapper, HttpServletRequest httpServletRequest) {
         this.cardRepository = cardRepository;
         this.cardStatusHistoryRepository = cardStatusHistoryRepository;
         this.cardProductService = cardProductService;
+        this.cardPinService = cardPinService;
         this.accountService = accountService;
         this.transactionService = transactionService;
         this.cardNumberHasher = cardNumberHasher;
@@ -75,13 +80,39 @@ public class CardServiceImpl implements CardService {
     @Transactional
     @Override
     public CardView activateCard(ActivateCardCommand command) {
-        return null;
-    }
+        Card card = this.cardRepository.findByIdForUpdate(command.getCardId()).orElseThrow(() -> {
+            log.warn("Card with id {} not found", command.getCardId());
+            return new ApiResourceException("Card not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        });
 
-    @Transactional
-    @Override
-    public CardView changePin(ChangeCardPinCommand command) {
-        return null;
+        if (card.getStatus() != CardStatus.INACTIVE) {
+            log.warn("Card with id {} is not inactive", card.getId());
+            throw new ApiResourceException("Card is not inactive", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        }
+
+        String expectedCardNoHash = card.getCardNumberHash();
+        String actualCardNoHash = this.cardNumberHasher.hash(command.getCardNumber());
+
+        if (!MessageDigest.isEqual(expectedCardNoHash.getBytes(StandardCharsets.UTF_8), actualCardNoHash.getBytes(StandardCharsets.UTF_8))) {
+            log.warn("Card with id {} can not be activated as entered Card Number does not match with actual", card.getId());
+            throw new ApiResourceException("Card Number does not match", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        }
+
+        if (!card.getExpiryDate().isEqual(command.getExpiryDate())) {
+            log.warn("Card with id {} can not be activated as entered expiry does not match with actual", card.getId());
+            throw new ApiResourceException("Card expiry does not match", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        }
+
+        this.cardPinService.setPin(new SetCardPinCommand(card.getId(), command.getCardPin()));
+
+        card.setStatus(CardStatus.ACTIVE);
+        Card activated = this.cardRepository.save(card);
+
+        log.info("Card with id {} has been activated", card.getId());
+
+        this.createStatusHistory(card.getId(), CardStatus.ACTIVE, "Customer activated");
+
+        return this.cardMapper.toView(activated);
     }
 
     @Transactional

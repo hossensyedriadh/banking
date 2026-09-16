@@ -2,7 +2,6 @@ package io.github.hossensyedriadh.cbs.card.api;
 
 import io.github.hossensyedriadh.cbs.card.api.model.ActivateCardCommand;
 import io.github.hossensyedriadh.cbs.card.api.model.CardView;
-import io.github.hossensyedriadh.cbs.card.api.model.ChangeCardPinCommand;
 import io.github.hossensyedriadh.cbs.card.api.model.IssueCardCommand;
 
 import java.util.List;
@@ -14,8 +13,6 @@ public interface CardService {
     Optional<CardView> getCard(Long cardId);
 
     CardView activateCard(ActivateCardCommand command);
-
-    CardView changePin(ChangeCardPinCommand command);
 
     CardView issueCard(IssueCardCommand command);
 

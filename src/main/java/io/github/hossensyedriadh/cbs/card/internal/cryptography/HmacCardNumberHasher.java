@@ -35,7 +35,7 @@ public class HmacCardNumberHasher implements CardNumberHasher {
 
             return HexFormat.of().formatHex(digest);
         } catch (GeneralSecurityException e) {
-            throw new IllegalStateException("Failed to hash card number");
+            throw new IllegalStateException("Failed to hash Card number", e);
         }
     }
 
