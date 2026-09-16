@@ -35,7 +35,7 @@ public class CardProduct {
     @Column(name = "product_name", nullable = false, length = 100)
     private String productName;
 
-    @Column(name = "description")
+    @Column(name = "description", length = Integer.MAX_VALUE)
     private String description;
 
     @Enumerated(EnumType.STRING)
