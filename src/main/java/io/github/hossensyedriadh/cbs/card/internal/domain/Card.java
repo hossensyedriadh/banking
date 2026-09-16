@@ -50,7 +50,7 @@ public class Card {
     @Column(name = "status", nullable = false, length = 20)
     private CardStatus status;
 
-    @Column(name = "issued_at", nullable = false)
+    @Column(name = "issued_at", updatable = false, nullable = false)
     private OffsetDateTime issuedAt;
 
     /**
@@ -59,7 +59,7 @@ public class Card {
      * 2031-09-01 means the card expires
      * at the end (31st day) of September 2031.
      */
-    @Column(name = "expiry_date", nullable = false)
+    @Column(name = "expiry_date", updatable = false, nullable = false)
     private LocalDate expiryDate;
 
     @Setter(AccessLevel.NONE)
