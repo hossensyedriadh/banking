@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
         "io.github.hossensyedriadh.cbs.branch.internal.repository",
         "io.github.hossensyedriadh.cbs.customer.internal.repository",
         "io.github.hossensyedriadh.cbs.card.internal.repository",
+        "io.github.hossensyedriadh.cbs.cheque.internal.repository",
         "io.github.hossensyedriadh.cbs.ledger.internal.repository",
         "io.github.hossensyedriadh.cbs.product.internal.repository",
         "io.github.hossensyedriadh.cbs.transaction.internal.repository"})
