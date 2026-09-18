@@ -30,6 +30,10 @@
   <img src="https://img.shields.io/badge/Status-Active%20Development-orange?style=flat-square" alt="Status">
 </p>
 
+<p align="center">
+    <img src="https://wakatime.com/badge/user/e2b59800-befa-4fbb-b409-570cc377f0eb/project/bca89adb-6d49-4c22-baa7-4917948771af.svg" alt="wakatime_total">
+</p>
+
 ---
 
 ## Overview
@@ -521,11 +525,13 @@ Request A ───────┐
 Request B ───────┘
 ```
 
-The application therefore considers database-level pessimistic locking for operations where serialized access is required.
+The application therefore considers database-level pessimistic locking for operations where serialized access is
+required.
 
 Example:
 
 ```java
+
 @Lock(LockModeType.PESSIMISTIC_WRITE)
 @Query("select a from Account a where a.id = :id")
 Optional<Account> findByIdForUpdate(Long id);
@@ -767,7 +773,7 @@ For example:
 ```java
 DepositCommand
         WithdrawCommand
-        
+
 TransferCommand
         ReverseTransactionCommand
 
