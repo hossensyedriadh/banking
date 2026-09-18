@@ -8,6 +8,7 @@ import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
 import io.github.hossensyedriadh.cbs.account.api.utility.SystemFeeCodes;
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import io.github.hossensyedriadh.cbs.ledger.api.LedgerService;
+import io.github.hossensyedriadh.cbs.ledger.api.model.SubLedgerAccountView;
 import io.github.hossensyedriadh.cbs.product.api.CurrencyService;
 import io.github.hossensyedriadh.cbs.product.api.model.CurrencyView;
 import io.github.hossensyedriadh.cbs.transaction.api.TransactionService;
@@ -126,6 +127,13 @@ public class TransactionServiceImpl implements TransactionService {
 
         this.validateCurrency(command.getCurrencyId(), account.getCurrencyId());
 
+        BigDecimal availableBalance = this.getAvailableBalance(account.getId());
+
+        if (availableBalance.compareTo(command.getAmount()) < 0) {
+            log.warn("Insufficient funds for withdrawal request with account id: {}", account.getId());
+            throw new ApiResourceException("Insufficient funds", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        }
+
         Transaction transaction = this.createTransaction(account.getId(), null, command.getCurrencyId(),
                 TransactionType.WITHDRAWAL, command.getAmount(), command.getDescription(), command.getIdempotencyKey());
 
@@ -162,9 +170,16 @@ public class TransactionServiceImpl implements TransactionService {
         }
 
         AccountView sourceAccount = this.getActiveAccount(command.getAccountId());
-        AccountView destinationAccount = this.getActiveAccount(command.getDestinationAccountId());
-
         this.validateCurrency(command.getCurrencyId(), sourceAccount.getCurrencyId());
+
+        BigDecimal availableBalance = this.getAvailableBalance(sourceAccount.getId());
+
+        if (availableBalance.compareTo(command.getAmount()) < 0) {
+            log.warn("Insufficient funds for transfer request with source account id: {}", sourceAccount.getId());
+            throw new ApiResourceException("Insufficient funds", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        }
+
+        AccountView destinationAccount = this.getActiveAccount(command.getDestinationAccountId());
         this.validateCurrency(command.getCurrencyId(), destinationAccount.getCurrencyId());
 
         Transaction transaction = this.createTransaction(sourceAccount.getId(), destinationAccount.getId(),
@@ -252,6 +267,13 @@ public class TransactionServiceImpl implements TransactionService {
 
         this.validateCurrency(command.getCurrencyId(), account.getCurrencyId());
 
+        BigDecimal availableBalance = this.getAvailableBalance(account.getId());
+
+        if (availableBalance.compareTo(command.getAmount()) < 0) {
+            log.warn("Insufficient funds for charging fee for {} with account id: {}", command.getFeeCode(), account.getId());
+            throw new ApiResourceException("Insufficient funds", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        }
+
         Transaction transaction = this.createTransaction(account.getId(), null, command.getCurrencyId(),
                 TransactionType.FEE, command.getAmount(), command.getDescription(), command.getIdempotencyKey());
 
@@ -321,6 +343,14 @@ public class TransactionServiceImpl implements TransactionService {
             log.warn("Sub-ledger account not found for account id: {}", accountId);
             return new ApiResourceException("Sub-ledger account not found for account", HttpStatus.INTERNAL_SERVER_ERROR, this.httpServletRequest);
         });
+    }
+
+    private BigDecimal getAvailableBalance(Long accountId) {
+        return this.ledgerService.getSubLedgerAccountByAccountId(accountId).map(SubLedgerAccountView::getBalance)
+                .orElseThrow(() -> {
+                    log.warn("Sub-ledger account not found for account id: {}", accountId);
+                    return new ApiResourceException("Sub-ledger account not found for customer", HttpStatus.INTERNAL_SERVER_ERROR, this.httpServletRequest);
+                });
     }
 
     private AccountView getActiveAccount(Long accountId) {

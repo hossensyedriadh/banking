@@ -258,14 +258,14 @@ public class LedgerServiceImpl implements LedgerService {
     private Long getFeeIncomeLedgerAccountId() {
         return this.ledgerAccountRepository.findByAccountCode(SystemLedgerAccountCodes.FEE_INCOME).map(LedgerAccount::getId).orElseThrow(() -> {
             log.warn("Fee income ledger account not configured");
-            return new ApiResourceException("Fee income account not configured", HttpStatus.INTERNAL_SERVER_ERROR, this.httpServletRequest);
+            return new ApiResourceException("Fee income ledger account not configured", HttpStatus.INTERNAL_SERVER_ERROR, this.httpServletRequest);
         });
     }
 
     private Long getInterestExpenseLedgerAccountId() {
         return this.ledgerAccountRepository.findByAccountCode(SystemLedgerAccountCodes.INTEREST_EXPENSE).map(LedgerAccount::getId).orElseThrow(() -> {
             log.warn("Interest expense ledger account not configured");
-            return new ApiResourceException("Interest expense account not configured", HttpStatus.INTERNAL_SERVER_ERROR, this.httpServletRequest);
+            return new ApiResourceException("Interest expense ledger account not configured", HttpStatus.INTERNAL_SERVER_ERROR, this.httpServletRequest);
         });
     }
 
