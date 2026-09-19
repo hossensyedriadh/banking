@@ -12,8 +12,10 @@ import io.github.hossensyedriadh.cbs.cheque.api.model.ChequeNumberRange;
 import io.github.hossensyedriadh.cbs.cheque.api.model.IssueChequeBookCommand;
 import io.github.hossensyedriadh.cbs.cheque.internal.domain.Cheque;
 import io.github.hossensyedriadh.cbs.cheque.internal.domain.ChequeBook;
+import io.github.hossensyedriadh.cbs.cheque.internal.domain.ChequeBookStatusHistory;
 import io.github.hossensyedriadh.cbs.cheque.internal.mapper.ChequeBookMapper;
 import io.github.hossensyedriadh.cbs.cheque.internal.repository.ChequeBookRepository;
+import io.github.hossensyedriadh.cbs.cheque.internal.repository.ChequeBookStatusHistoryRepository;
 import io.github.hossensyedriadh.cbs.cheque.internal.repository.ChequeRepository;
 import io.github.hossensyedriadh.cbs.cheque.internal.util.ChequeBookNumberGenerator;
 import io.github.hossensyedriadh.cbs.cheque.internal.util.ChequeFeeCodes;
@@ -42,6 +44,7 @@ import java.util.Optional;
 public class ChequeBookServiceImpl implements ChequeBookService {
     private final ChequeBookRepository chequeBookRepository;
     private final ChequeRepository chequeRepository;
+    private final ChequeBookStatusHistoryRepository chequeBookStatusHistoryRepository;
     private final AccountService accountService;
     private final ChequeProductService chequeProductService;
     private final TransactionService transactionService;
@@ -51,12 +54,14 @@ public class ChequeBookServiceImpl implements ChequeBookService {
     private final HttpServletRequest httpServletRequest;
 
     @Autowired
-    public ChequeBookServiceImpl(ChequeBookRepository chequeBookRepository, ChequeRepository chequeRepository, AccountService accountService,
+    public ChequeBookServiceImpl(ChequeBookRepository chequeBookRepository, ChequeRepository chequeRepository,
+                                 ChequeBookStatusHistoryRepository chequeBookStatusHistoryRepository, AccountService accountService,
                                  ChequeProductService chequeProductService, TransactionService transactionService,
                                  ChequeBookNumberGenerator chequeBookNumberGenerator, ChequeNumberGenerator chequeNumberGenerator,
                                  ChequeBookMapper chequeBookMapper, HttpServletRequest httpServletRequest) {
         this.chequeBookRepository = chequeBookRepository;
         this.chequeRepository = chequeRepository;
+        this.chequeBookStatusHistoryRepository = chequeBookStatusHistoryRepository;
         this.accountService = accountService;
         this.chequeProductService = chequeProductService;
         this.transactionService = transactionService;
@@ -141,6 +146,8 @@ public class ChequeBookServiceImpl implements ChequeBookService {
 
         log.info("{} Cheque book issued successfully for account: {}", product.getProductCode(), accountView.getId());
 
+        this.writeStatusHistory(chequeBook.getId(), ChequeBookStatus.ACTIVE);
+
         return this.chequeBookMapper.toView(savedChequeBook);
     }
 
@@ -162,7 +169,7 @@ public class ChequeBookServiceImpl implements ChequeBookService {
 
         chequeBook.setStatus(ChequeBookStatus.CANCELLED);
 
-        //todo: create status history
+        this.writeStatusHistory(chequeBook.getId(), ChequeBookStatus.CANCELLED);
 
         this.chequeBookRepository.save(chequeBook);
 
@@ -178,5 +185,15 @@ public class ChequeBookServiceImpl implements ChequeBookService {
         }
 
         log.info("Cheque book with id: {} has been cancelled successfully", chequeBook.getId());
+    }
+
+    private void writeStatusHistory(Long chequeBookId, ChequeBookStatus status) {
+        ChequeBookStatusHistory history = new ChequeBookStatusHistory();
+        history.setChequeBookId(chequeBookId);
+        history.setStatus(status);
+
+        this.chequeBookStatusHistoryRepository.save(history);
+
+        log.info("Saved status change history for cheque book with id: {}", chequeBookId);
     }
 }
