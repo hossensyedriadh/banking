@@ -1,6 +1,6 @@
 package io.github.hossensyedriadh.cbs.account.internal.scheduler;
 
-import io.github.hossensyedriadh.cbs.account.api.InterestBatchService;
+import io.github.hossensyedriadh.cbs.account.api.service.InterestBatchService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;

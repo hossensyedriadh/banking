@@ -1,11 +1,11 @@
 package io.github.hossensyedriadh.cbs.product.internal.impl;
 
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
-import io.github.hossensyedriadh.cbs.product.api.CardProductService;
+import io.github.hossensyedriadh.cbs.product.api.command.CreateCardProductCommand;
+import io.github.hossensyedriadh.cbs.product.api.command.UpdateCardProductCommand;
 import io.github.hossensyedriadh.cbs.product.api.enumerator.CardProductStatus;
 import io.github.hossensyedriadh.cbs.product.api.model.CardProductView;
-import io.github.hossensyedriadh.cbs.product.api.model.CreateCardProductCommand;
-import io.github.hossensyedriadh.cbs.product.api.model.UpdateCardProductCommand;
+import io.github.hossensyedriadh.cbs.product.api.service.CardProductService;
 import io.github.hossensyedriadh.cbs.product.internal.domain.CardProduct;
 import io.github.hossensyedriadh.cbs.product.internal.mapper.CardProductMapper;
 import io.github.hossensyedriadh.cbs.product.internal.repository.CardProductRepository;

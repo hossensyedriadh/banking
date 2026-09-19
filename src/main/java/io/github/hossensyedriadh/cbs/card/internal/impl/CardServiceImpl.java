@@ -1,15 +1,15 @@
 package io.github.hossensyedriadh.cbs.card.internal.impl;
 
-import io.github.hossensyedriadh.cbs.account.api.AccountService;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountStatus;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
-import io.github.hossensyedriadh.cbs.card.api.CardNumberHasher;
-import io.github.hossensyedriadh.cbs.card.api.CardService;
+import io.github.hossensyedriadh.cbs.account.api.service.AccountService;
+import io.github.hossensyedriadh.cbs.card.api.command.ActivateCardCommand;
+import io.github.hossensyedriadh.cbs.card.api.command.IssueCardCommand;
+import io.github.hossensyedriadh.cbs.card.api.command.SetCardPinCommand;
 import io.github.hossensyedriadh.cbs.card.api.enumerator.CardStatus;
-import io.github.hossensyedriadh.cbs.card.api.model.ActivateCardCommand;
 import io.github.hossensyedriadh.cbs.card.api.model.CardView;
-import io.github.hossensyedriadh.cbs.card.api.model.IssueCardCommand;
-import io.github.hossensyedriadh.cbs.card.api.model.SetCardPinCommand;
+import io.github.hossensyedriadh.cbs.card.api.service.CardNumberHasher;
+import io.github.hossensyedriadh.cbs.card.api.service.CardService;
 import io.github.hossensyedriadh.cbs.card.internal.domain.Card;
 import io.github.hossensyedriadh.cbs.card.internal.domain.CardStatusHistory;
 import io.github.hossensyedriadh.cbs.card.internal.mapper.CardMapper;
@@ -18,11 +18,11 @@ import io.github.hossensyedriadh.cbs.card.internal.repository.CardStatusHistoryR
 import io.github.hossensyedriadh.cbs.card.internal.util.CardFeeCodes;
 import io.github.hossensyedriadh.cbs.card.internal.util.CardNumberGenerator;
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
-import io.github.hossensyedriadh.cbs.product.api.CardProductService;
 import io.github.hossensyedriadh.cbs.product.api.enumerator.CardProductStatus;
 import io.github.hossensyedriadh.cbs.product.api.model.CardProductView;
-import io.github.hossensyedriadh.cbs.transaction.api.TransactionService;
-import io.github.hossensyedriadh.cbs.transaction.api.model.ChargeFeeCommand;
+import io.github.hossensyedriadh.cbs.product.api.service.CardProductService;
+import io.github.hossensyedriadh.cbs.transaction.api.command.ChargeFeeCommand;
+import io.github.hossensyedriadh.cbs.transaction.api.service.TransactionService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;

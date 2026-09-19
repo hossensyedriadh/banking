@@ -1,11 +1,11 @@
 package io.github.hossensyedriadh.cbs.product.internal.impl;
 
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
-import io.github.hossensyedriadh.cbs.product.api.AccountProductService;
+import io.github.hossensyedriadh.cbs.product.api.command.CreateAccountProductCommand;
+import io.github.hossensyedriadh.cbs.product.api.command.UpdateAccountProductCommand;
 import io.github.hossensyedriadh.cbs.product.api.enumerator.AccountProductStatus;
 import io.github.hossensyedriadh.cbs.product.api.model.AccountProductView;
-import io.github.hossensyedriadh.cbs.product.api.model.CreateAccountProductCommand;
-import io.github.hossensyedriadh.cbs.product.api.model.UpdateAccountProductCommand;
+import io.github.hossensyedriadh.cbs.product.api.service.AccountProductService;
 import io.github.hossensyedriadh.cbs.product.internal.domain.AccountProduct;
 import io.github.hossensyedriadh.cbs.product.internal.mapper.AccountProductMapper;
 import io.github.hossensyedriadh.cbs.product.internal.repository.AccountProductRepository;

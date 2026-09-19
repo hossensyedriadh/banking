@@ -1,10 +1,10 @@
 package io.github.hossensyedriadh.cbs.cheque.internal.impl;
 
-import io.github.hossensyedriadh.cbs.cheque.api.ChequeService;
+import io.github.hossensyedriadh.cbs.cheque.api.command.CancelChequeCommand;
+import io.github.hossensyedriadh.cbs.cheque.api.command.StopChequeCommand;
 import io.github.hossensyedriadh.cbs.cheque.api.enumerator.ChequeStatus;
-import io.github.hossensyedriadh.cbs.cheque.api.model.CancelChequeCommand;
 import io.github.hossensyedriadh.cbs.cheque.api.model.ChequeView;
-import io.github.hossensyedriadh.cbs.cheque.api.model.StopChequeCommand;
+import io.github.hossensyedriadh.cbs.cheque.api.service.ChequeService;
 import io.github.hossensyedriadh.cbs.cheque.internal.domain.Cheque;
 import io.github.hossensyedriadh.cbs.cheque.internal.mapper.ChequeMapper;
 import io.github.hossensyedriadh.cbs.cheque.internal.repository.ChequeRepository;

@@ -1,7 +1,7 @@
 package io.github.hossensyedriadh.cbs.account.internal.mapper;
 
+import io.github.hossensyedriadh.cbs.account.api.command.CreateAccountCommand;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
-import io.github.hossensyedriadh.cbs.account.api.model.CreateAccountCommand;
 import io.github.hossensyedriadh.cbs.account.internal.domain.Account;
 import io.github.hossensyedriadh.cbs.configuration.mapper.MapperConfiguration;
 import org.mapstruct.Mapper;

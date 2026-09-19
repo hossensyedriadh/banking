@@ -1,12 +1,12 @@
 package io.github.hossensyedriadh.cbs.account.internal.impl;
 
-import io.github.hossensyedriadh.cbs.account.api.AccountBalanceService;
-import io.github.hossensyedriadh.cbs.account.api.AccountService;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountHoldStatus;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountBalanceView;
+import io.github.hossensyedriadh.cbs.account.api.service.AccountBalanceService;
+import io.github.hossensyedriadh.cbs.account.api.service.AccountService;
 import io.github.hossensyedriadh.cbs.account.internal.repository.AccountHoldRepository;
-import io.github.hossensyedriadh.cbs.ledger.api.LedgerService;
 import io.github.hossensyedriadh.cbs.ledger.api.model.SubLedgerAccountView;
+import io.github.hossensyedriadh.cbs.ledger.api.service.LedgerService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

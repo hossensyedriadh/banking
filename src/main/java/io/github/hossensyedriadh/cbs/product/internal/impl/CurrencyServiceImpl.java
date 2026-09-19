@@ -1,9 +1,9 @@
 package io.github.hossensyedriadh.cbs.product.internal.impl;
 
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
-import io.github.hossensyedriadh.cbs.product.api.CurrencyService;
-import io.github.hossensyedriadh.cbs.product.api.model.CreateCurrencyCommand;
+import io.github.hossensyedriadh.cbs.product.api.command.CreateCurrencyCommand;
 import io.github.hossensyedriadh.cbs.product.api.model.CurrencyView;
+import io.github.hossensyedriadh.cbs.product.api.service.CurrencyService;
 import io.github.hossensyedriadh.cbs.product.internal.domain.Currency;
 import io.github.hossensyedriadh.cbs.product.internal.mapper.CurrencyMapper;
 import io.github.hossensyedriadh.cbs.product.internal.repository.CurrencyRepository;

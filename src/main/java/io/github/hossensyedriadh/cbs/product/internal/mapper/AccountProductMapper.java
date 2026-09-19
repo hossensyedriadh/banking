@@ -1,9 +1,9 @@
 package io.github.hossensyedriadh.cbs.product.internal.mapper;
 
 import io.github.hossensyedriadh.cbs.configuration.mapper.MapperConfiguration;
+import io.github.hossensyedriadh.cbs.product.api.command.CreateAccountProductCommand;
+import io.github.hossensyedriadh.cbs.product.api.command.UpdateAccountProductCommand;
 import io.github.hossensyedriadh.cbs.product.api.model.AccountProductView;
-import io.github.hossensyedriadh.cbs.product.api.model.CreateAccountProductCommand;
-import io.github.hossensyedriadh.cbs.product.api.model.UpdateAccountProductCommand;
 import io.github.hossensyedriadh.cbs.product.internal.domain.AccountProduct;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;

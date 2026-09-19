@@ -1,13 +1,13 @@
 package io.github.hossensyedriadh.cbs.account.internal.impl;
 
-import io.github.hossensyedriadh.cbs.account.api.AccountService;
+import io.github.hossensyedriadh.cbs.account.api.command.CloseAccountCommand;
+import io.github.hossensyedriadh.cbs.account.api.command.CreateAccountCommand;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountHoldStatus;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountHolderType;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountRestrictionStatus;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountStatus;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
-import io.github.hossensyedriadh.cbs.account.api.model.CloseAccountCommand;
-import io.github.hossensyedriadh.cbs.account.api.model.CreateAccountCommand;
+import io.github.hossensyedriadh.cbs.account.api.service.AccountService;
 import io.github.hossensyedriadh.cbs.account.internal.domain.Account;
 import io.github.hossensyedriadh.cbs.account.internal.domain.AccountHolder;
 import io.github.hossensyedriadh.cbs.account.internal.domain.AccountHolderId;
@@ -16,14 +16,14 @@ import io.github.hossensyedriadh.cbs.account.internal.repository.AccountHoldRepo
 import io.github.hossensyedriadh.cbs.account.internal.repository.AccountHolderRepository;
 import io.github.hossensyedriadh.cbs.account.internal.repository.AccountRepository;
 import io.github.hossensyedriadh.cbs.account.internal.repository.AccountRestrictionRepository;
-import io.github.hossensyedriadh.cbs.branch.api.BranchService;
-import io.github.hossensyedriadh.cbs.customer.api.CustomerService;
+import io.github.hossensyedriadh.cbs.branch.api.service.BranchService;
+import io.github.hossensyedriadh.cbs.customer.api.service.CustomerService;
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
-import io.github.hossensyedriadh.cbs.ledger.api.LedgerService;
 import io.github.hossensyedriadh.cbs.ledger.api.model.SubLedgerAccountView;
-import io.github.hossensyedriadh.cbs.product.api.AccountProductService;
-import io.github.hossensyedriadh.cbs.product.api.CurrencyService;
+import io.github.hossensyedriadh.cbs.ledger.api.service.LedgerService;
 import io.github.hossensyedriadh.cbs.product.api.enumerator.AccountProductStatus;
+import io.github.hossensyedriadh.cbs.product.api.service.AccountProductService;
+import io.github.hossensyedriadh.cbs.product.api.service.CurrencyService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;

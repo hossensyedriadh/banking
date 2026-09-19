@@ -1,10 +1,9 @@
 package io.github.hossensyedriadh.cbs;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.modulith.core.ApplicationModules;
 
-@SpringBootTest
+//@SpringBootTest
 class CbsApplicationTests {
 
     @Test

@@ -1,8 +1,8 @@
 package io.github.hossensyedriadh.cbs.ledger.internal.reconciliation;
 
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
-import io.github.hossensyedriadh.cbs.ledger.api.LedgerReconciliationService;
 import io.github.hossensyedriadh.cbs.ledger.api.model.ReconciliationResult;
+import io.github.hossensyedriadh.cbs.ledger.api.service.LedgerReconciliationService;
 import io.github.hossensyedriadh.cbs.ledger.internal.domain.LedgerAccount;
 import io.github.hossensyedriadh.cbs.ledger.internal.repository.LedgerAccountRepository;
 import io.github.hossensyedriadh.cbs.ledger.internal.repository.SubLedgerAccountRepository;

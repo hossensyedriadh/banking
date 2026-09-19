@@ -1,10 +1,10 @@
 package io.github.hossensyedriadh.cbs.customer.internal.impl;
 
-import io.github.hossensyedriadh.cbs.customer.api.CustomerService;
+import io.github.hossensyedriadh.cbs.customer.api.command.CreateCustomerCommand;
+import io.github.hossensyedriadh.cbs.customer.api.command.UpdateCustomerCommand;
 import io.github.hossensyedriadh.cbs.customer.api.enumerator.CustomerStatus;
-import io.github.hossensyedriadh.cbs.customer.api.model.CreateCustomerCommand;
 import io.github.hossensyedriadh.cbs.customer.api.model.CustomerView;
-import io.github.hossensyedriadh.cbs.customer.api.model.UpdateCustomerCommand;
+import io.github.hossensyedriadh.cbs.customer.api.service.CustomerService;
 import io.github.hossensyedriadh.cbs.customer.internal.domain.Customer;
 import io.github.hossensyedriadh.cbs.customer.internal.mapper.CustomerMapper;
 import io.github.hossensyedriadh.cbs.customer.internal.repository.CustomerRepository;

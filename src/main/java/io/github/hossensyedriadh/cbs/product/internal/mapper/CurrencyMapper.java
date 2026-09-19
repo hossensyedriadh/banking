@@ -1,7 +1,7 @@
 package io.github.hossensyedriadh.cbs.product.internal.mapper;
 
 import io.github.hossensyedriadh.cbs.configuration.mapper.MapperConfiguration;
-import io.github.hossensyedriadh.cbs.product.api.model.CreateCurrencyCommand;
+import io.github.hossensyedriadh.cbs.product.api.command.CreateCurrencyCommand;
 import io.github.hossensyedriadh.cbs.product.api.model.CurrencyView;
 import io.github.hossensyedriadh.cbs.product.internal.domain.Currency;
 import org.mapstruct.Mapper;

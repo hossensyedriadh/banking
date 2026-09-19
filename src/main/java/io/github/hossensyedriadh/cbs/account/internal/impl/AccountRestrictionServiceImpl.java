@@ -1,13 +1,13 @@
 package io.github.hossensyedriadh.cbs.account.internal.impl;
 
-import io.github.hossensyedriadh.cbs.account.api.AccountRestrictionService;
-import io.github.hossensyedriadh.cbs.account.api.AccountService;
+import io.github.hossensyedriadh.cbs.account.api.command.CreateAccountRestrictionCommand;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountRestrictionStatus;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountRestrictionType;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountStatus;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountRestrictionView;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
-import io.github.hossensyedriadh.cbs.account.api.model.CreateAccountRestrictionCommand;
+import io.github.hossensyedriadh.cbs.account.api.service.AccountRestrictionService;
+import io.github.hossensyedriadh.cbs.account.api.service.AccountService;
 import io.github.hossensyedriadh.cbs.account.internal.domain.AccountRestriction;
 import io.github.hossensyedriadh.cbs.account.internal.mapper.AccountRestrictionMapper;
 import io.github.hossensyedriadh.cbs.account.internal.repository.AccountRestrictionRepository;

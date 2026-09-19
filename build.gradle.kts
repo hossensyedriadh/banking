@@ -24,6 +24,12 @@ configurations.configureEach {
     exclude(group = "org.springframework.boot", module = "spring-boot-starter-logging")
 }
 
+configurations{
+    testRuntimeClasspath {
+        exclude(group = "org.json", module = "json")
+    }
+}
+
 extra["springModulithVersion"] = "2.1.1"
 
 dependencies {

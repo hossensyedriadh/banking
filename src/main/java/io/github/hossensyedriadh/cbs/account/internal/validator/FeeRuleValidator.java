@@ -1,6 +1,6 @@
 package io.github.hossensyedriadh.cbs.account.internal.validator;
 
-import io.github.hossensyedriadh.cbs.account.api.model.CreateFeeRuleCommand;
+import io.github.hossensyedriadh.cbs.account.api.command.CreateFeeRuleCommand;
 import io.github.hossensyedriadh.cbs.account.api.validation.ValidFeeRule;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;

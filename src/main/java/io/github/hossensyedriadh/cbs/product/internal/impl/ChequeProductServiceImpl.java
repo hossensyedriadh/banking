@@ -1,11 +1,11 @@
 package io.github.hossensyedriadh.cbs.product.internal.impl;
 
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
-import io.github.hossensyedriadh.cbs.product.api.ChequeProductService;
+import io.github.hossensyedriadh.cbs.product.api.command.CreateChequeProductCommand;
+import io.github.hossensyedriadh.cbs.product.api.command.UpdateChequeProductCommand;
 import io.github.hossensyedriadh.cbs.product.api.enumerator.ChequeProductStatus;
 import io.github.hossensyedriadh.cbs.product.api.model.ChequeProductView;
-import io.github.hossensyedriadh.cbs.product.api.model.CreateChequeProductCommand;
-import io.github.hossensyedriadh.cbs.product.api.model.UpdateChequeProductCommand;
+import io.github.hossensyedriadh.cbs.product.api.service.ChequeProductService;
 import io.github.hossensyedriadh.cbs.product.internal.domain.ChequeProduct;
 import io.github.hossensyedriadh.cbs.product.internal.mapper.ChequeProductMapper;
 import io.github.hossensyedriadh.cbs.product.internal.repository.ChequeProductRepository;

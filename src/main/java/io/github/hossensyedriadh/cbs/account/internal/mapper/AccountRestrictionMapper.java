@@ -1,7 +1,7 @@
 package io.github.hossensyedriadh.cbs.account.internal.mapper;
 
+import io.github.hossensyedriadh.cbs.account.api.command.CreateAccountRestrictionCommand;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountRestrictionView;
-import io.github.hossensyedriadh.cbs.account.api.model.CreateAccountRestrictionCommand;
 import io.github.hossensyedriadh.cbs.account.internal.domain.AccountRestriction;
 import io.github.hossensyedriadh.cbs.configuration.mapper.MapperConfiguration;
 import org.mapstruct.Mapper;

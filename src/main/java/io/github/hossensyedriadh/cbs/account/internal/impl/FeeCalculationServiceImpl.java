@@ -1,7 +1,7 @@
 package io.github.hossensyedriadh.cbs.account.internal.impl;
 
-import io.github.hossensyedriadh.cbs.account.api.FeeCalculationService;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.FeeRuleStatus;
+import io.github.hossensyedriadh.cbs.account.api.service.FeeCalculationService;
 import io.github.hossensyedriadh.cbs.account.internal.domain.FeeRule;
 import io.github.hossensyedriadh.cbs.account.internal.repository.FeeRuleRepository;
 import lombok.extern.log4j.Log4j2;

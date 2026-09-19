@@ -1,6 +1,6 @@
 package io.github.hossensyedriadh.cbs.product.internal.validator;
 
-import io.github.hossensyedriadh.cbs.product.api.model.CreateAccountProductCommand;
+import io.github.hossensyedriadh.cbs.product.api.command.CreateAccountProductCommand;
 import io.github.hossensyedriadh.cbs.product.api.validation.ValidInterestConfiguration;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;

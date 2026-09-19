@@ -1,13 +1,13 @@
 package io.github.hossensyedriadh.cbs.cheque.internal.impl;
 
-import io.github.hossensyedriadh.cbs.account.api.AccountService;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
-import io.github.hossensyedriadh.cbs.cheque.api.ChequePresentationService;
+import io.github.hossensyedriadh.cbs.account.api.service.AccountService;
+import io.github.hossensyedriadh.cbs.cheque.api.command.PresentChequeCommand;
+import io.github.hossensyedriadh.cbs.cheque.api.command.ReturnChequeCommand;
 import io.github.hossensyedriadh.cbs.cheque.api.enumerator.ChequePresentationStatus;
 import io.github.hossensyedriadh.cbs.cheque.api.enumerator.ChequeStatus;
 import io.github.hossensyedriadh.cbs.cheque.api.model.ChequePresentationView;
-import io.github.hossensyedriadh.cbs.cheque.api.model.PresentChequeCommand;
-import io.github.hossensyedriadh.cbs.cheque.api.model.ReturnChequeCommand;
+import io.github.hossensyedriadh.cbs.cheque.api.service.ChequePresentationService;
 import io.github.hossensyedriadh.cbs.cheque.internal.domain.Cheque;
 import io.github.hossensyedriadh.cbs.cheque.internal.domain.ChequeBook;
 import io.github.hossensyedriadh.cbs.cheque.internal.domain.ChequePresentation;
@@ -15,8 +15,8 @@ import io.github.hossensyedriadh.cbs.cheque.internal.mapper.ChequePresentationMa
 import io.github.hossensyedriadh.cbs.cheque.internal.repository.ChequePresentationRepository;
 import io.github.hossensyedriadh.cbs.cheque.internal.repository.ChequeRepository;
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
-import io.github.hossensyedriadh.cbs.transaction.api.TransactionService;
-import io.github.hossensyedriadh.cbs.transaction.api.model.CreateWithdrawalCommand;
+import io.github.hossensyedriadh.cbs.transaction.api.command.CreateWithdrawalCommand;
+import io.github.hossensyedriadh.cbs.transaction.api.service.TransactionService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;

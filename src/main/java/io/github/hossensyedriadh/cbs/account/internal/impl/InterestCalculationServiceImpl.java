@@ -1,6 +1,6 @@
 package io.github.hossensyedriadh.cbs.account.internal.impl;
 
-import io.github.hossensyedriadh.cbs.account.api.InterestCalculationService;
+import io.github.hossensyedriadh.cbs.account.api.service.InterestCalculationService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,9 +1,9 @@
 package io.github.hossensyedriadh.cbs.ledger.internal.mapper;
 
 import io.github.hossensyedriadh.cbs.configuration.mapper.MapperConfiguration;
-import io.github.hossensyedriadh.cbs.ledger.api.model.CreateLedgerAccountCommand;
+import io.github.hossensyedriadh.cbs.ledger.api.command.CreateLedgerAccountCommand;
+import io.github.hossensyedriadh.cbs.ledger.api.command.UpdateLedgerAccountCommand;
 import io.github.hossensyedriadh.cbs.ledger.api.model.LedgerAccountView;
-import io.github.hossensyedriadh.cbs.ledger.api.model.UpdateLedgerAccountCommand;
 import io.github.hossensyedriadh.cbs.ledger.internal.domain.LedgerAccount;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;

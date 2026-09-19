@@ -175,7 +175,7 @@ Each business module follows an explicit API/internal structure.
 module/
 ├── api/
 │   ├── command/
-│   ├── dto/
+│   ├── model/
 │   ├── service/
 │   └── ...
 │

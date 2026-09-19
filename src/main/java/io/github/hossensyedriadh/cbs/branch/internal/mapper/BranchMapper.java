@@ -1,8 +1,8 @@
 package io.github.hossensyedriadh.cbs.branch.internal.mapper;
 
+import io.github.hossensyedriadh.cbs.branch.api.command.CreateBranchCommand;
+import io.github.hossensyedriadh.cbs.branch.api.command.UpdateBranchCommand;
 import io.github.hossensyedriadh.cbs.branch.api.model.BranchView;
-import io.github.hossensyedriadh.cbs.branch.api.model.CreateBranchCommand;
-import io.github.hossensyedriadh.cbs.branch.api.model.UpdateBranchCommand;
 import io.github.hossensyedriadh.cbs.branch.internal.domain.Branch;
 import io.github.hossensyedriadh.cbs.configuration.mapper.MapperConfiguration;
 import org.mapstruct.Mapper;

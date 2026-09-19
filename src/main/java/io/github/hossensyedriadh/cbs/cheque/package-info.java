@@ -1,5 +1,5 @@
 @ApplicationModule(
-        allowedDependencies = {"exception", "configuration :: mapper", "account :: api", "transaction :: api", "product :: api", "account :: model", "product :: model", "account :: enumerator", "product :: enumerator", "transaction :: model", "ledger :: api"}
+        allowedDependencies = {"exception", "configuration :: mapper", "account :: service", "product :: service", "transaction :: service", "product :: model", "account :: enumerator", "product :: enumerator", "account :: model", "transaction :: command"}
 )
 package io.github.hossensyedriadh.cbs.cheque;
 

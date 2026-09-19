@@ -1,6 +1,6 @@
 package io.github.hossensyedriadh.cbs.card.internal.cryptography;
 
-import io.github.hossensyedriadh.cbs.card.api.CardNumberHasher;
+import io.github.hossensyedriadh.cbs.card.api.service.CardNumberHasher;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 

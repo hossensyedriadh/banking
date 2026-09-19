@@ -1,11 +1,11 @@
 package io.github.hossensyedriadh.cbs.card.internal.impl;
 
-import io.github.hossensyedriadh.cbs.card.api.CardPinService;
+import io.github.hossensyedriadh.cbs.card.api.command.ChangeCardPinCommand;
+import io.github.hossensyedriadh.cbs.card.api.command.SetCardPinCommand;
+import io.github.hossensyedriadh.cbs.card.api.command.VerifyCardPinCommand;
 import io.github.hossensyedriadh.cbs.card.api.enumerator.CardPinVerificationResult;
 import io.github.hossensyedriadh.cbs.card.api.enumerator.CardStatus;
-import io.github.hossensyedriadh.cbs.card.api.model.ChangeCardPinCommand;
-import io.github.hossensyedriadh.cbs.card.api.model.SetCardPinCommand;
-import io.github.hossensyedriadh.cbs.card.api.model.VerifyCardPinCommand;
+import io.github.hossensyedriadh.cbs.card.api.service.CardPinService;
 import io.github.hossensyedriadh.cbs.card.internal.domain.Card;
 import io.github.hossensyedriadh.cbs.card.internal.domain.CardPin;
 import io.github.hossensyedriadh.cbs.card.internal.repository.CardPinRepository;

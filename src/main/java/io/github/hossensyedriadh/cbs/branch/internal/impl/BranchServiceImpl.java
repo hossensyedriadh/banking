@@ -1,9 +1,9 @@
 package io.github.hossensyedriadh.cbs.branch.internal.impl;
 
-import io.github.hossensyedriadh.cbs.branch.api.BranchService;
+import io.github.hossensyedriadh.cbs.branch.api.command.CreateBranchCommand;
+import io.github.hossensyedriadh.cbs.branch.api.command.UpdateBranchCommand;
 import io.github.hossensyedriadh.cbs.branch.api.model.BranchView;
-import io.github.hossensyedriadh.cbs.branch.api.model.CreateBranchCommand;
-import io.github.hossensyedriadh.cbs.branch.api.model.UpdateBranchCommand;
+import io.github.hossensyedriadh.cbs.branch.api.service.BranchService;
 import io.github.hossensyedriadh.cbs.branch.internal.domain.Branch;
 import io.github.hossensyedriadh.cbs.branch.internal.mapper.BranchMapper;
 import io.github.hossensyedriadh.cbs.branch.internal.repository.BranchRepository;

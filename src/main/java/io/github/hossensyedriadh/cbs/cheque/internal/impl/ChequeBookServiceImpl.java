@@ -1,15 +1,15 @@
 package io.github.hossensyedriadh.cbs.cheque.internal.impl;
 
-import io.github.hossensyedriadh.cbs.account.api.AccountService;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountStatus;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
-import io.github.hossensyedriadh.cbs.cheque.api.ChequeBookService;
+import io.github.hossensyedriadh.cbs.account.api.service.AccountService;
+import io.github.hossensyedriadh.cbs.cheque.api.command.CancelChequeBookCommand;
+import io.github.hossensyedriadh.cbs.cheque.api.command.IssueChequeBookCommand;
 import io.github.hossensyedriadh.cbs.cheque.api.enumerator.ChequeBookStatus;
 import io.github.hossensyedriadh.cbs.cheque.api.enumerator.ChequeStatus;
-import io.github.hossensyedriadh.cbs.cheque.api.model.CancelChequeBookCommand;
 import io.github.hossensyedriadh.cbs.cheque.api.model.ChequeBookView;
 import io.github.hossensyedriadh.cbs.cheque.api.model.ChequeNumberRange;
-import io.github.hossensyedriadh.cbs.cheque.api.model.IssueChequeBookCommand;
+import io.github.hossensyedriadh.cbs.cheque.api.service.ChequeBookService;
 import io.github.hossensyedriadh.cbs.cheque.internal.domain.Cheque;
 import io.github.hossensyedriadh.cbs.cheque.internal.domain.ChequeBook;
 import io.github.hossensyedriadh.cbs.cheque.internal.domain.ChequeBookStatusHistory;
@@ -21,11 +21,11 @@ import io.github.hossensyedriadh.cbs.cheque.internal.util.ChequeBookNumberGenera
 import io.github.hossensyedriadh.cbs.cheque.internal.util.ChequeFeeCodes;
 import io.github.hossensyedriadh.cbs.cheque.internal.util.ChequeNumberGenerator;
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
-import io.github.hossensyedriadh.cbs.product.api.ChequeProductService;
 import io.github.hossensyedriadh.cbs.product.api.enumerator.ChequeProductStatus;
 import io.github.hossensyedriadh.cbs.product.api.model.ChequeProductView;
-import io.github.hossensyedriadh.cbs.transaction.api.TransactionService;
-import io.github.hossensyedriadh.cbs.transaction.api.model.ChargeFeeCommand;
+import io.github.hossensyedriadh.cbs.product.api.service.ChequeProductService;
+import io.github.hossensyedriadh.cbs.transaction.api.command.ChargeFeeCommand;
+import io.github.hossensyedriadh.cbs.transaction.api.service.TransactionService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;

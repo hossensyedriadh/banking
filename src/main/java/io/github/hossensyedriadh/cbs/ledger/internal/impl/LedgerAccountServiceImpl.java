@@ -1,15 +1,15 @@
 package io.github.hossensyedriadh.cbs.ledger.internal.impl;
 
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
-import io.github.hossensyedriadh.cbs.ledger.api.LedgerAccountService;
-import io.github.hossensyedriadh.cbs.ledger.api.model.CreateLedgerAccountCommand;
+import io.github.hossensyedriadh.cbs.ledger.api.command.CreateLedgerAccountCommand;
+import io.github.hossensyedriadh.cbs.ledger.api.command.UpdateLedgerAccountCommand;
 import io.github.hossensyedriadh.cbs.ledger.api.model.LedgerAccountView;
-import io.github.hossensyedriadh.cbs.ledger.api.model.UpdateLedgerAccountCommand;
+import io.github.hossensyedriadh.cbs.ledger.api.service.LedgerAccountService;
 import io.github.hossensyedriadh.cbs.ledger.internal.domain.LedgerAccount;
 import io.github.hossensyedriadh.cbs.ledger.internal.mapper.LedgerAccountMapper;
 import io.github.hossensyedriadh.cbs.ledger.internal.repository.LedgerAccountRepository;
-import io.github.hossensyedriadh.cbs.product.api.CurrencyService;
 import io.github.hossensyedriadh.cbs.product.api.model.CurrencyView;
+import io.github.hossensyedriadh.cbs.product.api.service.CurrencyService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;

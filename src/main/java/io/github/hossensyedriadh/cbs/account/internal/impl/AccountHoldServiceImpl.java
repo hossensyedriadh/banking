@@ -1,13 +1,13 @@
 package io.github.hossensyedriadh.cbs.account.internal.impl;
 
-import io.github.hossensyedriadh.cbs.account.api.AccountBalanceService;
-import io.github.hossensyedriadh.cbs.account.api.AccountHoldService;
-import io.github.hossensyedriadh.cbs.account.api.AccountService;
+import io.github.hossensyedriadh.cbs.account.api.command.CreateAccountHoldCommand;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountHoldStatus;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountStatus;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountHoldView;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
-import io.github.hossensyedriadh.cbs.account.api.model.CreateAccountHoldCommand;
+import io.github.hossensyedriadh.cbs.account.api.service.AccountBalanceService;
+import io.github.hossensyedriadh.cbs.account.api.service.AccountHoldService;
+import io.github.hossensyedriadh.cbs.account.api.service.AccountService;
 import io.github.hossensyedriadh.cbs.account.internal.domain.AccountHold;
 import io.github.hossensyedriadh.cbs.account.internal.mapper.AccountHoldMapper;
 import io.github.hossensyedriadh.cbs.account.internal.repository.AccountHoldRepository;

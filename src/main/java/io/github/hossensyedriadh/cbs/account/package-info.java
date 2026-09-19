@@ -1,5 +1,5 @@
 @ApplicationModule(
-        allowedDependencies = {"exception", "customer :: api", "product :: api", "branch :: api", "ledger :: api", "configuration :: mapper", "ledger :: model", "product :: model", "product :: enumerator"}
+        allowedDependencies = {"exception", "configuration :: mapper", "ledger :: service", "ledger :: model", "customer :: service", "branch :: service", "branch :: model", "product :: service", "product :: enumerator", "product :: model"}
 )
 package io.github.hossensyedriadh.cbs.account;
 

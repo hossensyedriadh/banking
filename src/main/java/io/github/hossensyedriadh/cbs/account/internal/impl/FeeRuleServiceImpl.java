@@ -1,9 +1,9 @@
 package io.github.hossensyedriadh.cbs.account.internal.impl;
 
-import io.github.hossensyedriadh.cbs.account.api.FeeRuleService;
+import io.github.hossensyedriadh.cbs.account.api.command.CreateFeeRuleCommand;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.FeeRuleStatus;
-import io.github.hossensyedriadh.cbs.account.api.model.CreateFeeRuleCommand;
 import io.github.hossensyedriadh.cbs.account.api.model.FeeRuleView;
+import io.github.hossensyedriadh.cbs.account.api.service.FeeRuleService;
 import io.github.hossensyedriadh.cbs.account.internal.domain.FeeRule;
 import io.github.hossensyedriadh.cbs.account.internal.mapper.FeeRuleMapper;
 import io.github.hossensyedriadh.cbs.account.internal.repository.FeeRuleRepository;
