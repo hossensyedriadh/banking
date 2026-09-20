@@ -75,3 +75,20 @@ card:
   security:
     crypto:
       pan-hmac-secret: "${PAN_HASH_HMAC_SECRET_KEY}"
+kafka:
+  bootstrap-servers: "${KAFKA_BOOTSTRAP_SERVERS}"
+  sasl:
+    username: "${KAFKA_SASL_USERNAME}"
+    pwd: "${KAFKA_SASL_PWD}"
+  ssl:
+    truststore:
+      path: "${KAFKA_SSL_TRUSTSTORE}"
+      pwd: "${KAFKA_SSL_TRUSTSTORE_PWD}"
+    keystore:
+      path: "${KAFKA_SSL_KEYSTORE}"
+      pwd: "${KAFKA_SSL_KEYSTORE_PWD}"
+    key-pwd: "${KAFKA_SSL_KEY_PWD}"
+  confluent:
+    avro:
+      schema-registry:
+        url: "${KAFKA_SCHEMA_REGISTRY_URL}"

@@ -4,6 +4,51 @@
       "name": "card.security.crypto.pan-hmac-secret",
       "type": "java.lang.String",
       "description": "HMAC secret key for card PAN hashing."
+    },
+    {
+      "name": "kafka.bootstrap-servers",
+      "type": "java.util.List<java.lang.String>",
+      "description": "List of Kafka broker addresses used to establish connections to the Kafka cluster."
+    },
+    {
+      "name": "kafka.sasl.username",
+      "type": "java.lang.String",
+      "description": "Username used to authenticate with the Kafka cluster using SASL."
+    },
+    {
+      "name": "kafka.sasl.pwd",
+      "type": "java.lang.String",
+      "description": "Password used to authenticate with the Kafka cluster using SASL."
+    },
+    {
+      "name": "kafka.ssl.truststore.path",
+      "type": "java.lang.String",
+      "description": "Path to the SSL truststore containing the trusted certificates used to verify Kafka brokers."
+    },
+    {
+      "name": "kafka.ssl.truststore.pwd",
+      "type": "java.lang.String",
+      "description": "Password used to access the Kafka SSL truststore."
+    },
+    {
+      "name": "kafka.ssl.keystore.path",
+      "type": "java.lang.String",
+      "description": "Path to the SSL keystore containing the client certificate and private key used for mutual TLS authentication with Kafka."
+    },
+    {
+      "name": "kafka.ssl.keystore.pwd",
+      "type": "java.lang.String",
+      "description": "Password used to access the Kafka SSL keystore."
+    },
+    {
+      "name": "kafka.ssl.key-pwd",
+      "type": "java.lang.String",
+      "description": "Password protecting the private key stored in the Kafka SSL keystore."
+    },
+    {
+      "name": "kafka.confluent.avro.schema-registry.url",
+      "type": "java.lang.String",
+      "description": "URL of the Confluent Schema Registry used to register and retrieve Avro schemas for Kafka messages."
     }
   ]
 }

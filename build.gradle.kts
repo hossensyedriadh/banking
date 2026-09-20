@@ -18,6 +18,7 @@ java {
 
 repositories {
     mavenCentral()
+    maven("https://packages.confluent.io/maven/")
 }
 
 configurations.configureEach {
@@ -38,7 +39,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
 //	implementation("org.springframework.boot:spring-boot-starter-flyway")
-//	implementation("org.springframework.boot:spring-boot-starter-kafka")
+	implementation("org.springframework.boot:spring-boot-starter-kafka")
 //	implementation("org.springframework.boot:spring-boot-starter-mail")
 //	implementation("org.springframework.boot:spring-boot-starter-quartz")
     implementation("org.springframework.boot:spring-boot-starter-restclient")
@@ -54,6 +55,8 @@ dependencies {
     implementation("org.apache.httpcomponents.core5:httpcore5:5.4.2")
     implementation("org.json:json:20251224")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.0")
+    implementation("io.confluent:kafka-avro-serializer:8.3.1")
+    implementation("io.confluent:kafka-schema-registry-client:8.3.1")
 //	implementation("org.flywaydb:flyway-database-postgresql")
     implementation("org.mapstruct:mapstruct:1.6.3")
     annotationProcessor("org.mapstruct:mapstruct-processor:1.6.3")
@@ -78,7 +81,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
     testImplementation("org.springframework.boot:spring-boot-starter-data-redis-test")
 //	testImplementation("org.springframework.boot:spring-boot-starter-flyway-test")
-//	testImplementation("org.springframework.boot:spring-boot-starter-kafka-test")
+	testImplementation("org.springframework.boot:spring-boot-starter-kafka-test")
 //	testImplementation("org.springframework.boot:spring-boot-starter-mail-test")
 //	testImplementation("org.springframework.boot:spring-boot-starter-quartz-test")
     testImplementation("org.springframework.boot:spring-boot-starter-restclient-test")
