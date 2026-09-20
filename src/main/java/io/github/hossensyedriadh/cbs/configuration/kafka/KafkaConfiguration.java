@@ -3,6 +3,7 @@ package io.github.hossensyedriadh.cbs.configuration.kafka;
 import io.confluent.kafka.serializers.AbstractKafkaSchemaSerDeConfig;
 import io.confluent.kafka.serializers.KafkaAvroSerializer;
 import jakarta.annotation.PostConstruct;
+import org.apache.avro.specific.SpecificRecord;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.config.SaslConfigs;
@@ -93,12 +94,12 @@ public class KafkaConfiguration {
     }
 
     @Bean
-    public ProducerFactory<String, String> producerFactory() {
+    public ProducerFactory<String, SpecificRecord> producerFactory() {
         return new DefaultKafkaProducerFactory<>(new HashMap<>(this.baseConfig));
     }
 
     @Bean
-    public KafkaTemplate<String, String> kafkaTemplate() {
+    public KafkaTemplate<String, SpecificRecord> kafkaTemplate() {
         return new KafkaTemplate<>(this.producerFactory());
     }
 }

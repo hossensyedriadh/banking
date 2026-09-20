@@ -4,6 +4,7 @@ plugins {
     java
     id("org.springframework.boot") version "4.1.1"
     id("io.spring.dependency-management") version "1.1.7"
+    id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
 }
 
 group = "io.github.hossensyedriadh"
@@ -55,6 +56,7 @@ dependencies {
     implementation("org.apache.httpcomponents.core5:httpcore5:5.4.2")
     implementation("org.json:json:20251224")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.0")
+    implementation("org.apache.avro:avro:1.12.2")
     implementation("io.confluent:kafka-avro-serializer:8.3.1")
     implementation("io.confluent:kafka-schema-registry-client:8.3.1")
 //	implementation("org.flywaydb:flyway-database-postgresql")

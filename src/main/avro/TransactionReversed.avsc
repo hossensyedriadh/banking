@@ -1,0 +1,68 @@
+{
+  "type": "record",
+  "name": "TransactionReversed",
+  "namespace": "io.github.hossensyedriadh.cbs.transaction.event",
+  "fields": [
+    {
+      "name": "eventId",
+      "type": "string"
+    },
+    {
+      "name": "transactionId",
+      "type": "long"
+    },
+    {
+      "name": "transactionReference",
+      "type": "string"
+    },
+    {
+      "name": "reversalOfTransactionId",
+      "type": "long"
+    },
+    {
+      "name": "reversalOfTransactionReference",
+      "type": "string"
+    },
+    {
+      "name": "transactionType",
+      "type": "string"
+    },
+    {
+      "name": "status",
+      "type": "string"
+    },
+    {
+      "name": "accountId",
+      "type": "long"
+    },
+    {
+      "name": "destinationAccountId",
+      "type": ["null", "long"],
+      "default": null
+    },
+    {
+      "name": "amount",
+      "type": "string"
+    },
+    {
+      "name": "currencyCode",
+      "type": "string"
+    },
+    {
+      "name": "feeAmount",
+      "type": "string"
+    },
+    {
+      "name": "feeCode",
+      "type": ["null", "string"],
+      "default": null
+    },
+    {
+      "name": "occurredAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      }
+    }
+  ]
+}
