@@ -18,7 +18,11 @@ import io.github.hossensyedriadh.cbs.transaction.api.enumerator.TransactionType;
 import io.github.hossensyedriadh.cbs.transaction.api.model.AccountTransactionView;
 import io.github.hossensyedriadh.cbs.transaction.api.model.TransactionView;
 import io.github.hossensyedriadh.cbs.transaction.api.service.TransactionService;
+import io.github.hossensyedriadh.cbs.transaction.event.TransactionCreated;
+import io.github.hossensyedriadh.cbs.transaction.event.TransactionReversed;
 import io.github.hossensyedriadh.cbs.transaction.internal.domain.Transaction;
+import io.github.hossensyedriadh.cbs.transaction.internal.event.OutboxEventService;
+import io.github.hossensyedriadh.cbs.transaction.internal.event.TransactionEventFactory;
 import io.github.hossensyedriadh.cbs.transaction.internal.mapper.TransactionMapper;
 import io.github.hossensyedriadh.cbs.transaction.internal.repository.TransactionRepository;
 import io.github.hossensyedriadh.cbs.transaction.internal.util.TransactionReferenceGenerator;
@@ -34,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
 @Log4j2
 @Service
@@ -46,13 +51,16 @@ public class TransactionServiceImpl implements TransactionService {
     private final LedgerService ledgerService;
     private final CurrencyService currencyService;
     private final FeeCalculationService feeCalculationService;
+    private final TransactionEventFactory transactionEventFactory;
+    private final OutboxEventService outboxEventService;
     private final HttpServletRequest httpServletRequest;
 
     @Autowired
     public TransactionServiceImpl(TransactionRepository transactionRepository, TransactionMapper transactionMapper,
                                   AccountService accountService, AccountRestrictionService accountRestrictionService,
-                                  LedgerService ledgerService, CurrencyService currencyService,
-                                  FeeCalculationService feeCalculationService, HttpServletRequest httpServletRequest) {
+                                  LedgerService ledgerService, CurrencyService currencyService, FeeCalculationService feeCalculationService,
+                                  TransactionEventFactory transactionEventFactory, OutboxEventService outboxEventService,
+                                  HttpServletRequest httpServletRequest) {
         this.transactionRepository = transactionRepository;
         this.transactionMapper = transactionMapper;
         this.accountService = accountService;
@@ -60,6 +68,8 @@ public class TransactionServiceImpl implements TransactionService {
         this.ledgerService = ledgerService;
         this.currencyService = currencyService;
         this.feeCalculationService = feeCalculationService;
+        this.transactionEventFactory = transactionEventFactory;
+        this.outboxEventService = outboxEventService;
         this.httpServletRequest = httpServletRequest;
     }
 
@@ -96,7 +106,7 @@ public class TransactionServiceImpl implements TransactionService {
 
         this.validateCurrency(command.getCurrencyId(), account.getCurrencyId());
 
-        Transaction transaction = createTransaction(account.getId(), null, command.getCurrencyId(), TransactionType.DEPOSIT,
+        Transaction transaction = this.createTransaction(account.getId(), null, command.getCurrencyId(), TransactionType.DEPOSIT,
                 command.getAmount(), command.getDescription(), command.getIdempotencyKey());
 
         Transaction savedTransaction = this.transactionRepository.save(transaction);
@@ -108,6 +118,10 @@ public class TransactionServiceImpl implements TransactionService {
         this.ledgerService.postDeposit(savedTransaction.getId(), customerLedgerAccountId, command.getAmount());
 
         this.completeTransaction(savedTransaction);
+
+        TransactionCreated event = this.transactionEventFactory.createTransactionCreatedEvent(savedTransaction);
+        this.outboxEventService.save(UUID.fromString(event.getEventId()), event, "TRANSACTION",
+                savedTransaction.getId().toString(), savedTransaction.getCreatedAt());
 
         return transactionMapper.toView(savedTransaction);
     }
@@ -148,6 +162,10 @@ public class TransactionServiceImpl implements TransactionService {
         this.ledgerService.postWithdrawal(savedTransaction.getId(), customerLedgerAccountId, command.getAmount());
 
         this.completeTransaction(savedTransaction);
+
+        TransactionCreated event = this.transactionEventFactory.createTransactionCreatedEvent(savedTransaction);
+        this.outboxEventService.save(UUID.fromString(event.getEventId()), event, "TRANSACTION",
+                savedTransaction.getId().toString(), savedTransaction.getCreatedAt());
 
         return transactionMapper.toView(savedTransaction);
     }
@@ -202,6 +220,10 @@ public class TransactionServiceImpl implements TransactionService {
 
         this.completeTransaction(savedTransaction);
 
+        TransactionCreated event = this.transactionEventFactory.createTransactionCreatedEvent(savedTransaction);
+        this.outboxEventService.save(UUID.fromString(event.getEventId()), event, "TRANSACTION",
+                savedTransaction.getId().toString(), savedTransaction.getCreatedAt());
+
         return this.transactionMapper.toView(savedTransaction);
     }
 
@@ -252,6 +274,10 @@ public class TransactionServiceImpl implements TransactionService {
 
         this.completeTransaction(savedReversal);
 
+        TransactionReversed event = this.transactionEventFactory.createTransactionReversedEvent(savedReversal);
+        this.outboxEventService.save(UUID.fromString(event.getEventId()), event, "TRANSACTION",
+                savedReversal.getId().toString(), savedReversal.getCreatedAt());
+
         return this.transactionMapper.toView(savedReversal);
     }
 
@@ -288,6 +314,10 @@ public class TransactionServiceImpl implements TransactionService {
         this.ledgerService.postFee(savedTransaction.getId(), customerLedgerAccountId, command.getAmount());
 
         this.completeTransaction(savedTransaction);
+
+        TransactionCreated event = this.transactionEventFactory.createTransactionCreatedEvent(savedTransaction);
+        this.outboxEventService.save(UUID.fromString(event.getEventId()), event, "TRANSACTION",
+                savedTransaction.getId().toString(), savedTransaction.getCreatedAt());
 
         return transactionMapper.toView(savedTransaction);
     }

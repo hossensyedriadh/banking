@@ -1,10 +1,7 @@
 package io.github.hossensyedriadh.cbs.transaction.internal.event;
 
-import io.github.hossensyedriadh.cbs.transaction.event.TransactionCreated;
-import io.github.hossensyedriadh.cbs.transaction.event.TransactionReversed;
+import org.apache.avro.specific.SpecificRecord;
 
 public interface TransactionEventProducer {
-    void publish(TransactionCreated event);
-
-    void publish(TransactionReversed event);
+    void publish(String key, SpecificRecord event);
 }
