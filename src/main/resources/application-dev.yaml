@@ -22,7 +22,8 @@ spring:
   data:
     web:
       pageable:
-        max-page-size: 40
+        max-page-size: 30
+        default-page-size: 10
     redis:
       host: "${REDIS_HOST}"
       port: ${REDIS_PORT}

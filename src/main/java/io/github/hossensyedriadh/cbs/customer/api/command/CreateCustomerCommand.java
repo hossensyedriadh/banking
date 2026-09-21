@@ -1,15 +1,13 @@
 package io.github.hossensyedriadh.cbs.customer.api.command;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.sql.Date;
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -18,25 +16,28 @@ public class CreateCustomerCommand implements Serializable {
     private static final long serialVersionUID = 9091724310596889014L;
 
     @NotBlank
-    @JsonProperty("fist_name")
+    @Size(max = 100)
+    @JsonProperty("first_name")
     private String firstName;
 
-    @NotBlank
+    @Size(max = 100)
     @JsonProperty("middle_name")
     private String middleName;
 
-    @NotBlank
+    @Size(max = 100)
     @JsonProperty("last_name")
     private String lastName;
 
     @NotNull
+    @Past
     @JsonProperty("date_of_birth")
-    private Date dateOfBirth;
+    private LocalDate dateOfBirth;
 
-    @Email
     @NotBlank
+    @Email
     private String email;
 
     @NotBlank
+    @Size(max = 30)
     private String phone;
 }
