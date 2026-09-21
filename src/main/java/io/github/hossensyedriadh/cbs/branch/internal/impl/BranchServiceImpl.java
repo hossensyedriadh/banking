@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Log4j2
@@ -31,6 +32,12 @@ public class BranchServiceImpl implements BranchService {
         this.branchRepository = branchRepository;
         this.branchMapper = branchMapper;
         this.httpServletRequest = httpServletRequest;
+    }
+
+    @Override
+    public List<BranchView> getBranches() {
+        return this.branchRepository.findAll().stream().map(this.branchMapper::toView)
+                .toList();
     }
 
     @Override
@@ -56,7 +63,7 @@ public class BranchServiceImpl implements BranchService {
 
     @Transactional
     @Override
-    public Optional<BranchView> updateBranch(Long id, UpdateBranchCommand command) {
+    public BranchView updateBranch(Long id, UpdateBranchCommand command) {
         this.branchRepository.findById(id).map(branch -> {
             if (branch.getActive() == Boolean.FALSE) {
                 log.warn("Branch [ID: {}] is not active.", id);
