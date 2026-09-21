@@ -9,6 +9,7 @@ import io.github.hossensyedriadh.cbs.branch.internal.mapper.BranchMapper;
 import io.github.hossensyedriadh.cbs.branch.internal.repository.BranchRepository;
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -52,7 +53,7 @@ public class BranchServiceImpl implements BranchService {
 
     @Transactional
     @Override
-    public BranchView createBranch(CreateBranchCommand command) {
+    public BranchView createBranch(@Valid CreateBranchCommand command) {
         Branch branch = this.branchMapper.toEntity(command);
         Branch saved = this.branchRepository.save(branch);
 
@@ -63,7 +64,7 @@ public class BranchServiceImpl implements BranchService {
 
     @Transactional
     @Override
-    public BranchView updateBranch(Long id, UpdateBranchCommand command) {
+    public BranchView updateBranch(Long id, @Valid UpdateBranchCommand command) {
         Branch branch = this.branchRepository.findByIdForUpdate(id).orElseThrow(() -> {
             log.warn("No Branch with ID: {}", id);
             return new ApiResourceException("Branch not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
