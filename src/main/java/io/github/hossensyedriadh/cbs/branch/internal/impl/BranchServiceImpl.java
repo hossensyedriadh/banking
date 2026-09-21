@@ -64,29 +64,29 @@ public class BranchServiceImpl implements BranchService {
     @Transactional
     @Override
     public BranchView updateBranch(Long id, UpdateBranchCommand command) {
-        this.branchRepository.findById(id).map(branch -> {
-            if (branch.getActive() == Boolean.FALSE) {
-                log.warn("Branch [ID: {}] is not active.", id);
-                throw new ApiResourceException("Branch [" + branch.getBranchCode() + "] is not active",
-                        HttpStatus.BAD_REQUEST, this.httpServletRequest);
-            }
-
-            this.branchMapper.toPatchedEntity(command, branch);
-            Branch updated = this.branchRepository.save(branch);
-
-            log.info("Updated Branch with ID: {}", id);
-
-            return this.branchMapper.toView(updated);
+        Branch branch = this.branchRepository.findByIdForUpdate(id).orElseThrow(() -> {
+            log.warn("No Branch with ID: {}", id);
+            return new ApiResourceException("Branch not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
         });
 
-        log.warn("No Branch with ID: {}", id);
-        throw new ApiResourceException("Branch not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        if (branch.getActive() == Boolean.FALSE) {
+            log.warn("Branch [ID: {}] is not active.", id);
+            throw new ApiResourceException("Branch [" + branch.getBranchCode() + "] is not active",
+                    HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        }
+
+        this.branchMapper.toPatchedEntity(command, branch);
+        Branch updated = this.branchRepository.save(branch);
+
+        log.info("Updated Branch with ID: {}", id);
+
+        return this.branchMapper.toView(updated);
     }
 
     @Transactional
     @Override
     public void activateBranch(Long id) {
-        this.branchRepository.findById(id).ifPresentOrElse(branch -> {
+        this.branchRepository.findByIdForUpdate(id).ifPresentOrElse(branch -> {
             if (branch.getActive() == Boolean.TRUE) {
                 log.warn("Branch with ID: {} is already active", id);
                 throw new ApiResourceException("Branch is already active", HttpStatus.BAD_REQUEST, this.httpServletRequest);
@@ -105,7 +105,7 @@ public class BranchServiceImpl implements BranchService {
     @Transactional
     @Override
     public void deactivateBranch(Long id) {
-        this.branchRepository.findById(id).ifPresentOrElse(branch -> {
+        this.branchRepository.findByIdForUpdate(id).ifPresentOrElse(branch -> {
             if (branch.getActive() == Boolean.FALSE) {
                 log.warn("Branch with ID: {} is already inactive", id);
                 throw new ApiResourceException("Branch is already inactive", HttpStatus.BAD_REQUEST, this.httpServletRequest);

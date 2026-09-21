@@ -6,6 +6,7 @@ import lombok.Setter;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.OffsetDateTime;
 
 @Getter
 @Setter
@@ -25,4 +26,10 @@ public class BranchView implements Serializable {
     private String phone;
 
     private boolean active;
+
+    @JsonProperty("created_at")
+    private OffsetDateTime createdAt;
+
+    @JsonProperty("last_updated_at")
+    private OffsetDateTime lastUpdatedAt;
 }
