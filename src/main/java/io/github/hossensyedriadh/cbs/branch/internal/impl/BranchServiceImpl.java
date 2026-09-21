@@ -47,7 +47,7 @@ public class BranchServiceImpl implements BranchService {
 
     @Override
     public Optional<BranchView> getBranchByCode(String code) {
-        return this.branchRepository.findByBranchCode(code).map(this.branchMapper::toView);
+        return this.branchRepository.findByBranchCodeIgnoreCase(code).map(this.branchMapper::toView);
     }
 
     @Transactional
