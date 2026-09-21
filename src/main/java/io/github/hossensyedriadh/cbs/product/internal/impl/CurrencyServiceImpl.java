@@ -8,6 +8,7 @@ import io.github.hossensyedriadh.cbs.product.internal.domain.Currency;
 import io.github.hossensyedriadh.cbs.product.internal.mapper.CurrencyMapper;
 import io.github.hossensyedriadh.cbs.product.internal.repository.CurrencyRepository;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -50,7 +51,7 @@ public class CurrencyServiceImpl implements CurrencyService {
 
     @Transactional
     @Override
-    public CurrencyView createCurrency(CreateCurrencyCommand command) {
+    public CurrencyView createCurrency(@Valid CreateCurrencyCommand command) {
         Currency currency = this.currencyMapper.toEntity(command);
         Currency saved = this.currencyRepository.save(currency);
 

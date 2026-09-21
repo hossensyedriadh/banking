@@ -2,10 +2,7 @@ package io.github.hossensyedriadh.cbs.product.api.command;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.github.hossensyedriadh.cbs.product.api.enumerator.ChequeProductStatus;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,10 +16,12 @@ public class CreateChequeProductCommand implements Serializable {
     @Serial
     private static final long serialVersionUID = 6250175179778988855L;
 
+    @Size(max = 50)
     @NotBlank
     @JsonProperty("product_code")
     private String productCode;
 
+    @Size(max = 100)
     @NotBlank
     @JsonProperty("product_name")
     private String productName;
@@ -32,10 +31,14 @@ public class CreateChequeProductCommand implements Serializable {
 
     @NotNull
     @Min(1)
+    @JsonProperty("leaf_count")
+    private Integer leafCount;
+
+    @NotNull
+    @Min(1)
     @JsonProperty("validity_days")
     private Integer validityDays;
 
-    @NotNull
     @PositiveOrZero
     @JsonProperty("issuance_fee")
     private BigDecimal issuanceFee;

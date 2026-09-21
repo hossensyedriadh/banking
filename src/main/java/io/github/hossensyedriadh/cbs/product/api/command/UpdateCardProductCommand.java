@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,6 +18,7 @@ public class UpdateCardProductCommand implements Serializable {
     @Serial
     private static final long serialVersionUID = 6640811579105651810L;
 
+    @Size(max = 100)
     @JsonProperty("product_name")
     private String productName;
 

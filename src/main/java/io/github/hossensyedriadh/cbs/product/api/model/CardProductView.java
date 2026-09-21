@@ -50,4 +50,7 @@ public class CardProductView implements Serializable {
 
     @JsonProperty("created_at")
     private OffsetDateTime createdAt;
+
+    @JsonProperty("last_updated_at")
+    private OffsetDateTime lastUpdatedAt;
 }

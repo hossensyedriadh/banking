@@ -10,6 +10,7 @@ import io.github.hossensyedriadh.cbs.product.internal.domain.AccountProduct;
 import io.github.hossensyedriadh.cbs.product.internal.mapper.AccountProductMapper;
 import io.github.hossensyedriadh.cbs.product.internal.repository.AccountProductRepository;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -52,7 +53,7 @@ public class AccountProductServiceImpl implements AccountProductService {
 
     @Transactional
     @Override
-    public AccountProductView createProduct(CreateAccountProductCommand command) {
+    public AccountProductView createProduct(@Valid CreateAccountProductCommand command) {
         if (this.accountProductRepository.existsByProductCode(command.getProductCode())) {
             log.warn("Account Product with code {} already exists", command.getProductCode());
             throw new ApiResourceException("Account Product with code " + command.getProductCode() + " already exists",
@@ -69,23 +70,23 @@ public class AccountProductServiceImpl implements AccountProductService {
 
     @Transactional
     @Override
-    public Optional<AccountProductView> updateProduct(Long id, UpdateAccountProductCommand command) {
-        this.accountProductRepository.findByIdForUpdate(id).map(product -> {
-            if (product.getStatus() != AccountProductStatus.ACTIVE) {
-                log.warn("Account product with code {} is not active", product.getProductCode());
-                throw new ApiResourceException("Account product not active", HttpStatus.BAD_REQUEST, this.httpServletRequest);
-            }
-
-            this.accountProductMapper.toPatchedEntity(command, product);
-            AccountProduct updated = this.accountProductRepository.save(product);
-
-            log.info("Account product updated with ID: {}", id);
-
-            return this.accountProductMapper.toView(updated);
+    public AccountProductView updateProduct(Long id, @Valid UpdateAccountProductCommand command) {
+        AccountProduct product = this.accountProductRepository.findByIdForUpdate(id).orElseThrow(() -> {
+            log.warn("Account product not found with id: {}", id);
+            return new ApiResourceException("Account product not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
         });
 
-        log.warn("Account product not found with id: {}", id);
-        throw new ApiResourceException("Account product not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        if (product.getStatus() != AccountProductStatus.ACTIVE) {
+            log.warn("Account product with code {} is not active", product.getProductCode());
+            throw new ApiResourceException("Account product not active", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        }
+
+        this.accountProductMapper.toPatchedEntity(command, product);
+        AccountProduct updated = this.accountProductRepository.save(product);
+
+        log.info("Account product updated with ID: {}", id);
+
+        return this.accountProductMapper.toView(updated);
     }
 
     @Transactional

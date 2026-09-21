@@ -11,6 +11,7 @@ import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
@@ -29,7 +30,7 @@ public class AccountProduct {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(name = "product_code", updatable = false, unique = true, nullable = false, length = 30)
+    @Column(name = "product_code", updatable = false, unique = true, nullable = false, length = 50)
     private String productCode;
 
     @Column(name = "name", nullable = false, length = 150)
@@ -61,4 +62,9 @@ public class AccountProduct {
     @CreatedDate
     @Column(name = "created_at", updatable = false, nullable = false)
     private OffsetDateTime createdAt;
+
+    @Setter(AccessLevel.NONE)
+    @LastModifiedDate
+    @Column(name = "last_updated_at", insertable = false)
+    private OffsetDateTime lastUpdatedAt;
 }

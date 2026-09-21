@@ -10,6 +10,7 @@ import lombok.Setter;
 import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 
 @Getter
 @Setter
@@ -39,4 +40,10 @@ public class AccountProductView implements Serializable {
 
     @JsonProperty("interest_calculation_method")
     private InterestCalculationMethod interestCalculationMethod;
+
+    @JsonProperty("created_at")
+    private OffsetDateTime createdAt;
+
+    @JsonProperty("last_updated_at")
+    private OffsetDateTime lastUpdatedAt;
 }

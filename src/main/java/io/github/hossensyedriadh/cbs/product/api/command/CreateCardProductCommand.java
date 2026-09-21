@@ -17,9 +17,11 @@ public class CreateCardProductCommand implements Serializable {
     @Serial
     private static final long serialVersionUID = 386049108088792519L;
 
+    @Size(max = 50)
     @NotBlank
     private String productCode;
 
+    @Size(max = 100)
     @NotBlank
     private String productName;
 

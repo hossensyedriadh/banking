@@ -10,6 +10,7 @@ import io.github.hossensyedriadh.cbs.product.internal.domain.ChequeProduct;
 import io.github.hossensyedriadh.cbs.product.internal.mapper.ChequeProductMapper;
 import io.github.hossensyedriadh.cbs.product.internal.repository.ChequeProductRepository;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -52,7 +53,7 @@ public class ChequeProductServiceImpl implements ChequeProductService {
 
     @Transactional
     @Override
-    public ChequeProductView createProduct(CreateChequeProductCommand command) {
+    public ChequeProductView createProduct(@Valid CreateChequeProductCommand command) {
         if (this.chequeProductRepository.existsByProductCode(command.getProductCode())) {
             log.warn("Cheque product with code {} already exists", command.getProductCode());
             throw new ApiResourceException("Cheque product with code " + command.getProductCode() + " already exists",
@@ -69,23 +70,23 @@ public class ChequeProductServiceImpl implements ChequeProductService {
 
     @Transactional
     @Override
-    public Optional<ChequeProductView> updateProduct(Long id, UpdateChequeProductCommand command) {
-        this.chequeProductRepository.findByIdForUpdate(id).map(product -> {
-            if (product.getStatus() != ChequeProductStatus.ACTIVE) {
-                log.warn("Cheque product with code {} is not active", product.getProductCode());
-                throw new ApiResourceException("Cheque product not active", HttpStatus.BAD_REQUEST, this.httpServletRequest);
-            }
-
-            this.chequeProductMapper.toPatchedEntity(command, product);
-            ChequeProduct updated = this.chequeProductRepository.save(product);
-
-            log.info("Cheque product updated with ID: {}", updated.getId());
-
-            return this.chequeProductMapper.toView(updated);
+    public ChequeProductView updateProduct(Long id, @Valid UpdateChequeProductCommand command) {
+        ChequeProduct product = this.chequeProductRepository.findByIdForUpdate(id).orElseThrow(() -> {
+            log.warn("Cheque product not found with id: {}", id);
+            return new ApiResourceException("Cheque product not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
         });
 
-        log.warn("Cheque product not found with id: {}", id);
-        throw new ApiResourceException("Cheque product not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        if (product.getStatus() != ChequeProductStatus.ACTIVE) {
+            log.warn("Cheque product with code {} is not active", product.getProductCode());
+            throw new ApiResourceException("Cheque product not active", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        }
+
+        this.chequeProductMapper.toPatchedEntity(command, product);
+        ChequeProduct updated = this.chequeProductRepository.save(product);
+
+        log.info("Cheque product updated with ID: {}", updated.getId());
+
+        return this.chequeProductMapper.toView(updated);
     }
 
     @Transactional
