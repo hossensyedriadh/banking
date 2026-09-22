@@ -34,7 +34,7 @@ public class AccountHoldController {
 
     @GetMapping("/account/{accountId}/status/{status}")
     public ResponseEntity<List<AccountHoldView>> getHolds(@PathVariable("accountId") Long accountId, @PathVariable("status") AccountHoldStatus status) {
-        List<AccountHoldView> holds = accountHoldService.getHolds(accountId, status);
+        List<AccountHoldView> holds = this.accountHoldService.getHolds(accountId, status);
 
         if (holds.isEmpty()) {
             return ResponseEntity.noContent().build();
@@ -45,7 +45,7 @@ public class AccountHoldController {
 
     @GetMapping("/{id}")
     public ResponseEntity<AccountHoldView> getHold(@PathVariable("id") Long holdId) {
-        Optional<AccountHoldView> hold = accountHoldService.getHold(holdId);
+        Optional<AccountHoldView> hold = this.accountHoldService.getHold(holdId);
 
         return hold.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
     }

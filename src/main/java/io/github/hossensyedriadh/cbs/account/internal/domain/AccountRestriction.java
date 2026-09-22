@@ -34,7 +34,7 @@ public class AccountRestriction {
     private Long accountId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "restriction_type", nullable = false, length = 30)
+    @Column(name = "restriction_type", updatable = false, nullable = false, length = 30)
     private AccountRestrictionType restrictionType;
 
     @Enumerated(EnumType.STRING)

@@ -13,6 +13,7 @@ import io.github.hossensyedriadh.cbs.account.internal.mapper.AccountRestrictionM
 import io.github.hossensyedriadh.cbs.account.internal.repository.AccountRestrictionRepository;
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -56,7 +57,7 @@ public class AccountRestrictionServiceImpl implements AccountRestrictionService 
 
     @Transactional
     @Override
-    public AccountRestrictionView createRestriction(CreateAccountRestrictionCommand command) {
+    public AccountRestrictionView createRestriction(@Valid CreateAccountRestrictionCommand command) {
         AccountView account = this.accountService.getAccountForUpdate(command.getAccountId())
                 .orElseThrow(() -> {
                     log.warn("Account not found with ID: {}", command.getAccountId());
@@ -69,10 +70,10 @@ public class AccountRestrictionServiceImpl implements AccountRestrictionService 
         }
 
         boolean alreadyActive = this.accountRestrictionRepository.existsByAccountIdAndRestrictionTypeAndStatus(account.getId(),
-                command.getType(), AccountRestrictionStatus.ACTIVE);
+                command.getRestrictionType(), AccountRestrictionStatus.ACTIVE);
 
         if (alreadyActive) {
-            log.warn("Restriction on {} for Account ID: {} is already active", command.getType().toString(), command.getAccountId());
+            log.warn("Restriction on {} for Account ID: {} is already active", command.getAccountId().toString(), command.getAccountId());
             throw new ApiResourceException("Restriction is already active", HttpStatus.BAD_REQUEST, this.httpServletRequest);
         }
 
@@ -114,7 +115,7 @@ public class AccountRestrictionServiceImpl implements AccountRestrictionService 
 
         if (restrictions.contains(AccountRestrictionType.DEBIT_BLOCK) || restrictions.contains(AccountRestrictionType.FULL_FREEZE)) {
             log.warn("Account ID: {} is debit restricted", accountId);
-            throw new ApiResourceException("Debit transactions are not allowed for this account");
+            throw new ApiResourceException("Debit transactions are not allowed for this account", HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -124,7 +125,7 @@ public class AccountRestrictionServiceImpl implements AccountRestrictionService 
 
         if (restrictions.contains(AccountRestrictionType.CREDIT_BLOCK) || restrictions.contains(AccountRestrictionType.FULL_FREEZE)) {
             log.warn("Account ID: {} is credit restricted", accountId);
-            throw new ApiResourceException("Credit transactions are not allowed for this account");
+            throw new ApiResourceException("Credit transactions are not allowed for this account", HttpStatus.BAD_REQUEST);
         }
     }
 }
