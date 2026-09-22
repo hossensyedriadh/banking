@@ -25,6 +25,7 @@ import io.github.hossensyedriadh.cbs.product.api.enumerator.AccountProductStatus
 import io.github.hossensyedriadh.cbs.product.api.service.AccountProductService;
 import io.github.hossensyedriadh.cbs.product.api.service.CurrencyService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -74,8 +75,18 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    public List<AccountView> getAccountByCustomerId(Long customerId) {
+        return this.accountRepository.findAllByCustomerId(customerId).stream().map(this.accountMapper::toView).toList();
+    }
+
+    @Override
     public Optional<AccountView> getAccount(Long id) {
         return this.accountRepository.findById(id).map(this.accountMapper::toView);
+    }
+
+    @Override
+    public Optional<AccountView> getAccountByNumber(String accountNumber) {
+        return this.accountRepository.findByAccountNumber(accountNumber).map(this.accountMapper::toView);
     }
 
     @Transactional
@@ -84,19 +95,9 @@ public class AccountServiceImpl implements AccountService {
         return this.accountRepository.findByIdForUpdate(id).map(this.accountMapper::toView);
     }
 
-    @Override
-    public Optional<AccountView> getAccountByNumber(String accountNumber) {
-        return this.accountRepository.findByAccountNumber(accountNumber).map(this.accountMapper::toView);
-    }
-
-    @Override
-    public List<AccountView> getAccountByCustomerId(Long customerId) {
-        return this.accountRepository.findAllByCustomerId(customerId).stream().map(this.accountMapper::toView).toList();
-    }
-
     @Transactional
     @Override
-    public AccountView createAccount(CreateAccountCommand command) {
+    public AccountView createAccount(@Valid CreateAccountCommand command) {
         this.validateCustomers(command.getCustomerIds());
 
         this.accountProductService.getProduct(command.getProductId()).ifPresentOrElse(product -> {
@@ -146,27 +147,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Transactional
     @Override
-    public void blockAccount(Long id) {
-        this.accountRepository.findByIdForUpdate(id).ifPresentOrElse(account -> {
-            if (account.getStatus().equals(AccountStatus.BLOCKED) || account.getStatus().equals(AccountStatus.CLOSED)) {
-                log.warn("Account with ID: {} already {}", id, account.getStatus().toString().toLowerCase());
-                throw new ApiResourceException(String.format("Account already %s", account.getStatus().toString().toLowerCase()),
-                        HttpStatus.BAD_REQUEST, this.httpServletRequest);
-            }
-
-            account.setStatus(AccountStatus.BLOCKED);
-            Account saved = this.accountRepository.save(account);
-
-            log.info("Account with ID: {} successfully blocked", saved.getId());
-        }, () -> {
-            log.warn("No account found with ID: {}", id);
-            throw new ApiResourceException("Account not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
-        });
-    }
-
-    @Transactional
-    @Override
-    public void unblockAccount(Long id) {
+    public void activateAccount(Long id) {
         this.accountRepository.findByIdForUpdate(id).ifPresentOrElse(account -> {
             if (account.getStatus().equals(AccountStatus.ACTIVE) || account.getStatus().equals(AccountStatus.CLOSED)) {
                 log.warn("Account with ID: {} already {}", id, account.getStatus().toString().toLowerCase());
@@ -177,7 +158,7 @@ public class AccountServiceImpl implements AccountService {
             account.setStatus(AccountStatus.ACTIVE);
             Account saved = this.accountRepository.save(account);
 
-            log.info("Account with ID: {} successfully unblocked", saved.getId());
+            log.info("Account with ID: {} successfully activated", saved.getId());
 
         }, () -> {
             log.warn("No account found with ID: {}", id);
@@ -187,7 +168,27 @@ public class AccountServiceImpl implements AccountService {
 
     @Transactional
     @Override
-    public AccountView closeAccount(CloseAccountCommand command) {
+    public void deactivateAccount(Long id) {
+        this.accountRepository.findByIdForUpdate(id).ifPresentOrElse(account -> {
+            if (account.getStatus().equals(AccountStatus.BLOCKED) || account.getStatus().equals(AccountStatus.CLOSED)) {
+                log.warn("Account with ID: {} already {}", id, account.getStatus().toString().toLowerCase());
+                throw new ApiResourceException(String.format("Account already %s", account.getStatus().toString().toLowerCase()),
+                        HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            }
+
+            account.setStatus(AccountStatus.BLOCKED);
+            Account saved = this.accountRepository.save(account);
+
+            log.info("Account with ID: {} successfully deactivated", saved.getId());
+        }, () -> {
+            log.warn("No account found with ID: {}", id);
+            throw new ApiResourceException("Account not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        });
+    }
+
+    @Transactional
+    @Override
+    public AccountView closeAccount(@Valid CloseAccountCommand command) {
         Account account = this.accountRepository.findByIdForUpdate(command.getAccountId()).orElseThrow(() -> {
             log.warn("No account found with ID: {}", command.getAccountId());
             return new ApiResourceException("Account not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);

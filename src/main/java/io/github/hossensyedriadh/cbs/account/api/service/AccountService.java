@@ -3,24 +3,25 @@ package io.github.hossensyedriadh.cbs.account.api.service;
 import io.github.hossensyedriadh.cbs.account.api.command.CloseAccountCommand;
 import io.github.hossensyedriadh.cbs.account.api.command.CreateAccountCommand;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface AccountService {
-    Optional<AccountView> getAccount(Long id);
+    List<AccountView> getAccountByCustomerId(Long customerId);
 
-    Optional<AccountView> getAccountForUpdate(Long id);
+    Optional<AccountView> getAccount(Long id);
 
     Optional<AccountView> getAccountByNumber(String accountNumber);
 
-    List<AccountView> getAccountByCustomerId(Long customerId);
+    Optional<AccountView> getAccountForUpdate(Long id);
 
-    AccountView createAccount(CreateAccountCommand command);
+    AccountView createAccount(@Valid CreateAccountCommand command);
 
-    void blockAccount(Long id);
+    void activateAccount(Long id);
 
-    void unblockAccount(Long id);
+    void deactivateAccount(Long id);
 
-    AccountView closeAccount(CloseAccountCommand command);
+    AccountView closeAccount(@Valid CloseAccountCommand command);
 }

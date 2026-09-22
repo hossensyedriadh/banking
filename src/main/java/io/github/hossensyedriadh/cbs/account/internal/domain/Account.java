@@ -28,7 +28,7 @@ public class Account {
     private Long id;
 
     @Setter(AccessLevel.NONE)
-    @Column(name = "account_number", updatable = false, nullable = false, length = 30)
+    @Column(name = "account_number", updatable = false, unique = true, nullable = false, length = 30)
     private String accountNumber;
 
     @Column(name = "product_id", nullable = false)
