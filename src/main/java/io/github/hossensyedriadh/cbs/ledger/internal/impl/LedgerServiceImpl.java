@@ -3,6 +3,7 @@ package io.github.hossensyedriadh.cbs.ledger.internal.impl;
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import io.github.hossensyedriadh.cbs.ledger.api.command.PostJournalEntryCommand;
 import io.github.hossensyedriadh.cbs.ledger.api.enumerator.JournalEntryType;
+import io.github.hossensyedriadh.cbs.ledger.api.enumerator.ProductLedgerRole;
 import io.github.hossensyedriadh.cbs.ledger.api.model.JournalEntryLine;
 import io.github.hossensyedriadh.cbs.ledger.api.model.SubLedgerAccountView;
 import io.github.hossensyedriadh.cbs.ledger.api.service.LedgerService;
@@ -76,10 +77,11 @@ public class LedgerServiceImpl implements LedgerService {
             throw new ApiResourceException("Subledger account already exists for account", HttpStatus.BAD_REQUEST, this.httpServletRequest);
         }
 
-        Long ledgerAccountId = this.productLedgerAccountRepository.findLedgerAccountIdByProductId(accountProductId).orElseThrow(() -> {
-            log.warn("No ledger account configured for product: {}", accountProductId);
-            return new ApiResourceException("No ledger account configured for product", HttpStatus.BAD_REQUEST, this.httpServletRequest);
-        });
+        Long ledgerAccountId = this.productLedgerAccountRepository.findLedgerAccountIdByProductIdAndLedgerRole(accountProductId, ProductLedgerRole.CUSTOMER_DEPOSIT)
+                .orElseThrow(() -> {
+                    log.warn("No ledger account configured for product: {}", accountProductId);
+                    return new ApiResourceException("No ledger account configured for product", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+                });
 
         LedgerAccount ledgerAccount = this.ledgerAccountRepository.findById(ledgerAccountId).orElseThrow(() -> {
             log.warn("Ledger account with ID: {} does not exist", ledgerAccountId);
