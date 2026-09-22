@@ -14,6 +14,7 @@ import io.github.hossensyedriadh.cbs.account.internal.mapper.AccountHoldMapper;
 import io.github.hossensyedriadh.cbs.account.internal.repository.AccountHoldRepository;
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -59,7 +60,7 @@ public class AccountHoldServiceImpl implements AccountHoldService {
 
     @Transactional
     @Override
-    public AccountHoldView createHold(CreateAccountHoldCommand command) {
+    public AccountHoldView createHold(@Valid CreateAccountHoldCommand command) {
         AccountView account = this.accountService.getAccountForUpdate(command.getAccountId())
                 .orElseThrow(() -> {
                     log.warn("Account not found with ID: {}", command.getAccountId());
