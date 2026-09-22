@@ -93,11 +93,6 @@ public class LedgerServiceImpl implements LedgerService {
             throw new ApiResourceException("Ledger account is inactive", HttpStatus.BAD_REQUEST, this.httpServletRequest);
         }
 
-        if (this.subLedgerAccountRepository.existsByLedgerAccountId(ledgerAccountId)) {
-            log.warn("Ledger account with ID: {} already mapped to another banking account", ledgerAccountId);
-            throw new ApiResourceException("Ledger account is already mapped to another banking account", HttpStatus.BAD_REQUEST, this.httpServletRequest);
-        }
-
         SubLedgerAccount subLedgerAccount = new SubLedgerAccount();
         subLedgerAccount.setAccountId(accountId);
         subLedgerAccount.setLedgerAccount(ledgerAccount);

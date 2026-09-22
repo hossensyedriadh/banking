@@ -3,6 +3,7 @@ package io.github.hossensyedriadh.cbs.account.internal.impl;
 import io.github.hossensyedriadh.cbs.account.api.command.CreateAccountHoldCommand;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountHoldStatus;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountStatus;
+import io.github.hossensyedriadh.cbs.account.api.model.AccountBalanceView;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountHoldView;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
 import io.github.hossensyedriadh.cbs.account.api.service.AccountBalanceService;
@@ -70,15 +71,12 @@ public class AccountHoldServiceImpl implements AccountHoldService {
             throw new ApiResourceException("Account is not active", HttpStatus.BAD_REQUEST, this.httpServletRequest);
         }
 
-        this.accountBalanceService.getBalance(account.getId()).ifPresentOrElse(balance -> {
-            if (command.getAmount().compareTo(balance.getAvailableBalance()) > 0) {
-                log.warn("Insufficient funds to create account hold for account ID: {}", command.getAccountId());
-                throw new ApiResourceException("Insufficient funds", HttpStatus.BAD_REQUEST, this.httpServletRequest);
-            }
-        }, () -> {
-            log.warn("Account ID: {} has no balance records", command.getAccountId());
-            throw new ApiResourceException("Account not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
-        });
+        AccountBalanceView balance = this.accountBalanceService.getBalance(account.getId());
+
+        if (command.getAmount().compareTo(balance.getAvailableBalance()) > 0) {
+            log.warn("Insufficient funds to create account hold for account ID: {}", command.getAccountId());
+            throw new ApiResourceException("Insufficient funds", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        }
 
         AccountHold hold = this.accountHoldMapper.toEntity(command);
         AccountHold saved = this.accountHoldRepository.save(hold);

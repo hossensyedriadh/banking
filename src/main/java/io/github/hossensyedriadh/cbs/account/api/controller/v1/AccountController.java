@@ -2,7 +2,9 @@ package io.github.hossensyedriadh.cbs.account.api.controller.v1;
 
 import io.github.hossensyedriadh.cbs.account.api.command.CloseAccountCommand;
 import io.github.hossensyedriadh.cbs.account.api.command.CreateAccountCommand;
+import io.github.hossensyedriadh.cbs.account.api.model.AccountBalanceView;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
+import io.github.hossensyedriadh.cbs.account.api.service.AccountBalanceService;
 import io.github.hossensyedriadh.cbs.account.api.service.AccountService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,10 +23,12 @@ import java.util.Optional;
 @RequestMapping(value = "/accounts/v1", produces = {MediaType.APPLICATION_JSON_VALUE})
 public class AccountController {
     private final AccountService accountService;
+    private final AccountBalanceService accountBalanceService;
 
     @Autowired
-    public AccountController(AccountService accountService) {
+    public AccountController(AccountService accountService, AccountBalanceService accountBalanceService) {
         this.accountService = accountService;
+        this.accountBalanceService = accountBalanceService;
     }
 
     @InitBinder
@@ -56,6 +60,13 @@ public class AccountController {
         Optional<AccountView> accountView = this.accountService.getAccountByNumber(accountNumber);
 
         return accountView.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
+    }
+
+    @GetMapping("/balance/{accountId}")
+    public ResponseEntity<AccountBalanceView> getBalance(@PathVariable("accountId") Long accountId) {
+        AccountBalanceView accountBalanceView = this.accountBalanceService.getBalance(accountId);
+
+        return ResponseEntity.ok(accountBalanceView);
     }
 
     @PostMapping(value = "/", consumes = {MediaType.APPLICATION_JSON_VALUE})

@@ -2,12 +2,12 @@ package io.github.hossensyedriadh.cbs.transaction.internal.impl;
 
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountStatus;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
+import io.github.hossensyedriadh.cbs.account.api.service.AccountBalanceService;
 import io.github.hossensyedriadh.cbs.account.api.service.AccountRestrictionService;
 import io.github.hossensyedriadh.cbs.account.api.service.AccountService;
 import io.github.hossensyedriadh.cbs.account.api.service.FeeCalculationService;
 import io.github.hossensyedriadh.cbs.account.api.utility.SystemFeeCodes;
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
-import io.github.hossensyedriadh.cbs.ledger.api.model.SubLedgerAccountView;
 import io.github.hossensyedriadh.cbs.ledger.api.service.LedgerService;
 import io.github.hossensyedriadh.cbs.product.api.model.CurrencyView;
 import io.github.hossensyedriadh.cbs.product.api.service.CurrencyService;
@@ -47,6 +47,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final TransactionRepository transactionRepository;
     private final TransactionMapper transactionMapper;
     private final AccountService accountService;
+    private final AccountBalanceService accountBalanceService;
     private final AccountRestrictionService accountRestrictionService;
     private final LedgerService ledgerService;
     private final CurrencyService currencyService;
@@ -57,13 +58,15 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Autowired
     public TransactionServiceImpl(TransactionRepository transactionRepository, TransactionMapper transactionMapper,
-                                  AccountService accountService, AccountRestrictionService accountRestrictionService,
-                                  LedgerService ledgerService, CurrencyService currencyService, FeeCalculationService feeCalculationService,
+                                  AccountService accountService, AccountBalanceService accountBalanceService,
+                                  AccountRestrictionService accountRestrictionService, LedgerService ledgerService,
+                                  CurrencyService currencyService, FeeCalculationService feeCalculationService,
                                   TransactionEventFactory transactionEventFactory, OutboxEventService outboxEventService,
                                   HttpServletRequest httpServletRequest) {
         this.transactionRepository = transactionRepository;
         this.transactionMapper = transactionMapper;
         this.accountService = accountService;
+        this.accountBalanceService = accountBalanceService;
         this.accountRestrictionService = accountRestrictionService;
         this.ledgerService = ledgerService;
         this.currencyService = currencyService;
@@ -378,11 +381,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     private BigDecimal getAvailableBalance(Long accountId) {
-        return this.ledgerService.getSubLedgerAccountByAccountId(accountId).map(SubLedgerAccountView::getBalance)
-                .orElseThrow(() -> {
-                    log.warn("Sub-ledger account not found for account id: {}", accountId);
-                    return new ApiResourceException("Sub-ledger account not found for customer", HttpStatus.INTERNAL_SERVER_ERROR, this.httpServletRequest);
-                });
+        return this.accountBalanceService.getBalance(accountId).getAvailableBalance();
     }
 
     private AccountView getActiveAccount(Long accountId) {

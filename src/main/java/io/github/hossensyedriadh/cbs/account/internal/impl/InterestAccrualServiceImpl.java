@@ -4,6 +4,7 @@ import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountStatus;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.InterestAccrualStatus;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
 import io.github.hossensyedriadh.cbs.account.api.model.InterestAccrualView;
+import io.github.hossensyedriadh.cbs.account.api.service.AccountBalanceService;
 import io.github.hossensyedriadh.cbs.account.api.service.AccountService;
 import io.github.hossensyedriadh.cbs.account.api.service.InterestAccrualService;
 import io.github.hossensyedriadh.cbs.account.api.service.InterestCalculationService;
@@ -11,7 +12,6 @@ import io.github.hossensyedriadh.cbs.account.internal.domain.InterestAccrual;
 import io.github.hossensyedriadh.cbs.account.internal.mapper.InterestAccrualMapper;
 import io.github.hossensyedriadh.cbs.account.internal.repository.InterestAccrualRepository;
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
-import io.github.hossensyedriadh.cbs.ledger.api.model.SubLedgerAccountView;
 import io.github.hossensyedriadh.cbs.ledger.api.service.LedgerService;
 import io.github.hossensyedriadh.cbs.product.api.enumerator.AccountProductStatus;
 import io.github.hossensyedriadh.cbs.product.api.model.AccountProductView;
@@ -34,6 +34,7 @@ public class InterestAccrualServiceImpl implements InterestAccrualService {
     private final InterestAccrualRepository interestAccrualRepository;
     private final InterestCalculationService interestCalculationService;
     private final AccountService accountService;
+    private final AccountBalanceService accountBalanceService;
     private final AccountProductService accountProductService;
     private final LedgerService ledgerService;
     private final InterestAccrualMapper interestAccrualMapper;
@@ -41,12 +42,13 @@ public class InterestAccrualServiceImpl implements InterestAccrualService {
 
     @Autowired
     public InterestAccrualServiceImpl(InterestAccrualRepository interestAccrualRepository, InterestCalculationService interestCalculationService,
-                                      AccountService accountService, AccountProductService accountProductService,
-                                      LedgerService ledgerService, InterestAccrualMapper interestAccrualMapper,
-                                      HttpServletRequest httpServletRequest) {
+                                      AccountService accountService, AccountBalanceService accountBalanceService,
+                                      AccountProductService accountProductService, LedgerService ledgerService,
+                                      InterestAccrualMapper interestAccrualMapper, HttpServletRequest httpServletRequest) {
         this.interestAccrualRepository = interestAccrualRepository;
         this.interestCalculationService = interestCalculationService;
         this.accountService = accountService;
+        this.accountBalanceService = accountBalanceService;
         this.accountProductService = accountProductService;
         this.ledgerService = ledgerService;
         this.interestAccrualMapper = interestAccrualMapper;
@@ -90,12 +92,7 @@ public class InterestAccrualServiceImpl implements InterestAccrualService {
             throw new ApiResourceException("Account is not interest bearing", HttpStatus.BAD_REQUEST, this.httpServletRequest);
         }
 
-        BigDecimal baseAmount = this.ledgerService.getSubLedgerAccountByAccountId(accountId)
-                .map(SubLedgerAccountView::getBalance).orElseThrow(() -> {
-                    log.warn("Sub-ledger account not found for account id: {}", accountId);
-                    return new ApiResourceException("Sub-ledger account not found for account", HttpStatus.INTERNAL_SERVER_ERROR, this.httpServletRequest);
-                });
-
+        BigDecimal baseAmount = this.accountBalanceService.getBalance(accountId).getLedgerBalance();
         BigDecimal interestAmount = this.interestCalculationService.calculateDailyInterest(baseAmount, accountProduct.getInterestRate());
 
         InterestAccrual accrual = new InterestAccrual();
