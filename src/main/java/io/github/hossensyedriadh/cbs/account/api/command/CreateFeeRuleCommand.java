@@ -6,6 +6,7 @@ import io.github.hossensyedriadh.cbs.account.api.validation.ValidFeeRule;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,10 +22,12 @@ public class CreateFeeRuleCommand implements Serializable {
     private static final long serialVersionUID = 7095049503135381072L;
 
     @NotBlank
+    @Size(max = 50)
     @JsonProperty("fee_code")
     private String feeCode;
 
     @NotBlank
+    @Size(max = 100)
     @JsonProperty("fee_name")
     private String feeName;
 

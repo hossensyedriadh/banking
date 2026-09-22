@@ -3,6 +3,7 @@ package io.github.hossensyedriadh.cbs.account.api.service;
 import io.github.hossensyedriadh.cbs.account.api.command.CreateFeeRuleCommand;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.FeeRuleStatus;
 import io.github.hossensyedriadh.cbs.account.api.model.FeeRuleView;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -18,9 +19,9 @@ public interface FeeRuleService {
 
     Optional<FeeRuleView> getFeeRule(String feeCode, FeeRuleStatus status);
 
-    FeeRuleView createFeeRule(CreateFeeRuleCommand command);
+    FeeRuleView createFeeRule(@Valid CreateFeeRuleCommand command);
 
-    FeeRuleView activateFeeRule(Long id);
+    void activateFeeRule(Long id);
 
-    FeeRuleView deactivateFeeRule(Long id);
+    void deactivateFeeRule(Long id);
 }
