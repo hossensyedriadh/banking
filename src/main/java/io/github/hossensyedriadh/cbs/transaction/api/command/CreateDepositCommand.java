@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -30,6 +31,7 @@ public class CreateDepositCommand implements Serializable {
     private BigDecimal amount;
 
     @NotBlank
+    @Size(min = 5, max = 100)
     @JsonProperty("idempotency_key")
     private String idempotencyKey;
 

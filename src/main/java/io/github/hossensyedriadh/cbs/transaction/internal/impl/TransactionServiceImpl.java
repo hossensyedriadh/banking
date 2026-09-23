@@ -27,6 +27,7 @@ import io.github.hossensyedriadh.cbs.transaction.internal.mapper.TransactionMapp
 import io.github.hossensyedriadh.cbs.transaction.internal.repository.TransactionRepository;
 import io.github.hossensyedriadh.cbs.transaction.internal.util.TransactionReferenceGenerator;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -94,7 +95,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
-    public TransactionView deposit(CreateDepositCommand command) {
+    public TransactionView deposit(@Valid CreateDepositCommand command) {
         this.accountRestrictionService.validateCreditAllowed(command.getAccountId());
 
         Optional<TransactionView> existingTransaction = this.getCompletedOrPendingTransaction(command.getIdempotencyKey());
@@ -131,7 +132,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
-    public TransactionView withdraw(CreateWithdrawalCommand command) {
+    public TransactionView withdraw(@Valid CreateWithdrawalCommand command) {
         this.accountRestrictionService.validateDebitAllowed(command.getAccountId());
 
         Optional<TransactionView> existingTransaction = this.getCompletedOrPendingTransaction(command.getIdempotencyKey());
@@ -175,7 +176,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
-    public TransactionView transfer(CreateTransferCommand command) {
+    public TransactionView transfer(@Valid CreateTransferCommand command) {
         this.accountRestrictionService.validateDebitAllowed(command.getAccountId());
         this.accountRestrictionService.validateCreditAllowed(command.getDestinationAccountId());
 
@@ -232,7 +233,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
-    public TransactionView reverse(ReverseTransactionCommand command) {
+    public TransactionView reverse(@Valid ReverseTransactionCommand command) {
         Optional<TransactionView> existingTransaction = this.getCompletedOrPendingTransaction(command.getIdempotencyKey());
 
         if (existingTransaction.isPresent()) {
@@ -285,7 +286,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public TransactionView charge(ChargeFeeCommand command) {
+    public TransactionView charge(@Valid ChargeFeeCommand command) {
         Optional<TransactionView> existingTransaction = this.getCompletedOrPendingTransaction(command.getIdempotencyKey());
 
         if (existingTransaction.isPresent()) {

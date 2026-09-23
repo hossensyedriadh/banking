@@ -20,8 +20,8 @@ public class ReverseTransactionCommand implements Serializable {
     @JsonProperty("transaction_id")
     private Long transactionId;
 
-    @Size(min = 5, max = 100)
     @NotBlank
+    @Size(min = 5, max = 100)
     @JsonProperty("idempotency_key")
     private String idempotencyKey;
 

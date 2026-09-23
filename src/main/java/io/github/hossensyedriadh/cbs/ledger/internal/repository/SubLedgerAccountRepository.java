@@ -15,7 +15,8 @@ import java.util.Optional;
 public interface SubLedgerAccountRepository extends JpaRepository<SubLedgerAccount, Long> {
     Optional<Long> findLedgerAccountIdByAccountId(Long accountId);
 
-    Optional<Long> findSubLedgerAccountIdByAccountId(Long accountId);
+    @Query("select s.id from SubLedgerAccount s where s.accountId = :accountId")
+    Optional<Long> findSubLedgerAccountIdByAccountId(@Param("accountId") Long accountId);
 
     Optional<SubLedgerAccount> findSubLedgerAccountByAccountId(Long accountId);
 

@@ -61,7 +61,7 @@ public class AccountHoldServiceImpl implements AccountHoldService {
     @Transactional
     @Override
     public AccountHoldView createHold(@Valid CreateAccountHoldCommand command) {
-        AccountView account = this.accountService.getAccountForUpdate(command.getAccountId())
+        AccountView account = this.accountService.getAccount(command.getAccountId())
                 .orElseThrow(() -> {
                     log.warn("Account not found with ID: {}", command.getAccountId());
                     return new ApiResourceException("Account not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);

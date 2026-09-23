@@ -26,6 +26,7 @@ class TransactionEventFactoryImpl implements TransactionEventFactory {
                 .setStatus(transaction.getStatus().toString())
                 .setDescription(transaction.getDescription())
                 .setOccurredAt(transaction.getCreatedAt().toInstant())
+                .setIdempotencyKey(transaction.getIdempotencyKey())
                 .build();
     }
 
@@ -44,6 +45,7 @@ class TransactionEventFactoryImpl implements TransactionEventFactory {
                 .setStatus(transaction.getStatus().toString())
                 .setDescription(transaction.getDescription())
                 .setOccurredAt(transaction.getCreatedAt().toInstant())
+                .setIdempotencyKey(transaction.getIdempotencyKey())
                 .build();
     }
 }
