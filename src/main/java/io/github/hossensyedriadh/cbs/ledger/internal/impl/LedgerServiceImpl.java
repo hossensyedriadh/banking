@@ -1,5 +1,6 @@
 package io.github.hossensyedriadh.cbs.ledger.internal.impl;
 
+import io.github.hossensyedriadh.cbs.account.api.service.AccountMappingService;
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import io.github.hossensyedriadh.cbs.ledger.api.command.PostJournalEntryCommand;
 import io.github.hossensyedriadh.cbs.ledger.api.enumerator.JournalEntryType;
@@ -39,17 +40,20 @@ public class LedgerServiceImpl implements LedgerService {
     private final LedgerAccountRepository ledgerAccountRepository;
     private final SubLedgerAccountRepository subLedgerAccountRepository;
     private final ProductLedgerAccountRepository productLedgerAccountRepository;
+    private final AccountMappingService accountMappingService;
     private final SubLedgerAccountMapper subLedgerAccountMapper;
     private final HttpServletRequest httpServletRequest;
 
     @Autowired
     public LedgerServiceImpl(JournalEntryRepository journalEntryRepository, LedgerAccountRepository ledgerAccountRepository,
                              SubLedgerAccountRepository subLedgerAccountRepository, ProductLedgerAccountRepository productLedgerAccountRepository,
-                             SubLedgerAccountMapper subLedgerAccountMapper, HttpServletRequest httpServletRequest) {
+                             AccountMappingService accountMappingService, SubLedgerAccountMapper subLedgerAccountMapper,
+                             HttpServletRequest httpServletRequest) {
         this.journalEntryRepository = journalEntryRepository;
         this.ledgerAccountRepository = ledgerAccountRepository;
         this.subLedgerAccountRepository = subLedgerAccountRepository;
         this.productLedgerAccountRepository = productLedgerAccountRepository;
+        this.accountMappingService = accountMappingService;
         this.subLedgerAccountMapper = subLedgerAccountMapper;
         this.httpServletRequest = httpServletRequest;
     }
@@ -148,7 +152,7 @@ public class LedgerServiceImpl implements LedgerService {
     @Override
     public void postDeposit(Long transactionId, Long customerLedgerAccountId, BigDecimal amount) {
         Long cashLedgerAccountId = this.getCashLedgerAccountId();
-        Long customerDepositsLedgerAccountId = this.getCustomerDepositLedgerAccountId();
+        Long customerDepositsLedgerAccountId = this.getCustomerDepositLedgerAccountId(customerLedgerAccountId);
 
         this.postJournalEntry(new PostJournalEntryCommand(transactionId,
                 List.of(
@@ -168,7 +172,7 @@ public class LedgerServiceImpl implements LedgerService {
     @Override
     public void postWithdrawal(Long transactionId, Long customerLedgerAccountId, BigDecimal amount) {
         Long cashLedgerAccountId = this.getCashLedgerAccountId();
-        Long customerDepositsLedgerAccountId = this.getCustomerDepositLedgerAccountId();
+        Long customerDepositsLedgerAccountId = this.getCustomerDepositLedgerAccountId(customerLedgerAccountId);
 
         this.postJournalEntry(new PostJournalEntryCommand(transactionId,
                 List.of(
@@ -186,19 +190,24 @@ public class LedgerServiceImpl implements LedgerService {
 
     @Transactional
     @Override
-    public void postCustomerTransfer(Long transactionId, Long sourceLedgerAccountId, Long destinationLedgerAccountId, BigDecimal fee, BigDecimal amount) {
+    public void postCustomerTransfer(Long transactionId, Long sourceSubLedgerAccountId, Long destinationSubLedgerAccountId, BigDecimal fee, BigDecimal amount) {
         Long feeIncomeLedgerAccountId = this.getFeeIncomeLedgerAccountId();
-        Long customerDepositsLedgerAccountId = this.getCustomerDepositLedgerAccountId();
+        Long sourceLedgerAccountId = this.getCustomerDepositLedgerAccountId(sourceSubLedgerAccountId);
+        Long destinationLedgerAccountId = this.getCustomerDepositLedgerAccountId(destinationSubLedgerAccountId);
+
+        BigDecimal totalDebit = amount.add(fee);
 
         this.postJournalEntry(new PostJournalEntryCommand(transactionId, List.of(
-                new JournalEntryLine(customerDepositsLedgerAccountId, JournalEntryType.DEBIT, fee),
+                new JournalEntryLine(sourceLedgerAccountId, JournalEntryType.DEBIT, totalDebit),
+                new JournalEntryLine(destinationLedgerAccountId, JournalEntryType.CREDIT, amount),
                 new JournalEntryLine(feeIncomeLedgerAccountId, JournalEntryType.CREDIT, fee)
         )));
 
-        this.adjustGLAccountBalance(customerDepositsLedgerAccountId, fee.negate());
+        this.adjustGLAccountBalance(sourceLedgerAccountId, totalDebit.negate());
+        this.adjustGLAccountBalance(destinationLedgerAccountId, amount);
         this.adjustGLAccountBalance(feeIncomeLedgerAccountId, fee);
-        this.adjustSubLedgerAccountBalance(sourceLedgerAccountId, amount.add(fee).negate());
-        this.adjustSubLedgerAccountBalance(destinationLedgerAccountId, amount);
+        this.adjustSubLedgerAccountBalance(sourceSubLedgerAccountId, totalDebit.negate());
+        this.adjustSubLedgerAccountBalance(destinationSubLedgerAccountId, amount);
 
         log.info("Customer transfer posted for transaction id: {}, amount: {}", transactionId, amount);
     }
@@ -207,7 +216,7 @@ public class LedgerServiceImpl implements LedgerService {
     @Override
     public void postInterest(Long accrualId, Long customerLedgerAccountId, BigDecimal amount) {
         Long interestExpenseLedgerAccountId = this.getInterestExpenseLedgerAccountId();
-        Long customerDepositsLedgerAccountId = this.getCustomerDepositLedgerAccountId();
+        Long customerDepositsLedgerAccountId = this.getCustomerDepositLedgerAccountId(customerLedgerAccountId);
 
         this.postJournalEntry(new PostJournalEntryCommand(accrualId, List.of(
                 new JournalEntryLine(interestExpenseLedgerAccountId, JournalEntryType.DEBIT, amount),
@@ -224,7 +233,7 @@ public class LedgerServiceImpl implements LedgerService {
     @Override
     public void postFee(Long transactionId, Long customerLedgerAccountId, BigDecimal amount) {
         Long feeIncomeLedgerAccountId = this.getFeeIncomeLedgerAccountId();
-        Long customerDepositsLedgerAccountId = this.getCustomerDepositLedgerAccountId();
+        Long customerDepositsLedgerAccountId = this.getCustomerDepositLedgerAccountId(customerLedgerAccountId);
 
         this.postJournalEntry(new PostJournalEntryCommand(transactionId, List.of(
                 new JournalEntryLine(customerDepositsLedgerAccountId, JournalEntryType.DEBIT, amount),
@@ -245,11 +254,19 @@ public class LedgerServiceImpl implements LedgerService {
         });
     }
 
-    private Long getCustomerDepositLedgerAccountId() {
-        return this.ledgerAccountRepository.findByAccountCode(SystemLedgerAccountCodes.CUSTOMER_DEPOSITS).map(LedgerAccount::getId).orElseThrow(() -> {
-            log.warn("Customer deposits ledger account not configured");
-            return new ApiResourceException("Customer deposits ledger account not configured", HttpStatus.INTERNAL_SERVER_ERROR, this.httpServletRequest);
+    private Long getCustomerDepositLedgerAccountId(Long customerLedgerAccountId) {
+        SubLedgerAccount subLedgerAccount = this.subLedgerAccountRepository.findById(customerLedgerAccountId).orElseThrow(() -> {
+            log.warn("Sub-ledger account not found with id: {}, role: {}", customerLedgerAccountId, ProductLedgerRole.CUSTOMER_DEPOSIT);
+            return new ApiResourceException("Sub-ledger account not found", HttpStatus.BAD_REQUEST);
         });
+
+        Long accountProductId = this.accountMappingService.getAccountProductId(subLedgerAccount.getAccountId());
+
+        return this.productLedgerAccountRepository.findLedgerAccountIdByProductIdAndLedgerRole(accountProductId, ProductLedgerRole.CUSTOMER_DEPOSIT)
+                .orElseThrow(() -> {
+                    log.warn("Customer deposits ledger account not configured");
+                    return new ApiResourceException("Customer deposits ledger account not configured", HttpStatus.INTERNAL_SERVER_ERROR, this.httpServletRequest);
+                });
     }
 
     private Long getFeeIncomeLedgerAccountId() {

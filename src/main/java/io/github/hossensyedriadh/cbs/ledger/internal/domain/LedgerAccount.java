@@ -27,17 +27,17 @@ public class LedgerAccount {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(name = "account_code", nullable = false, length = 30)
+    @Column(name = "account_code", unique = true, updatable = false, nullable = false, length = 30)
     private String accountCode;
 
     @Column(name = "name", nullable = false, length = 150)
     private String name;
 
-    @Column(name = "currency_id", nullable = false)
+    @Column(name = "currency_id", updatable = false, nullable = false)
     private Long currencyId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "account_type", nullable = false, length = 30)
+    @Column(name = "account_type", updatable = false, nullable = false, length = 30)
     private LedgerAccountType accountType;
 
     @ColumnDefault("true")

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.github.hossensyedriadh.cbs.ledger.api.enumerator.LedgerAccountType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,10 +18,12 @@ public class CreateLedgerAccountCommand implements Serializable {
     private static final long serialVersionUID = 8768852460851988509L;
 
     @NotBlank
+    @Size(max = 30)
     @JsonProperty("account_code")
     private String accountCode;
 
     @NotBlank
+    @Size(max = 150)
     private String name;
 
     @NotNull

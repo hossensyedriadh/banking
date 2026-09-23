@@ -16,6 +16,8 @@ import java.util.Optional;
 public interface LedgerAccountRepository extends JpaRepository<LedgerAccount, Long> {
     Optional<LedgerAccount> findByAccountCode(String accountCode);
 
+    boolean existsByAccountCode(String accountCode);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select l from LedgerAccount l where l.id = :id")
     Optional<LedgerAccount> findByIdForUpdate(@Param("id") Long id);

@@ -11,6 +11,7 @@ import io.github.hossensyedriadh.cbs.ledger.internal.repository.LedgerAccountRep
 import io.github.hossensyedriadh.cbs.product.api.model.CurrencyView;
 import io.github.hossensyedriadh.cbs.product.api.service.CurrencyService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -50,7 +51,12 @@ public class LedgerAccountServiceImpl implements LedgerAccountService {
 
     @Transactional
     @Override
-    public LedgerAccountView createLedgerAccount(CreateLedgerAccountCommand command) {
+    public LedgerAccountView createLedgerAccount(@Valid CreateLedgerAccountCommand command) {
+        if (this.ledgerAccountRepository.existsByAccountCode(command.getAccountCode())) {
+            log.warn("Ledger Account code {} already exists", command.getAccountCode());
+            throw new ApiResourceException("Ledger Account code already exists", HttpStatus.CONFLICT, this.httpServletRequest);
+        }
+
         CurrencyView currency = this.currencyService.getCurrency(command.getCurrencyId())
                 .orElseThrow(() -> {
                     log.warn("Currency not found with ID: {}", command.getCurrencyId());
@@ -72,23 +78,23 @@ public class LedgerAccountServiceImpl implements LedgerAccountService {
 
     @Transactional
     @Override
-    public Optional<LedgerAccountView> updateLedgerAccount(Long id, UpdateLedgerAccountCommand command) {
-        this.ledgerAccountRepository.findById(id).map(account -> {
-            if (account.getActive() == Boolean.FALSE) {
-                log.warn("Ledger account with ID: {} is not active", id);
-                throw new ApiResourceException("Ledger account not active", HttpStatus.BAD_REQUEST, this.httpServletRequest);
-            }
-
-            this.ledgerAccountMapper.toPatchedEntity(command, account);
-            LedgerAccount updated = this.ledgerAccountRepository.save(account);
-
-            log.info("Updated ledger account with ID: {}", id);
-
-            return this.ledgerAccountMapper.toView(updated);
+    public LedgerAccountView updateLedgerAccount(Long id, @Valid UpdateLedgerAccountCommand command) {
+        LedgerAccount account = this.ledgerAccountRepository.findById(id).orElseThrow(() -> {
+            log.warn("Ledger account with ID: {} not found", id);
+            return new ApiResourceException("Ledger account not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
         });
 
-        log.warn("Ledger account with ID: {} not found", id);
-        throw new ApiResourceException("Ledger account not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        if (account.getActive() == Boolean.FALSE) {
+            log.warn("Ledger account with ID: {} is not active", id);
+            throw new ApiResourceException("Ledger account not active", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        }
+
+        this.ledgerAccountMapper.toPatchedEntity(command, account);
+        LedgerAccount updated = this.ledgerAccountRepository.save(account);
+
+        log.info("Updated ledger account with ID: {}", id);
+
+        return this.ledgerAccountMapper.toView(updated);
     }
 
     @Transactional
