@@ -1,6 +1,5 @@
 package io.github.hossensyedriadh.cbs.ledger.internal.impl;
 
-import io.github.hossensyedriadh.cbs.account.api.service.AccountMappingService;
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import io.github.hossensyedriadh.cbs.ledger.api.command.PostJournalEntryCommand;
 import io.github.hossensyedriadh.cbs.ledger.api.enumerator.JournalEntryType;
@@ -40,20 +39,17 @@ public class LedgerServiceImpl implements LedgerService {
     private final LedgerAccountRepository ledgerAccountRepository;
     private final SubLedgerAccountRepository subLedgerAccountRepository;
     private final ProductLedgerAccountRepository productLedgerAccountRepository;
-    private final AccountMappingService accountMappingService;
     private final SubLedgerAccountMapper subLedgerAccountMapper;
     private final HttpServletRequest httpServletRequest;
 
     @Autowired
     public LedgerServiceImpl(JournalEntryRepository journalEntryRepository, LedgerAccountRepository ledgerAccountRepository,
                              SubLedgerAccountRepository subLedgerAccountRepository, ProductLedgerAccountRepository productLedgerAccountRepository,
-                             AccountMappingService accountMappingService, SubLedgerAccountMapper subLedgerAccountMapper,
-                             HttpServletRequest httpServletRequest) {
+                             SubLedgerAccountMapper subLedgerAccountMapper, HttpServletRequest httpServletRequest) {
         this.journalEntryRepository = journalEntryRepository;
         this.ledgerAccountRepository = ledgerAccountRepository;
         this.subLedgerAccountRepository = subLedgerAccountRepository;
         this.productLedgerAccountRepository = productLedgerAccountRepository;
-        this.accountMappingService = accountMappingService;
         this.subLedgerAccountMapper = subLedgerAccountMapper;
         this.httpServletRequest = httpServletRequest;
     }
@@ -260,13 +256,7 @@ public class LedgerServiceImpl implements LedgerService {
             return new ApiResourceException("Sub-ledger account not found", HttpStatus.BAD_REQUEST);
         });
 
-        Long accountProductId = this.accountMappingService.getAccountProductId(subLedgerAccount.getAccountId());
-
-        return this.productLedgerAccountRepository.findLedgerAccountIdByProductIdAndLedgerRole(accountProductId, ProductLedgerRole.CUSTOMER_DEPOSIT)
-                .orElseThrow(() -> {
-                    log.warn("Customer deposits ledger account not configured");
-                    return new ApiResourceException("Customer deposits ledger account not configured", HttpStatus.INTERNAL_SERVER_ERROR, this.httpServletRequest);
-                });
+        return subLedgerAccount.getLedgerAccount().getId();
     }
 
     private Long getFeeIncomeLedgerAccountId() {
