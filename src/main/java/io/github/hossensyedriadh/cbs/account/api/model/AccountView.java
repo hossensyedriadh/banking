@@ -8,6 +8,7 @@ import lombok.Setter;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -30,6 +31,9 @@ public class AccountView implements Serializable {
     private Long currencyId;
 
     private AccountStatus status;
+
+    @JsonProperty("account_holders")
+    private List<AccountHolderView> accountHolders;
 
     @JsonProperty("opened_at")
     private OffsetDateTime openedAt;

@@ -15,9 +15,8 @@ public class AccountHolderView implements Serializable {
     @Serial
     private static final long serialVersionUID = 4491290145556572564L;
 
-    private AccountHolderIdView id;
-
-    private AccountView account;
+    @JsonProperty("customer_id")
+    private Long customerId;
 
     @JsonProperty("holder_type")
     private AccountHolderType holderType;

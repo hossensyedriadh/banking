@@ -6,7 +6,7 @@ import io.github.hossensyedriadh.cbs.account.internal.domain.Account;
 import io.github.hossensyedriadh.cbs.configuration.mapper.MapperConfiguration;
 import org.mapstruct.Mapper;
 
-@Mapper(config = MapperConfiguration.class)
+@Mapper(config = MapperConfiguration.class, uses = {AccountHolderMapper.class})
 public interface AccountMapper {
     AccountView toView(Account account);
 

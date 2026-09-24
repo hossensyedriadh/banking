@@ -2,7 +2,7 @@ spring:
   application:
     name: cbs
   profiles:
-    active: "${SPRING_PROFILES_ACTIVE}"
+    active: "${SPRING_PROFILES_ACTIVE:dev}"
   threads:
     virtual:
       enabled: true

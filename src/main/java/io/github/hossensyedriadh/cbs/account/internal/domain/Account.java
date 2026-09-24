@@ -13,6 +13,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -44,6 +45,9 @@ public class Account {
     @ColumnDefault("'ACTIVE'")
     @Column(name = "status", nullable = false, length = 20)
     private AccountStatus status;
+
+    @OneToMany(mappedBy = "account", fetch = FetchType.LAZY)
+    private List<AccountHolder> accountHolders;
 
     @Setter(AccessLevel.NONE)
     @CreatedDate
