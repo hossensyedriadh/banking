@@ -6,5 +6,6 @@ public enum CardStatus {
     TEMPORARILY_BLOCKED,
     PERMANENTLY_BLOCKED,
     EXPIRED,
-    CLOSED
+    CLOSED,
+    REPLACED
 }

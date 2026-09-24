@@ -11,6 +11,7 @@ import io.github.hossensyedriadh.cbs.card.internal.domain.CardPin;
 import io.github.hossensyedriadh.cbs.card.internal.repository.CardPinRepository;
 import io.github.hossensyedriadh.cbs.card.internal.repository.CardRepository;
 import io.github.hossensyedriadh.cbs.card.internal.util.CardPinUtil;
+import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,7 +32,7 @@ public class CardPinServiceImpl implements CardPinService {
 
     @Transactional
     @Override
-    public void setPin(SetCardPinCommand command) {
+    public void setPin(@Valid SetCardPinCommand command) {
         Card card = this.getCard(command.getCardId());
 
         this.validateCardForPinOperation(card);
@@ -59,7 +60,7 @@ public class CardPinServiceImpl implements CardPinService {
 
     @Transactional
     @Override
-    public void changePin(ChangeCardPinCommand command) {
+    public void changePin(@Valid ChangeCardPinCommand command) {
         Card card = this.getCard(command.getCardId());
 
         CardPin cardPin = this.cardPinRepository.findByCardIdForUpdate(card.getId())
@@ -95,7 +96,7 @@ public class CardPinServiceImpl implements CardPinService {
 
     @Transactional
     @Override
-    public CardPinVerificationResult verifyPin(VerifyCardPinCommand command) {
+    public CardPinVerificationResult verifyPin(@Valid VerifyCardPinCommand command) {
         Card card = this.getCard(command.getCardId());
 
         this.validateCardForPinOperation(card);

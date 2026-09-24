@@ -1,5 +1,6 @@
 package io.github.hossensyedriadh.cbs.card.internal.domain;
 
+import io.github.hossensyedriadh.cbs.card.api.enumerator.CardReplacementReason;
 import io.github.hossensyedriadh.cbs.card.api.enumerator.CardStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -61,6 +62,13 @@ public class Card {
      */
     @Column(name = "expiry_date", updatable = false, nullable = false)
     private LocalDate expiryDate;
+
+    @Column(name = "replaced_card_id", insertable = false)
+    private Long replacedCard;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "replacement_reason", insertable = false)
+    private CardReplacementReason replacementReason;
 
     @Setter(AccessLevel.NONE)
     @CreatedDate

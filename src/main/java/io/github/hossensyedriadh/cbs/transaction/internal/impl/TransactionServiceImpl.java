@@ -438,20 +438,21 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     private TransactionDirection determineDirection(Transaction transaction, Long accountId) {
+        boolean reversed = transaction.getReversalOfTransactionId() != null;
+
         return switch (transaction.getTransactionType()) {
-            case DEPOSIT ->
-                    transaction.getReversalOfTransactionId() == null ? TransactionDirection.CREDIT : TransactionDirection.DEBIT;
-            case WITHDRAWAL ->
-                    transaction.getReversalOfTransactionId() == null ? TransactionDirection.DEBIT : TransactionDirection.CREDIT;
+            case DEPOSIT -> reversed ? TransactionDirection.DEBIT : TransactionDirection.CREDIT;
+            case WITHDRAWAL -> reversed ? TransactionDirection.CREDIT : TransactionDirection.DEBIT;
             case TRANSFER -> {
                 boolean isSource = transaction.getAccountId().equals(accountId);
 
-                if (transaction.getReversalOfTransactionId() == null) {
+                if (!reversed) {
                     yield isSource ? TransactionDirection.DEBIT : TransactionDirection.CREDIT;
                 }
 
                 yield isSource ? TransactionDirection.CREDIT : TransactionDirection.DEBIT;
             }
+            case FEE -> TransactionDirection.DEBIT;
             default -> null;
         };
     }

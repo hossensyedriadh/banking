@@ -1,8 +1,8 @@
 package io.github.hossensyedriadh.cbs.card.api.service;
 
-import io.github.hossensyedriadh.cbs.card.api.command.ActivateCardCommand;
-import io.github.hossensyedriadh.cbs.card.api.command.IssueCardCommand;
+import io.github.hossensyedriadh.cbs.card.api.command.*;
 import io.github.hossensyedriadh.cbs.card.api.model.CardView;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,15 +12,17 @@ public interface CardService {
 
     Optional<CardView> getCard(Long cardId);
 
-    CardView activateCard(ActivateCardCommand command);
+    CardView activateCard(@Valid ActivateCardCommand command);
 
-    CardView issueCard(IssueCardCommand command);
+    CardView issueCard(@Valid IssueCardCommand command);
 
-    CardView temporarilyBlockCard(Long cardId, String reason);
+    CardView replaceCard(@Valid ReplaceCardCommand command);
 
-    CardView permanentlyBlockCard(Long cardId, String reason);
+    CardView temporarilyBlockCard(@Valid BlockCardCommand command);
 
-    CardView unblockCard(Long cardId, String reason);
+    CardView permanentlyBlockCard(@Valid BlockCardCommand command);
 
-    CardView closeCard(Long cardId, String reason);
+    CardView unblockCard(@Valid UnblockCardCommand command);
+
+    CardView closeCard(@Valid CloseCardCommand command);
 }
