@@ -10,6 +10,7 @@ import io.github.hossensyedriadh.cbs.cheque.internal.mapper.ChequeMapper;
 import io.github.hossensyedriadh.cbs.cheque.internal.repository.ChequeRepository;
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -54,7 +55,7 @@ public class ChequeServiceImpl implements ChequeService {
 
     @Transactional
     @Override
-    public void stopCheque(StopChequeCommand command) {
+    public void stopCheque(@Valid StopChequeCommand command) {
         Cheque cheque = this.chequeRepository.findByIdForUpdate(command.getId()).orElseThrow(() -> {
             log.warn("Cheque with id {} not found", command.getId());
             return new ApiResourceException("Cheque not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
@@ -76,7 +77,7 @@ public class ChequeServiceImpl implements ChequeService {
 
     @Transactional
     @Override
-    public void cancelCheque(CancelChequeCommand command) {
+    public void cancelCheque(@Valid CancelChequeCommand command) {
         Cheque cheque = this.chequeRepository.findByIdForUpdate(command.getId()).orElseThrow(() -> {
             log.warn("Cheque with id {} not found", command.getId());
             return new ApiResourceException("Cheque not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);

@@ -21,6 +21,6 @@ class PostgresChequeBookNumberGenerator implements ChequeBookNumberGenerator {
             throw new IllegalStateException("Failed to generate cheque book number");
         }
 
-        return "CB-" + sequence;
+        return String.valueOf(sequence);
     }
 }

@@ -5,6 +5,7 @@ import io.github.hossensyedriadh.cbs.account.api.service.AccountService;
 import io.github.hossensyedriadh.cbs.cheque.api.command.PresentChequeCommand;
 import io.github.hossensyedriadh.cbs.cheque.api.command.ReturnChequeCommand;
 import io.github.hossensyedriadh.cbs.cheque.api.enumerator.ChequePresentationStatus;
+import io.github.hossensyedriadh.cbs.cheque.api.enumerator.ChequePresentationType;
 import io.github.hossensyedriadh.cbs.cheque.api.enumerator.ChequeStatus;
 import io.github.hossensyedriadh.cbs.cheque.api.model.ChequePresentationView;
 import io.github.hossensyedriadh.cbs.cheque.api.service.ChequePresentationService;
@@ -18,6 +19,7 @@ import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import io.github.hossensyedriadh.cbs.transaction.api.command.CreateWithdrawalCommand;
 import io.github.hossensyedriadh.cbs.transaction.api.service.TransactionService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -65,7 +67,7 @@ public class ChequePresentationServiceImpl implements ChequePresentationService 
 
     @Transactional
     @Override
-    public ChequePresentationView presentCheque(PresentChequeCommand command) {
+    public ChequePresentationView presentCheque(@Valid PresentChequeCommand command) {
         Cheque cheque = this.chequeRepository.findByChequeNumberForUpdate(command.getChequeNumber()).orElseThrow(() -> {
             log.warn("Cheque with chequeNumber {} not found", command.getChequeNumber());
             return new ApiResourceException("Cheque not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
@@ -87,6 +89,7 @@ public class ChequePresentationServiceImpl implements ChequePresentationService 
         presentation.setCheque(cheque);
         presentation.setPresentingBankCode(command.getPresentingBankCode());
         presentation.setPresentingAccountNo(command.getPresentingAccountNo());
+        presentation.setPresentationType(command.getPresentationType());
         presentation.setPresentedAmount(command.getAmount());
         presentation.setStatus(ChequePresentationStatus.PENDING);
         presentation.setPresentedAt(now);
@@ -159,8 +162,10 @@ public class ChequePresentationServiceImpl implements ChequePresentationService 
         });
 
         this.transactionService.withdraw(new CreateWithdrawalCommand(account.getId(), account.getCurrencyId(), presentation.getPresentedAmount(),
-                "CHEQUE_PRESENTATION:" + presentation.getId() + ":PAY", "Cheque presentation for payment to "
-                + (presentation.getPresentingAccountNo() != null ? presentation.getPresentingAccountNo() : presentation.getPresentingBankCode())));
+                "CHEQUE_PRESENTATION:" + presentation.getId() + ":PAY", "Cheque " + cheque.getChequeNumber() + " payment to "
+                + (presentation.getPresentationType() == ChequePresentationType.ACCOUNT_CREDIT
+                ? (String.join(" ", presentation.getPresentingBankCode(), presentation.getPresentingAccountNo()))
+                : "CASH")));
 
         OffsetDateTime now = OffsetDateTime.now();
 
@@ -182,7 +187,7 @@ public class ChequePresentationServiceImpl implements ChequePresentationService 
 
     @Transactional
     @Override
-    public ChequePresentationView returnCheque(ReturnChequeCommand command) {
+    public ChequePresentationView returnCheque(@Valid ReturnChequeCommand command) {
         ChequePresentation presentation = this.chequePresentationRepository.findByIdForUpdate(command.getPresentationId()).orElseThrow(() -> {
             log.warn("Cheque presentation with id {} not found", command.getPresentationId());
             return new ApiResourceException("Cheque Presentation not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);

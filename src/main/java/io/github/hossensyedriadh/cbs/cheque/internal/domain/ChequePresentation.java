@@ -1,6 +1,7 @@
 package io.github.hossensyedriadh.cbs.cheque.internal.domain;
 
 import io.github.hossensyedriadh.cbs.cheque.api.enumerator.ChequePresentationStatus;
+import io.github.hossensyedriadh.cbs.cheque.api.enumerator.ChequePresentationType;
 import io.github.hossensyedriadh.cbs.cheque.api.enumerator.ChequeReturnReason;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -38,6 +39,10 @@ public class ChequePresentation {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "cheque_id", nullable = false)
     private Cheque cheque;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "presentation_type", updatable = false, nullable = false)
+    private ChequePresentationType presentationType;
 
     @Column(name = "presenting_bank_code", updatable = false, length = 30)
     private String presentingBankCode;

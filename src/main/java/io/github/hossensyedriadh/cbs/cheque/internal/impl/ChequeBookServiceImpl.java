@@ -27,6 +27,7 @@ import io.github.hossensyedriadh.cbs.product.api.service.ChequeProductService;
 import io.github.hossensyedriadh.cbs.transaction.api.command.ChargeFeeCommand;
 import io.github.hossensyedriadh.cbs.transaction.api.service.TransactionService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -35,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -83,7 +85,7 @@ public class ChequeBookServiceImpl implements ChequeBookService {
 
     @Transactional
     @Override
-    public ChequeBookView issueChequeBook(IssueChequeBookCommand command) {
+    public ChequeBookView issueChequeBook(@Valid IssueChequeBookCommand command) {
         AccountView accountView = this.accountService.getAccount(command.getAccountId())
                 .orElseThrow(() -> {
                     log.warn("Account not found with id {}", command.getAccountId());
@@ -122,6 +124,7 @@ public class ChequeBookServiceImpl implements ChequeBookService {
 
         LocalDate expiry = issuedAt.toLocalDate().plusDays(product.getValidityDays());
 
+        List<Cheque> cheques = new ArrayList<>();
         for (long chequeNumber = range.firstNumber(); chequeNumber <= range.lastNumber(); chequeNumber++) {
             Cheque cheque = new Cheque();
             cheque.setChequeBook(savedChequeBook);
@@ -129,8 +132,10 @@ public class ChequeBookServiceImpl implements ChequeBookService {
             cheque.setIssuedAt(issuedAt);
             cheque.setExpiryDate(expiry);
 
-            this.chequeRepository.save(cheque);
+            cheques.add(cheque);
         }
+
+        this.chequeRepository.saveAll(cheques);
 
         if (product.getIssuanceFee().signum() > 0) {
             ChargeFeeCommand chargeFeeCommand = new ChargeFeeCommand();
@@ -153,7 +158,7 @@ public class ChequeBookServiceImpl implements ChequeBookService {
 
     @Transactional
     @Override
-    public void cancelChequeBook(CancelChequeBookCommand command) {
+    public void cancelChequeBook(@Valid CancelChequeBookCommand command) {
         ChequeBook chequeBook = this.chequeBookRepository.findByIdForUpdate(command.getId())
                 .orElseThrow(() -> {
                     log.warn("Cheque Book with id {} is not found", command.getId());
