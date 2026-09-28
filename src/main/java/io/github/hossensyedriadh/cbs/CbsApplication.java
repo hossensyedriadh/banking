@@ -22,7 +22,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
         "io.github.hossensyedriadh.cbs.cheque.internal.repository",
         "io.github.hossensyedriadh.cbs.ledger.internal.repository",
         "io.github.hossensyedriadh.cbs.product.internal.repository",
-        "io.github.hossensyedriadh.cbs.transaction.internal.repository"})
+        "io.github.hossensyedriadh.cbs.transaction.internal.repository",
+        "io.github.hossensyedriadh.cbs.eod.internal.repository"})
 @SpringBootApplication
 public class CbsApplication {
 
