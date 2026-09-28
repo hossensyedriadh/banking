@@ -57,6 +57,7 @@ Rather than treating banking as a collection of CRUD operations, the system mode
 * Cheque books
 * Auditability
 * Financial reconciliation
+* End of Day processing
 
 The backend is implemented as a **Spring Modulith modular monolith**, providing strong domain boundaries while avoiding
 the distributed-system complexity of microservices.
@@ -83,7 +84,7 @@ flowchart TB
     subgraph CBS["Core Banking System"]
         CUSTOMER["Customer"]
         BRANCH["Branch"]
-        ACCOUNT_PRODUCT["Account Product"]
+        PRODUCT["Product"]
         ACCOUNT["Account"]
         CURRENCY["Currency"]
         LEDGER["Ledger"]
@@ -91,13 +92,14 @@ flowchart TB
         CARD["Card"]
         CHEQUE["Cheque"]
         AUDIT["Audit"]
+        EOD["End of Day"]
     end
 
     DB[("PostgreSQL")]
     UI --> API
     API --> CUSTOMER
     API --> BRANCH
-    API --> ACCOUNT_PRODUCT
+    API --> PRODUCT
     API --> ACCOUNT
     API --> CURRENCY
     API --> LEDGER
@@ -105,17 +107,21 @@ flowchart TB
     API --> CARD
     API --> CHEQUE
     API --> AUDIT
+    API --> EOD
     CUSTOMER --> ACCOUNT
     BRANCH --> ACCOUNT
-    ACCOUNT_PRODUCT --> ACCOUNT
+    PRODUCT --> ACCOUNT
     CURRENCY --> ACCOUNT
     TRANSACTION --> ACCOUNT
     TRANSACTION --> LEDGER
+    EOD --> LEDGER
+    EOD --> ACCOUNT
+    EOD --> PRODUCT
     CARD --> ACCOUNT
     CHEQUE --> ACCOUNT
     CUSTOMER --> DB
     BRANCH --> DB
-    ACCOUNT_PRODUCT --> DB
+    PRODUCT --> DB
     ACCOUNT --> DB
     CURRENCY --> DB
     LEDGER --> DB
@@ -123,6 +129,7 @@ flowchart TB
     CARD --> DB
     CHEQUE --> DB
     AUDIT --> DB
+    EOD --> DB
 ```
 
 ---
@@ -216,6 +223,7 @@ Other modules should consume the public API rather than directly accessing anoth
 | **Card**            | Debit/credit card lifecycle                |
 | **Cheque**          | Cheque books and cheques                   |
 | **Audit**           | Audit and traceability                     |
+| **EOD**             | End of Day operations processing           |
 
 ---
 
@@ -742,6 +750,10 @@ cbs/
 │                   │   ├── api/
 │                   │   └── internal/
 │                   │
+│                   ├── eod/
+│                   │   ├── api/
+│                   │   └── internal/
+│                   │
 │                   ├── ledger/
 │                   │   ├── api/
 │                   │   └── internal/
@@ -857,9 +869,10 @@ This is one of the reasons the initial architecture benefits from being a modula
 | Interest Accrual        |   ✅   |
 | Interest Posting        |   ✅   |
 | Cards                   |   ✅   |
-| Cheque Books            |   🚧   |
-| Audit                   |   🚧   |
+| Cheque Books            |   ✅   |
+| EOD                     |   🚧   |
 | REST API                |   🚧   |
+| Audit                   |   📋   |
 | Authentication          |   📋   |
 | Authorization           |   📋   |
 | Frontend                |   📋   |
