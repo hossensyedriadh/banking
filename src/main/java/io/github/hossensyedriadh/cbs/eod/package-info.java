@@ -1,5 +1,5 @@
 @ApplicationModule(
-        allowedDependencies = {"exception", "configuration :: mapper", "account :: service"}
+        allowedDependencies = {"exception", "configuration :: mapper", "account :: service", "ledger :: service"}
 )
 package io.github.hossensyedriadh.cbs.eod;
 
