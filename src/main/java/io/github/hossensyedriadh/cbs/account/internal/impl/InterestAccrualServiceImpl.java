@@ -1,6 +1,5 @@
 package io.github.hossensyedriadh.cbs.account.internal.impl;
 
-import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountStatus;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.InterestAccrualStatus;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
 import io.github.hossensyedriadh.cbs.account.api.model.InterestAccrualView;
@@ -13,7 +12,6 @@ import io.github.hossensyedriadh.cbs.account.internal.mapper.InterestAccrualMapp
 import io.github.hossensyedriadh.cbs.account.internal.repository.InterestAccrualRepository;
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import io.github.hossensyedriadh.cbs.ledger.api.service.LedgerService;
-import io.github.hossensyedriadh.cbs.product.api.enumerator.AccountProductStatus;
 import io.github.hossensyedriadh.cbs.product.api.model.AccountProductView;
 import io.github.hossensyedriadh.cbs.product.api.service.AccountProductService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,6 +24,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Log4j2
 @Service
@@ -57,57 +61,61 @@ public class InterestAccrualServiceImpl implements InterestAccrualService {
 
     @Transactional
     @Override
-    public InterestAccrualView accrue(Long accountId, LocalDate calculationDate) {
-        InterestAccrual existingAccural = this.interestAccrualRepository.findByAccountIdAndCalculationDate(accountId, calculationDate)
-                .orElse(null);
+    public void accrue(LocalDate businessDate) {
+        List<AccountView> accountViews = this.accountService.getActiveAccounts();
 
-        if (existingAccural != null) {
-            return this.interestAccrualMapper.toView(existingAccural);
+        if (accountViews.isEmpty()) {
+            log.info("No active interest-bearing accounts found for business date {}", businessDate);
+            return;
         }
 
-        AccountView account = this.accountService.getAccount(accountId)
-                .orElseThrow(() -> {
-                    log.warn("Account not found with id {}", accountId);
-                    return new ApiResourceException("Account not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
-                });
+        List<Long> productIds = accountViews.stream().map(AccountView::getProductId).distinct().toList();
 
-        if (account.getStatus() != AccountStatus.ACTIVE) {
-            log.warn("Account with id {} is not active", accountId);
-            throw new ApiResourceException("Account is not active", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        Map<Long, AccountProductView> productsById = this.accountProductService.getActiveAndInterestBearingAccountProducts(productIds)
+                .stream().collect(Collectors.toMap(AccountProductView::getId, Function.identity()));
+
+        List<InterestAccrual> accruals = new ArrayList<>();
+
+        for (AccountView account : accountViews) {
+            AccountProductView product = productsById.get(account.getProductId());
+
+            if (product == null) {
+                log.warn("Skipping account {} because its interest-bearing product {} could not be found", account.getId(), account.getProductId());
+                continue;
+            }
+            if (this.interestAccrualRepository.existsByAccountIdAndCalculationDate(account.getId(), businessDate)) {
+                log.debug("Interest accrual already exists for account {} on {}", account.getId(), businessDate);
+                continue;
+            }
+
+            BigDecimal baseAmount = this.accountBalanceService.getBalance(account.getId()).getLedgerBalance();
+            BigDecimal interestAmount = this.interestCalculationService.calculateDailyInterest(baseAmount, product.getInterestRate());
+
+            InterestAccrual accrual = new InterestAccrual();
+            accrual.setAccountId(account.getId());
+            accrual.setCalculationDate(businessDate);
+            accrual.setBaseAmount(baseAmount);
+            accrual.setInterestRate(product.getInterestRate());
+            accrual.setInterestAmount(interestAmount);
+            accrual.setStatus(InterestAccrualStatus.ACCRUED);
+
+            accruals.add(accrual);
         }
 
-        AccountProductView accountProduct = this.accountProductService.getProduct(account.getProductId())
-                .orElseThrow(() -> {
-                    log.warn("Account Product not found with id {}", account.getProductId());
-                    return new ApiResourceException("Account Product not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
-                });
-
-        if (accountProduct.getStatus() != AccountProductStatus.ACTIVE) {
-            log.warn("Account Product with id {} is not active", accountId);
-            throw new ApiResourceException("Account product is not active", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        if (accruals.isEmpty()) {
+            log.info("No new interest accruals generated for business date {}", businessDate);
+            return;
         }
 
-        if (!accountProduct.isInterestBearing()) {
-            log.warn("Account with id {} is not interest bearing", accountId);
-            throw new ApiResourceException("Account is not interest bearing", HttpStatus.BAD_REQUEST, this.httpServletRequest);
-        }
+        this.interestAccrualRepository.saveAll(accruals);
 
-        BigDecimal baseAmount = this.accountBalanceService.getBalance(accountId).getLedgerBalance();
-        BigDecimal interestAmount = this.interestCalculationService.calculateDailyInterest(baseAmount, accountProduct.getInterestRate());
+        log.info("Generated {} interest accruals for business date {}", accruals.size(), businessDate);
+    }
 
-        InterestAccrual accrual = new InterestAccrual();
-        accrual.setAccountId(accountId);
-        accrual.setCalculationDate(calculationDate);
-        accrual.setBaseAmount(baseAmount);
-        accrual.setInterestRate(accountProduct.getInterestRate());
-        accrual.setInterestAmount(interestAmount);
-        accrual.setStatus(InterestAccrualStatus.ACCRUED);
-
-        InterestAccrual saved = this.interestAccrualRepository.save(accrual);
-
-        log.info("Accrued interest for account product: {}, account: {}", accountProduct.getId(), accountId);
-
-        return this.interestAccrualMapper.toView(saved);
+    @Override
+    public List<InterestAccrualView> getNotPostedAccrualsForMonth(YearMonth yearMonth) {
+        return this.interestAccrualRepository.findAllByStatusMonthAndYear(InterestAccrualStatus.ACCRUED, yearMonth.getMonthValue(), yearMonth.getYear())
+                .stream().map(this.interestAccrualMapper::toView).toList();
     }
 
     @Transactional

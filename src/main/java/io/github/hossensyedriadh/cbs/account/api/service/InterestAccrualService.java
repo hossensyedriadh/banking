@@ -3,9 +3,13 @@ package io.github.hossensyedriadh.cbs.account.api.service;
 import io.github.hossensyedriadh.cbs.account.api.model.InterestAccrualView;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.List;
 
 public interface InterestAccrualService {
-    InterestAccrualView accrue(Long accountId, LocalDate calculationDate);
+    void accrue(LocalDate businessDate);
+
+    List<InterestAccrualView> getNotPostedAccrualsForMonth(YearMonth yearMonth);
 
     InterestAccrualView post(Long accrualId);
 }

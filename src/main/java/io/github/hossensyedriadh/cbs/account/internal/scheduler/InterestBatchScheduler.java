@@ -1,6 +1,7 @@
 package io.github.hossensyedriadh.cbs.account.internal.scheduler;
 
 import io.github.hossensyedriadh.cbs.account.api.service.InterestBatchService;
+import io.github.hossensyedriadh.cbs.eod.api.service.BusinessDateService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -13,18 +14,22 @@ import java.time.format.DateTimeFormatter;
 @Service
 public class InterestBatchScheduler {
     private final InterestBatchService interestBatchService;
+    private final BusinessDateService businessDateService;
 
     @Autowired
-    public InterestBatchScheduler(InterestBatchService interestBatchService) {
+    public InterestBatchScheduler(InterestBatchService interestBatchService, BusinessDateService businessDateService) {
         this.interestBatchService = interestBatchService;
+        this.businessDateService = businessDateService;
     }
 
-    @Scheduled(cron = "0 0 0 * * *")
-    public void processDailyInterest() {
-        LocalDate calculationDate = LocalDate.now().minusDays(1);
+    @Scheduled(cron = "0 0 0 1 * *")
+    public void postInterests() {
+        LocalDate businessDate = this.businessDateService.getCurrentBusinessDate();
 
-        log.info("Starting daily interest accrual/posting batch for date: {}", calculationDate.format(DateTimeFormatter.ISO_DATE));
+        log.info("Starting interest posting for accruals, business date: {}", businessDate.format(DateTimeFormatter.ISO_DATE));
 
-        this.interestBatchService.processDailyInterest(calculationDate);
+        this.interestBatchService.postInterests(businessDate);
+
+        log.info("Monthly interest posting batch completed, business date: {}", businessDate.format(DateTimeFormatter.ISO_DATE));
     }
 }

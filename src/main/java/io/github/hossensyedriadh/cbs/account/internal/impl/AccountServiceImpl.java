@@ -80,6 +80,11 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    public List<AccountView> getActiveAccounts() {
+        return this.accountRepository.findAllByStatus(AccountStatus.ACTIVE).stream().map(this.accountMapper::toView).toList();
+    }
+
+    @Override
     public Optional<AccountView> getAccount(Long id) {
         return this.accountRepository.findById(id).map(this.accountMapper::toView);
     }

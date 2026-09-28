@@ -34,16 +34,16 @@ public class InterestAccrual {
     @Column(name = "account_id", updatable = false, nullable = false)
     private Long accountId;
 
-    @Column(name = "calculation_date", nullable = false)
+    @Column(name = "calculation_date", updatable = false, nullable = false)
     private LocalDate calculationDate;
 
-    @Column(name = "base_amount", nullable = false, precision = 19, scale = 4)
+    @Column(name = "base_amount", updatable = false, nullable = false, precision = 19, scale = 4)
     private BigDecimal baseAmount;
 
-    @Column(name = "interest_rate", nullable = false, precision = 9, scale = 6)
+    @Column(name = "interest_rate", updatable = false, nullable = false, precision = 9, scale = 6)
     private BigDecimal interestRate;
 
-    @Column(name = "interest_amount", nullable = false, precision = 19, scale = 4)
+    @Column(name = "interest_amount", updatable = false, nullable = false, precision = 19, scale = 4)
     private BigDecimal interestAmount;
 
     @Enumerated(EnumType.STRING)
