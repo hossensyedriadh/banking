@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,6 +24,9 @@ public interface AccountHoldRepository extends JpaRepository<AccountHold, Long> 
 
     @Query(value = "select coalesce(sum(h.amount), 0.0) from AccountHold h where h.accountId = :accountId and h.status = :status")
     BigDecimal sumAmountByAccountIdAndStatus(@Param("accountId") Long accountId, @Param("status") AccountHoldStatus status);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    List<AccountHold> findAllByStatusAndExpiresAtBefore(AccountHoldStatus status, OffsetDateTime expiresAtBefore);
 
     boolean existsByAccountIdAndStatus(Long accountId, AccountHoldStatus status);
 }

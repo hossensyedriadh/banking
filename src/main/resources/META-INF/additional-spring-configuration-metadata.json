@@ -49,6 +49,11 @@
       "name": "kafka.confluent.avro.schema-registry.url",
       "type": "java.lang.String",
       "description": "URL of the Confluent Schema Registry used to register and retrieve Avro schemas for Kafka messages."
+    },
+    {
+      "name": "cbs.timezone",
+      "type": "java.time.ZoneId",
+      "description": "IANA Timezone ID the CBS will use to coordinate business operations."
     }
   ]
 }

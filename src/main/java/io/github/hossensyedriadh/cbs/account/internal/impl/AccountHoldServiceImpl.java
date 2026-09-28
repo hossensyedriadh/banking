@@ -17,11 +17,15 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,6 +38,9 @@ public class AccountHoldServiceImpl implements AccountHoldService {
     private final AccountBalanceService accountBalanceService;
     private final AccountHoldMapper accountHoldMapper;
     private final HttpServletRequest httpServletRequest;
+
+    @Value("${cbs.timezone}")
+    private ZoneId cbsTimezone;
 
     @Autowired
     public AccountHoldServiceImpl(AccountHoldRepository accountHoldRepository, AccountService accountService,
@@ -108,5 +115,18 @@ public class AccountHoldServiceImpl implements AccountHoldService {
         log.info("Released hold of amount: {} for account: {}, hold: {}", hold.getAmount(), saved.getAccountId(), saved.getId());
 
         return this.accountHoldMapper.toView(saved);
+    }
+
+    @Transactional
+    @Override
+    public void expireHolds(LocalDate businessDate) {
+        OffsetDateTime expirationBoundary = businessDate.plusDays(1).atStartOfDay(this.cbsTimezone).toOffsetDateTime();
+
+        List<AccountHold> accountHolds = this.accountHoldRepository.findAllByStatusAndExpiresAtBefore(AccountHoldStatus.ACTIVE, expirationBoundary);
+        accountHolds.forEach(accountHold -> accountHold.setStatus(AccountHoldStatus.EXPIRED));
+
+        this.accountHoldRepository.saveAll(accountHolds);
+
+        log.info("Expired {} account balance holds expiring before: {}", accountHolds.size(), expirationBoundary.format(DateTimeFormatter.ISO_DATE_TIME));
     }
 }

@@ -72,6 +72,8 @@ springdoc:
     enabled: true
 
 #custom properties
+cbs:
+  timezone: "${CBS_IANA_TZ}"
 card:
   security:
     crypto:
