@@ -29,8 +29,10 @@ public class InterestAccrualEodStep implements EndOfDayStep {
     @Override
     @Transactional
     public void execute(LocalDate businessDate) {
-        log.info("Started interest accrual EOD step for business date {}", businessDate.format(DateTimeFormatter.ISO_DATE));
+        String formattedBusinessDate = businessDate.format(DateTimeFormatter.ISO_DATE);
+
+        log.info("Started interest accrual EOD step for business date {}", formattedBusinessDate);
         this.interestAccrualService.accrue(businessDate);
-        log.info("Ended interest accrual EOD step for business date {}", businessDate.format(DateTimeFormatter.ISO_DATE));
+        log.info("Ended interest accrual EOD step for business date {}", formattedBusinessDate);
     }
 }
