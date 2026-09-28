@@ -35,11 +35,12 @@ public class LoggingAspect {
     public void inbound(JoinPoint joinPoint) {
         MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        assert attributes != null;
-        HttpServletRequest request = attributes.getRequest();
-        HttpUtil httpUtil = new HttpUtil(request);
-        log.info("Inbound request -> Src: {} | Request-URI: {} | Request-ID: {} | Method: {}.", httpUtil.parseClientAddress(), String.join(" ", request.getMethod(), request.getRequestURI()),
-                request.getAttribute(CustomHttpAttributes.X_REQUEST_ID.getAttributeName()), methodSignature);
+        if (attributes != null) {
+            HttpServletRequest request = attributes.getRequest();
+            HttpUtil httpUtil = new HttpUtil(request);
+            log.info("Inbound request -> Src: {} | Request-URI: {} | Request-ID: {} | Method: {}.", httpUtil.parseClientAddress(), String.join(" ", request.getMethod(), request.getRequestURI()),
+                    request.getAttribute(CustomHttpAttributes.X_REQUEST_ID.getAttributeName()), methodSignature);
+        }
     }
 
     @AfterReturning(value = "executeForAllControllers() && !excludeInitBinders() && !excludeSetterMethods() && !excludePostConstructs()")
@@ -47,10 +48,11 @@ public class LoggingAspect {
         MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         Class<?> returnType = methodSignature.getReturnType();
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        assert attributes != null;
-        HttpUtil httpUtil = new HttpUtil(attributes.getRequest());
-        log.info("Success sample -> Dest: {} | Request-ID: {} | Method: {} | returned {}.", httpUtil.parseClientAddress(),
-                attributes.getRequest().getAttribute(CustomHttpAttributes.X_REQUEST_ID.getAttributeName()), methodSignature, returnType);
+        if (attributes != null) {
+            HttpUtil httpUtil = new HttpUtil(attributes.getRequest());
+            log.info("Success sample -> Dest: {} | Request-ID: {} | Method: {} | returned {}.", httpUtil.parseClientAddress(),
+                    attributes.getRequest().getAttribute(CustomHttpAttributes.X_REQUEST_ID.getAttributeName()), methodSignature, returnType);
+        }
     }
 
     @AfterThrowing(value = "executeForAllControllers() && !excludeInitBinders() && !excludeSetterMethods() && !excludePostConstructs()", throwing = "throwable")
@@ -58,9 +60,10 @@ public class LoggingAspect {
         MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         Class<?> returnType = methodSignature.getReturnType();
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        assert attributes != null;
-        HttpUtil httpUtil = new HttpUtil(attributes.getRequest());
-        log.error("Error sample -> Dest: {} | Request-ID: {} | Method: {} | Return Type: {} has thrown {}.", httpUtil.parseClientAddress(),
-                attributes.getRequest().getAttribute(CustomHttpAttributes.X_REQUEST_ID.getAttributeName()), methodSignature, returnType, throwable);
+        if (attributes != null) {
+            HttpUtil httpUtil = new HttpUtil(attributes.getRequest());
+            log.error("Error sample -> Dest: {} | Request-ID: {} | Method: {} | Return Type: {} has thrown {}.", httpUtil.parseClientAddress(),
+                    attributes.getRequest().getAttribute(CustomHttpAttributes.X_REQUEST_ID.getAttributeName()), methodSignature, returnType, throwable);
+        }
     }
 }
