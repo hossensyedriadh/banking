@@ -1,4 +1,4 @@
-package io.github.hossensyedriadh.cbs.ledger.internal.util;
+package io.github.hossensyedriadh.cbs.eod.internal.util;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -6,7 +6,7 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public enum DistributedLockKeys {
-    LEDGER_RECONCILE ("LEDGER_RECONCILE_JOB");
+    EOD_RUN ("EOD_RUN");
 
     private final String key;
 }

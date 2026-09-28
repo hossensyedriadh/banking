@@ -1,5 +1,7 @@
 package io.github.hossensyedriadh.cbs.eod.api.service;
 
+import io.github.hossensyedriadh.cbs.eod.api.model.EodRunResult;
+
 public interface EndOfDayService {
-    void run();
+    EodRunResult run() throws InterruptedException;
 }
