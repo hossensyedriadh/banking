@@ -11,6 +11,8 @@ import java.util.Optional;
 public interface AccountProductService {
     List<AccountProductView> getAccountProducts();
 
+    List<AccountProductView> getActiveAndInterestBearingAccountProducts(List<Long> ids);
+
     Optional<AccountProductView> getProduct(Long id);
 
     Optional<AccountProductView> getProductByCode(String code);

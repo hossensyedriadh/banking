@@ -42,6 +42,12 @@ public class AccountProductServiceImpl implements AccountProductService {
     }
 
     @Override
+    public List<AccountProductView> getActiveAndInterestBearingAccountProducts(List<Long> ids) {
+        return this.accountProductRepository.findAllByIdInAndStatusAndInterestBearing(ids, AccountProductStatus.ACTIVE, true)
+                .stream().map(this.accountProductMapper::toView).toList();
+    }
+
+    @Override
     public Optional<AccountProductView> getProduct(Long id) {
         return this.accountProductRepository.findById(id).map(this.accountProductMapper::toView);
     }
