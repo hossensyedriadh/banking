@@ -4,6 +4,7 @@ import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import io.github.hossensyedriadh.cbs.ledger.api.model.ReconciliationResult;
 import io.github.hossensyedriadh.cbs.ledger.api.service.LedgerReconciliationService;
 import io.github.hossensyedriadh.cbs.ledger.internal.domain.LedgerAccount;
+import io.github.hossensyedriadh.cbs.ledger.internal.projection.LedgerReconciliationResult;
 import io.github.hossensyedriadh.cbs.ledger.internal.repository.LedgerAccountRepository;
 import io.github.hossensyedriadh.cbs.ledger.internal.repository.SubLedgerAccountRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Log4j2
 @Service
@@ -47,14 +50,39 @@ public class LedgerReconciliationServiceImpl implements LedgerReconciliationServ
                 subLedgerBalance, difference, difference.compareTo(BigDecimal.ZERO) == 0);
     }
 
-    protected void reconcileAllSubLedgers() {
-        this.ledgerAccountRepository.findSubLedgerReconciliationRows().forEach(row -> {
-            BigDecimal difference = row.glBalance().subtract(row.subLedgerBalance());
+    @Override
+    public void reconcile() {
+        List<LedgerAccount> ledgerAccounts = this.ledgerAccountRepository.findAccountsWithSubLedgers();
 
-            if (difference.compareTo(BigDecimal.ZERO) != 0) {
-                log.error("SubLedger reconciliation failed for GL {} ({}): GL balance={}, SubLedger balance={}, difference={}",
-                        row.glAccountId(), row.accountCode(), row.glBalance(), row.subLedgerBalance(), difference);
+        if (ledgerAccounts.isEmpty()) {
+            log.info("No ledger accounts found for reconciliation");
+            return;
+        }
+
+        List<LedgerReconciliationResult> discrepancies = new ArrayList<>();
+
+        ledgerAccounts.forEach(ledgerAccount -> {
+            BigDecimal glBalance = ledgerAccount.getBalance();
+            BigDecimal subLedgerBalance = this.subLedgerAccountRepository.sumBalanceByLedgerAccountId(ledgerAccount.getId());
+
+            if (glBalance.compareTo(subLedgerBalance) != 0) {
+                BigDecimal difference = glBalance.subtract(subLedgerBalance);
+
+                discrepancies.add(new LedgerReconciliationResult(ledgerAccount.getId(), ledgerAccount.getAccountCode(),
+                        glBalance, subLedgerBalance, difference));
             }
         });
+
+        if (!discrepancies.isEmpty()) {
+            log.error("Ledger reconciliation failed, {} discrepancies found", discrepancies.size());
+
+            discrepancies.forEach(d -> {
+                log.error("Ledger reconciliation discrepancy: ledgerAccountId={}, code={}, glBalance={}, subLedgerBalance={}, difference={}",
+                        d.ledgerAccountId(), d.ledgerAccountCode(), d.glBalance(), d.subLedgerBalance(), d.difference()
+                );
+            });
+
+            throw new RuntimeException("Ledger reconciliation failed with " + discrepancies.size() + " discrepancies");
+        }
     }
 }
