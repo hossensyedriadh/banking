@@ -13,7 +13,7 @@ spring:
       leak-detection-threshold: ${DB_POOL_LEAK_THRESHOLD}
       connection-test-query: "select 1;"
       driver-class-name: "org.postgresql.Driver"
-      pool-name: "Hikari Connection Pool [Dev]"
+      pool-name: "Hikari Connection Pool [CBS Core: Dev]"
   jpa:
     properties:
       hibernate:
@@ -52,6 +52,37 @@ spring:
         schema: "modulith"
         schema-initialization:
           enabled: false
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: never
+      platform: postgres
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceName: "cbs-core"
+            instanceId: "AUTO"
+          threadPool:
+            class: org.quartz.simpl.SimpleThreadPool
+            threadCount: 10
+            threadPriority: 5
+            threadsInheritContextClassLoaderOfInitializingThread: true
+          jobStore:
+            dataSource: "cbs-core"
+            class: org.quartz.impl.jdbcjobstore.JobStoreTX
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+            tablePrefix: quartz_
+            isClustered: true
+            clusterCheckinInterval: 20000
+            misfireThreshold: 60000
+          dataSource:
+            cbs-core:
+              driver: org.postgresql.Driver
+              URL: "${POSTGRES_URL}?currentSchema=scheduler"
+              user: "${POSTGRES_SCHED_USER}"
+              password: "${POSTGRES_SCHED_PWD}"
+              maxConnections: 10
 server:
   tomcat:
     connection-timeout: 15s

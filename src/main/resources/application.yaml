@@ -1,6 +1,6 @@
 spring:
   application:
-    name: cbs
+    name: "cbs-core"
   profiles:
     active: "${SPRING_PROFILES_ACTIVE:dev}"
   threads:
