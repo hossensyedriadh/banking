@@ -94,7 +94,6 @@ public class EndOfDayServiceImpl implements EndOfDayService {
                 }
             }
 
-            this.businessDateService.rolloverBusinessDate();
             this.eodRunService.complete(run);
 
             log.info("{} EOD steps completed successfully for business date: {}", this.steps.size(), formattedBusinessDate);
