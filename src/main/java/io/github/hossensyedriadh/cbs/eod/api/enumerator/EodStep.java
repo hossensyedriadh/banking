@@ -8,10 +8,9 @@ import lombok.Getter;
 public enum EodStep {
     INTEREST_ACCRUAL(1),
     HOLD_EXPIRATION(2),
-    SCHEDULED_FEES(3),
-    LEDGER_RECONCILIATION(4),
-    TRIAL_BALANCE(5),
-    CLOSE_BUSINESS_DATE(6);
+    LEDGER_RECONCILIATION(3),
+    TRIAL_BALANCE(4),
+    CLOSE_BUSINESS_DATE(5);
 
     private final int order;
 }
