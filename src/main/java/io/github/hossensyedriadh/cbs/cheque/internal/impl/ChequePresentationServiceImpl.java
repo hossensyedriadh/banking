@@ -141,6 +141,11 @@ public class ChequePresentationServiceImpl implements ChequePresentationService 
             return new ApiResourceException("Cheque presentation not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
         });
 
+        if (presentation.getStatus() == ChequePresentationStatus.PAID) {
+            log.warn("Cheque presentation with id {} is already paid", id);
+            throw new ApiResourceException("Cheque presentation already paid", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        }
+
         if (presentation.getStatus() != ChequePresentationStatus.ACCEPTED) {
             log.warn("Cheque presentation with id {} is not in accepted status for payment", id);
             throw new ApiResourceException("Only accepted cheque presentations can be paid", HttpStatus.BAD_REQUEST, this.httpServletRequest);
