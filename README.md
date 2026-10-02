@@ -1,7 +1,7 @@
-# Core Banking System
+# Core Banking Solution
 
 <p align="center">
-  <strong>A production-inspired Core Banking System built with Java, Spring Boot and Spring Modulith.</strong>
+  <strong>A production-inspired Core Banking Solution built with Java, Spring Boot, and Spring Modulith.</strong>
 </p>
 
 <p align="center">
@@ -38,7 +38,7 @@
 
 ## Overview
 
-This project is a **production-inspired Core Banking System (CBS)** designed to explore the architecture, accounting
+This project is a **production-inspired Core Banking Solution (CBS)** designed to explore the architecture, accounting
 principles, and transactional behavior behind modern banking software.
 
 Rather than treating banking as a collection of CRUD operations, the system models concepts such as:
@@ -49,7 +49,7 @@ Rather than treating banking as a collection of CRUD operations, the system mode
 * Currencies
 * General ledger and subledger
 * Double-entry accounting
-* Deposits, withdrawals and transfers
+* Deposits, withdrawals, and transfers
 * Transaction reversals
 * Interest accrual and posting
 * Account holds
@@ -81,7 +81,7 @@ flowchart TB
     UI["React + TypeScript<br/>Banking Frontend"]
     API["Spring Boot<br/>Application"]
 
-    subgraph CBS["Core Banking System"]
+    subgraph CBS["Core Banking Solution"]
         CUSTOMER["Customer"]
         BRANCH["Branch"]
         PRODUCT["Product"]
