@@ -35,7 +35,7 @@ RUN keytool -importcert -noprompt \
     -keystore "$JAVA_HOME/lib/security/cacerts" \
     -storepass changeit
 
-RUN addgroup -g 1000 bankingbe && adduser -u 1000 -S cbs-core -G bankingbe
+RUN addgroup -g 1000 bankingbe && adduser -u 1000 -S cbs -G bankingbe
 
 WORKDIR /app
 
@@ -44,7 +44,7 @@ COPY --from=builder /app/spring-boot-loader/ ./
 COPY --from=builder /app/snapshot-dependencies/ ./
 COPY --from=builder /app/application/ ./
 
-USER cbs-core
+USER cbs
 
 EXPOSE 8080
 
