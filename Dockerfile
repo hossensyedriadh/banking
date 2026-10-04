@@ -48,6 +48,8 @@ COPY --from=builder /app/ ./
 
 RUN chown -R 1000:1000 /app
 
+RUN chown -R 1000:1000 /app
+
 USER cbs
 
 EXPOSE 8080
