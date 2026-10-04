@@ -19,7 +19,7 @@ RUN ./gradlew --no-daemon dependencies || true
 COPY src src
 RUN ./gradlew --no-daemon clean bootJar
 
-RUN java -Djarmode=tools -jar build/libs/*.jar extract --layers
+RUN java -Djarmode=tools -jar build/libs/*.jar extract --layers --launcher --destination extracted
 
 
 FROM eclipse-temurin:25-jre-alpine
@@ -39,10 +39,10 @@ RUN addgroup -g 1000 bankingbe && adduser -u 1000 -S cbs -G bankingbe
 
 WORKDIR /app
 
-COPY --from=builder /app/dependencies/ ./
-COPY --from=builder /app/spring-boot-loader/ ./
-COPY --from=builder /app/snapshot-dependencies/ ./
-COPY --from=builder /app/application/ ./
+COPY --from=builder /app/extracted/dependencies/ ./
+COPY --from=builder /app/extracted/spring-boot-loader/ ./
+COPY --from=builder /app/extracted/snapshot-dependencies/ ./
+COPY --from=builder /app/extracted/application/ ./
 
 RUN chown -R 1000:1000 /app
 
