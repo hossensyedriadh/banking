@@ -61,7 +61,7 @@ spring:
       org:
         quartz:
           scheduler:
-            instanceName: "cbs-core"
+            instanceName: "cbs"
             instanceId: "AUTO"
           threadPool:
             class: org.quartz.simpl.SimpleThreadPool
@@ -69,7 +69,7 @@ spring:
             threadPriority: 5
             threadsInheritContextClassLoaderOfInitializingThread: true
           jobStore:
-            dataSource: "cbs-core"
+            dataSource: "cbs"
             class: org.quartz.impl.jdbcjobstore.JobStoreTX
             driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
             tablePrefix: quartz_
@@ -77,7 +77,7 @@ spring:
             clusterCheckinInterval: 20000
             misfireThreshold: 60000
           dataSource:
-            cbs-core:
+            cbs:
               driver: org.postgresql.Driver
               URL: "${POSTGRES_URL}?currentSchema=scheduler"
               user: "${POSTGRES_SCHED_USER}"

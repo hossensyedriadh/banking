@@ -9,7 +9,7 @@ plugins {
 
 group = "io.github.hossensyedriadh"
 version = "1.0.0-SNAPSHOT"
-description = "Core Banking Solution service"
+description = "Core Banking Solution"
 
 java {
     toolchain {
@@ -26,7 +26,7 @@ configurations.configureEach {
     exclude(group = "org.springframework.boot", module = "spring-boot-starter-logging")
 }
 
-configurations{
+configurations {
     testRuntimeClasspath {
         exclude(group = "org.json", module = "json")
     }
@@ -36,13 +36,11 @@ extra["springModulithVersion"] = "2.1.1"
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
-//	implementation("org.springframework.boot:spring-boot-starter-cache")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
 //	implementation("org.springframework.boot:spring-boot-starter-flyway")
-	implementation("org.springframework.boot:spring-boot-starter-kafka")
-//	implementation("org.springframework.boot:spring-boot-starter-mail")
-	implementation("org.springframework.boot:spring-boot-starter-quartz")
+    implementation("org.springframework.boot:spring-boot-starter-kafka")
+    implementation("org.springframework.boot:spring-boot-starter-quartz")
     implementation("org.springframework.boot:spring-boot-starter-restclient")
 //	implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
@@ -52,8 +50,8 @@ dependencies {
     implementation("org.apache.commons:commons-pool2:2.13.1")
     implementation("org.springframework.boot:spring-boot-starter-log4j2")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1")
-    implementation("org.apache.httpcomponents.client5:httpclient5:5.6.3")
-    implementation("org.apache.httpcomponents.core5:httpcore5:5.4.2")
+    implementation("org.apache.httpcomponents.client5:httpclient5:5.6.4")
+    implementation("org.apache.httpcomponents.core5:httpcore5:5.4.4")
     implementation("org.json:json:20251224")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.0")
     implementation("org.apache.avro:avro:1.12.2")
@@ -79,13 +77,11 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
-//	testImplementation("org.springframework.boot:spring-boot-starter-cache-test")
     testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
     testImplementation("org.springframework.boot:spring-boot-starter-data-redis-test")
 //	testImplementation("org.springframework.boot:spring-boot-starter-flyway-test")
-	testImplementation("org.springframework.boot:spring-boot-starter-kafka-test")
-//	testImplementation("org.springframework.boot:spring-boot-starter-mail-test")
-	testImplementation("org.springframework.boot:spring-boot-starter-quartz-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-kafka-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-quartz-test")
     testImplementation("org.springframework.boot:spring-boot-starter-restclient-test")
 //	testImplementation("org.springframework.boot:spring-boot-starter-security-test")
     testImplementation("org.springframework.boot:spring-boot-starter-thymeleaf-test")
