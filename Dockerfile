@@ -43,10 +43,6 @@ COPY --from=builder /app/dependencies/ ./
 COPY --from=builder /app/spring-boot-loader/ ./
 COPY --from=builder /app/snapshot-dependencies/ ./
 COPY --from=builder /app/application/ ./
-COPY --from=builder /app/lib/ ./lib/
-COPY --from=builder /app/ ./
-
-RUN chown -R 1000:1000 /app
 
 RUN chown -R 1000:1000 /app
 
