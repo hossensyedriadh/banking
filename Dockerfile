@@ -19,7 +19,7 @@ RUN ./gradlew --no-daemon dependencies || true
 COPY src src
 RUN ./gradlew --no-daemon clean bootJar
 
-RUN java -Djarmode=tools -jar build/libs/*.jar extract
+RUN java -Djarmode=tools -jar build/libs/*.jar extract --layers
 
 
 FROM eclipse-temurin:25-jre-alpine
