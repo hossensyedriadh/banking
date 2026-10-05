@@ -6,6 +6,7 @@ import io.github.hossensyedriadh.cbs.account.api.service.AccountService;
 import io.github.hossensyedriadh.cbs.card.api.command.*;
 import io.github.hossensyedriadh.cbs.card.api.enumerator.CardReplacementReason;
 import io.github.hossensyedriadh.cbs.card.api.enumerator.CardStatus;
+import io.github.hossensyedriadh.cbs.card.api.event.*;
 import io.github.hossensyedriadh.cbs.card.api.model.CardView;
 import io.github.hossensyedriadh.cbs.card.api.service.CardService;
 import io.github.hossensyedriadh.cbs.card.internal.cryptography.CardNumberHasher;
@@ -26,6 +27,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,13 +51,15 @@ public class CardServiceImpl implements CardService {
     private final TransactionService transactionService;
     private final CardNumberHasher cardNumberHasher;
     private final CardMapper cardMapper;
+    private final ApplicationEventPublisher applicationEventPublisher;
     private final HttpServletRequest httpServletRequest;
 
     @Autowired
     public CardServiceImpl(CardRepository cardRepository, CardStatusHistoryRepository cardStatusHistoryRepository,
                            CardProductService cardProductService, CardPinServiceImpl cardPinService,
                            AccountService accountService, TransactionService transactionService,
-                           CardNumberHasher cardNumberHasher, CardMapper cardMapper, HttpServletRequest httpServletRequest) {
+                           CardNumberHasher cardNumberHasher, CardMapper cardMapper,
+                           ApplicationEventPublisher applicationEventPublisher, HttpServletRequest httpServletRequest) {
         this.cardRepository = cardRepository;
         this.cardStatusHistoryRepository = cardStatusHistoryRepository;
         this.cardProductService = cardProductService;
@@ -64,6 +68,7 @@ public class CardServiceImpl implements CardService {
         this.transactionService = transactionService;
         this.cardNumberHasher = cardNumberHasher;
         this.cardMapper = cardMapper;
+        this.applicationEventPublisher = applicationEventPublisher;
         this.httpServletRequest = httpServletRequest;
     }
 
@@ -111,6 +116,8 @@ public class CardServiceImpl implements CardService {
         log.info("Card with id {} has been activated", card.getId());
 
         this.createStatusHistory(card.getId(), CardStatus.ACTIVE, "Customer activated");
+
+        this.applicationEventPublisher.publishEvent(new CardActivatedEvent(activated.getId()));
 
         return this.cardMapper.toView(activated);
     }
@@ -166,6 +173,8 @@ public class CardServiceImpl implements CardService {
 
         this.transactionService.charge(chargingCommand);
 
+        this.applicationEventPublisher.publishEvent(new CardIssuedEvent(issued.getId(), account.getId()));
+
         return this.cardMapper.toView(issued);
     }
 
@@ -220,6 +229,8 @@ public class CardServiceImpl implements CardService {
 
         this.transactionService.charge(chargingCommand);
 
+        this.applicationEventPublisher.publishEvent(new CardIssuedEvent(issued.getId(), account.getId()));
+
         return issued;
     }
 
@@ -241,6 +252,8 @@ public class CardServiceImpl implements CardService {
         this.createStatusHistory(oldCard.getId(), CardStatus.REPLACED, command.getReason().toString());
 
         this.cardRepository.save(oldCard);
+
+        this.applicationEventPublisher.publishEvent(new CardPermanentBlockedEvent(oldCard.getId(), "Old Card " + oldCard.getId() + " replaced with Card: " + replacement.getId()));
 
         return this.cardMapper.toView(replacement);
     }
@@ -311,6 +324,8 @@ public class CardServiceImpl implements CardService {
 
         log.info("Card with id: {} status updated to TEMPORARILY_BLOCKED", command.getCardId());
 
+        this.applicationEventPublisher.publishEvent(new CardTemporaryBlockedEvent(card.getId(), command.getReason()));
+
         return this.cardMapper.toView(updated);
     }
 
@@ -338,6 +353,8 @@ public class CardServiceImpl implements CardService {
         this.createStatusHistory(command.getCardId(), CardStatus.PERMANENTLY_BLOCKED, command.getReason());
 
         log.info("Card with id: {} status updated to PERMANENTLY_BLOCKED", command.getCardId());
+
+        this.applicationEventPublisher.publishEvent(new CardPermanentBlockedEvent(card.getId(), command.getReason()));
 
         return this.cardMapper.toView(updated);
     }
@@ -367,6 +384,8 @@ public class CardServiceImpl implements CardService {
 
         log.info("Card with id: {} status updated to ACTIVE", command.getCardId());
 
+        this.applicationEventPublisher.publishEvent(new CardUnblockedEvent(card.getId(), command.getReason()));
+
         return this.cardMapper.toView(updated);
     }
 
@@ -389,6 +408,8 @@ public class CardServiceImpl implements CardService {
         this.createStatusHistory(command.getCardId(), CardStatus.CLOSED, command.getReason());
 
         log.info("Card with id: {} status updated to CLOSED", command.getCardId());
+
+        this.applicationEventPublisher.publishEvent(new CardClosedEvent(card.getId(), command.getReason()));
 
         return this.cardMapper.toView(closed);
     }

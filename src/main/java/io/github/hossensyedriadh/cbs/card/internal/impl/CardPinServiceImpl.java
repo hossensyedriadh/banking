@@ -5,6 +5,9 @@ import io.github.hossensyedriadh.cbs.card.api.command.SetCardPinCommand;
 import io.github.hossensyedriadh.cbs.card.api.command.VerifyCardPinCommand;
 import io.github.hossensyedriadh.cbs.card.api.enumerator.CardPinVerificationResult;
 import io.github.hossensyedriadh.cbs.card.api.enumerator.CardStatus;
+import io.github.hossensyedriadh.cbs.card.api.event.CardPinChangedEvent;
+import io.github.hossensyedriadh.cbs.card.api.event.CardPinSetEvent;
+import io.github.hossensyedriadh.cbs.card.api.event.CardPinUnblockedEvent;
 import io.github.hossensyedriadh.cbs.card.api.service.CardPinService;
 import io.github.hossensyedriadh.cbs.card.internal.domain.Card;
 import io.github.hossensyedriadh.cbs.card.internal.domain.CardPin;
@@ -15,6 +18,7 @@ import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,11 +29,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class CardPinServiceImpl implements CardPinService {
     private final CardPinRepository cardPinRepository;
     private final CardRepository cardRepository;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Autowired
-    public CardPinServiceImpl(CardPinRepository cardPinRepository, CardRepository cardRepository) {
+    public CardPinServiceImpl(CardPinRepository cardPinRepository, CardRepository cardRepository,
+                              ApplicationEventPublisher applicationEventPublisher) {
         this.cardPinRepository = cardPinRepository;
         this.cardRepository = cardRepository;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     @Transactional
@@ -56,6 +63,8 @@ public class CardPinServiceImpl implements CardPinService {
         cardPin.setPinVerificationData(CardPinVerifier.createVerificationData(command.getPin()));
 
         this.cardPinRepository.save(cardPin);
+
+        this.applicationEventPublisher.publishEvent(new CardPinSetEvent(card.getId(), cardPin.getId()));
 
         log.info("Successfully set PIN for Card with id {}", card.getId());
     }
@@ -92,6 +101,8 @@ public class CardPinServiceImpl implements CardPinService {
         cardPin.setFailedAttempts(0);
 
         this.cardPinRepository.save(cardPin);
+
+        this.applicationEventPublisher.publishEvent(new CardPinChangedEvent(card.getId(), cardPin.getId()));
 
         log.info("Successfully changed PIN for Card with id {}", card.getId());
     }
@@ -160,6 +171,8 @@ public class CardPinServiceImpl implements CardPinService {
         cardPin.setFailedAttempts(0);
 
         this.cardPinRepository.save(cardPin);
+
+        this.applicationEventPublisher.publishEvent(new CardPinUnblockedEvent(card.getId(), cardPin.getId()));
 
         log.info("Successfully unblocked PIN for Card with id {}", cardId);
     }

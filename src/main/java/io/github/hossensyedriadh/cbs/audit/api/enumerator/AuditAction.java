@@ -3,6 +3,7 @@ package io.github.hossensyedriadh.cbs.audit.api.enumerator;
 public enum AuditAction {
     CREATED,
     UPDATED,
+    ISSUED,
     ACTIVATED,
     DEACTIVATED,
     BLOCKED,
