@@ -3,6 +3,9 @@ package io.github.hossensyedriadh.cbs.customer.internal.impl;
 import io.github.hossensyedriadh.cbs.customer.api.command.CreateCustomerCommand;
 import io.github.hossensyedriadh.cbs.customer.api.command.UpdateCustomerCommand;
 import io.github.hossensyedriadh.cbs.customer.api.enumerator.CustomerStatus;
+import io.github.hossensyedriadh.cbs.customer.api.event.CustomerClosedEvent;
+import io.github.hossensyedriadh.cbs.customer.api.event.CustomerCreatedEvent;
+import io.github.hossensyedriadh.cbs.customer.api.event.CustomerUpdatedEvent;
 import io.github.hossensyedriadh.cbs.customer.api.model.CustomerView;
 import io.github.hossensyedriadh.cbs.customer.api.service.CustomerService;
 import io.github.hossensyedriadh.cbs.customer.internal.domain.Customer;
@@ -13,6 +16,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -28,13 +32,15 @@ import java.util.Optional;
 public class CustomerServiceImpl implements CustomerService {
     private final CustomerRepository customerRepository;
     private final CustomerMapper customerMapper;
+    private final ApplicationEventPublisher applicationEventPublisher;
     private final HttpServletRequest httpServletRequest;
 
     @Autowired
     public CustomerServiceImpl(CustomerRepository customerRepository, CustomerMapper customerMapper,
-                               HttpServletRequest httpServletRequest) {
+                               ApplicationEventPublisher applicationEventPublisher, HttpServletRequest httpServletRequest) {
         this.customerRepository = customerRepository;
         this.customerMapper = customerMapper;
+        this.applicationEventPublisher = applicationEventPublisher;
         this.httpServletRequest = httpServletRequest;
     }
 
@@ -59,6 +65,8 @@ public class CustomerServiceImpl implements CustomerService {
         Customer customer = this.customerMapper.toEntity(command);
         Customer saved = this.customerRepository.save(customer);
 
+        this.applicationEventPublisher.publishEvent(new CustomerCreatedEvent(saved.getId()));
+
         log.info("Customer created with ID: {}", saved.getId());
 
         return this.customerMapper.toView(saved);
@@ -80,6 +88,8 @@ public class CustomerServiceImpl implements CustomerService {
         this.customerMapper.toPatchedEntity(command, customer);
         Customer updated = this.customerRepository.save(customer);
 
+        this.applicationEventPublisher.publishEvent(new CustomerUpdatedEvent(updated.getId()));
+
         log.info("Updated customer with ID: {}", id);
 
         return this.customerMapper.toView(updated);
@@ -98,6 +108,8 @@ public class CustomerServiceImpl implements CustomerService {
             customer.setClosedAt(OffsetDateTime.now());
 
             this.customerRepository.save(customer);
+
+            this.applicationEventPublisher.publishEvent(new CustomerClosedEvent(customer.getId()));
 
             log.info("Customer closed with ID: {}", id);
         }, () -> {
