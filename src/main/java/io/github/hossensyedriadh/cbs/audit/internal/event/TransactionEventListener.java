@@ -45,8 +45,8 @@ public class TransactionEventListener {
 
     @ApplicationModuleListener
     public void on(TransactionReversedEvent event) {
-        this.auditService.record(new CreateAuditLogCommand(TRANSACTION_NAME, TRANSACTION_NAME, event.transactionId(),
+        this.auditService.record(new CreateAuditLogCommand(TRANSACTION_NAME, TRANSACTION_NAME, event.originalTransactionId(),
                 AuditAction.REVERSED, "Transaction type " + event.type().toString() + " with reference "
-                + event.reference() + " reversed"));
+                + event.reference() + " reversed. Reversal ID: " + event.reversalTransactionId()));
     }
 }
