@@ -69,9 +69,9 @@ public class BranchServiceImpl implements BranchService {
         Branch branch = this.branchMapper.toEntity(command);
         Branch saved = this.branchRepository.save(branch);
 
-        log.info("Created branch [Code: {}] with ID: {}", branch.getBranchCode(), branch.getId());
-
         this.applicationEventPublisher.publishEvent(new BranchCreatedEvent(saved.getId(), saved.getBranchCode()));
+
+        log.info("Created branch [Code: {}] with ID: {}", branch.getBranchCode(), branch.getId());
 
         return this.branchMapper.toView(saved);
     }
@@ -93,9 +93,9 @@ public class BranchServiceImpl implements BranchService {
         this.branchMapper.toPatchedEntity(command, branch);
         Branch updated = this.branchRepository.save(branch);
 
-        log.info("Updated Branch with ID: {}", id);
-
         this.applicationEventPublisher.publishEvent(new BranchUpdatedEvent(updated.getId(), updated.getBranchCode()));
+
+        log.info("Updated Branch with ID: {}", id);
 
         return this.branchMapper.toView(updated);
     }
