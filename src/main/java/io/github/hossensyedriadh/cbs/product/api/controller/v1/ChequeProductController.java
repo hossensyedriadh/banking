@@ -4,6 +4,13 @@ import io.github.hossensyedriadh.cbs.product.api.command.CreateChequeProductComm
 import io.github.hossensyedriadh.cbs.product.api.command.UpdateChequeProductCommand;
 import io.github.hossensyedriadh.cbs.product.api.model.ChequeProductView;
 import io.github.hossensyedriadh.cbs.product.api.service.ChequeProductService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.http.MediaType;
@@ -18,6 +25,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping(value = "/cheque-products/v1", produces = {MediaType.APPLICATION_JSON_VALUE})
+@Tag(name = "Cheque Product API", description = "API endpoints for managing cheque products")
 public class ChequeProductController {
     private final ChequeProductService chequeProductService;
 
@@ -32,6 +40,11 @@ public class ChequeProductController {
         binder.registerCustomEditor(String.class, stringTrimmerEditor);
     }
 
+    @Operation(summary = "Get all cheque products", description = "Get all existing cheque products",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK", content = @Content(array = @ArraySchema(schema = @Schema(implementation = ChequeProductView.class)))),
+                    @ApiResponse(responseCode = "204", description = "No cheque products found", content = @Content)
+            })
     @GetMapping("/")
     public ResponseEntity<List<ChequeProductView>> getChequeProducts() {
         List<ChequeProductView> chequeProductViews = this.chequeProductService.getChequeProducts();
@@ -43,20 +56,45 @@ public class ChequeProductController {
         return ResponseEntity.ok(chequeProductViews);
     }
 
+    @Operation(summary = "Get cheque product by ID", description = "Get a cheque product by its ID",
+            parameters = {
+                    @Parameter(name = "id", description = "ID of the cheque product to retrieve", required = true)
+            },
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = ChequeProductView.class))),
+                    @ApiResponse(responseCode = "404", description = "Cheque product not found", content = @Content)
+            })
     @GetMapping("/{id}")
     public ResponseEntity<ChequeProductView> getChequeProductById(@PathVariable("id") Long id) {
         Optional<ChequeProductView> chequeProductView = this.chequeProductService.getChequeProduct(id);
 
-        return chequeProductView.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
+        return chequeProductView.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Get cheque product by code", description = "Get a cheque product by its code",
+            parameters = {
+                    @Parameter(name = "code", description = "Code of the cheque product to retrieve", required = true)
+            },
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = ChequeProductView.class))),
+                    @ApiResponse(responseCode = "404", description = "Cheque product not found", content = @Content)
+            })
     @GetMapping("/code/{code}")
     public ResponseEntity<ChequeProductView> getChequeProductByCode(@PathVariable("code") String code) {
         Optional<ChequeProductView> chequeProductView = this.chequeProductService.getChequeProductByCode(code);
 
-        return chequeProductView.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
+        return chequeProductView.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Create a new cheque product", description = "Create a new cheque product",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Command to create a new cheque product",
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = CreateChequeProductCommand.class))
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Created", content = @Content(schema = @Schema(implementation = ChequeProductView.class)))
+            })
     @PostMapping(value = "/", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<ChequeProductView> createChequeProduct(@RequestBody CreateChequeProductCommand command) {
         ChequeProductView saved = this.chequeProductService.createProduct(command);
@@ -67,6 +105,18 @@ public class ChequeProductController {
         return ResponseEntity.created(location).body(saved);
     }
 
+    @Operation(summary = "Update an existing cheque product", description = "Update an existing cheque product",
+            parameters = {
+                    @Parameter(name = "id", description = "ID of the cheque product to update", required = true)
+            },
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Command object containing the details of the cheque product to update", required = true,
+                    content = @Content(schema = @Schema(implementation = UpdateChequeProductCommand.class))
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = ChequeProductView.class))),
+                    @ApiResponse(responseCode = "404", description = "Cheque product not found", content = @Content)
+            })
     @PatchMapping(value = "/{id}", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<ChequeProductView> updateChequeProduct(@PathVariable("id") Long id, @RequestBody UpdateChequeProductCommand command) {
         ChequeProductView updated = this.chequeProductService.updateProduct(id, command);
@@ -74,14 +124,28 @@ public class ChequeProductController {
         return ResponseEntity.ok(updated);
     }
 
-    @PostMapping("/activate/{id}")
+    @Operation(summary = "Activate a cheque product", description = "Activate a cheque product by its ID",
+            parameters = {
+                    @Parameter(name = "id", description = "The ID of the cheque product to activate", required = true)
+            }, responses = {
+            @ApiResponse(responseCode = "204", description = "No content", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Cheque product not found", content = @Content)
+    })
+    @PostMapping("/activation/{id}")
     public ResponseEntity<Void> activateProduct(@PathVariable("id") Long id) {
         this.chequeProductService.activateProduct(id);
 
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/deactivate/{id}")
+    @Operation(summary = "Deactivate a cheque product", description = "Deactivate a cheque product by its ID",
+            parameters = {
+                    @Parameter(name = "id", description = "The ID of the cheque product to deactivate", required = true)
+            }, responses = {
+            @ApiResponse(responseCode = "204", description = "No content", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Cheque product not found", content = @Content)
+    })
+    @PostMapping("/deactivation/{id}")
     public ResponseEntity<Void> deactivateProduct(@PathVariable("id") Long id) {
         this.chequeProductService.deactivateProduct(id);
 

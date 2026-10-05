@@ -26,7 +26,7 @@ public class Currency {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(name = "code", nullable = false, length = 3)
+    @Column(name = "code", unique = true, nullable = false, length = 3)
     private String code;
 
     @Column(name = "name", nullable = false, length = 100)

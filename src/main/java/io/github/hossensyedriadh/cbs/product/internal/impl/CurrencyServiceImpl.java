@@ -52,6 +52,11 @@ public class CurrencyServiceImpl implements CurrencyService {
     @Transactional
     @Override
     public CurrencyView createCurrency(@Valid CreateCurrencyCommand command) {
+        if (this.currencyRepository.existsByCode(command.getCode())) {
+            log.warn("Currency with code {} already exists", command.getCode());
+            throw new ApiResourceException("Currency already exists", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        }
+
         Currency currency = this.currencyMapper.toEntity(command);
         Currency saved = this.currencyRepository.save(currency);
 
@@ -75,7 +80,7 @@ public class CurrencyServiceImpl implements CurrencyService {
             log.info("Activated currency with ID: {}", id);
         }, () -> {
             log.warn("Currency with id {} not found", id);
-            throw new ApiResourceException("Currency not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            throw new ApiResourceException("Currency not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
     }
 
@@ -94,7 +99,7 @@ public class CurrencyServiceImpl implements CurrencyService {
             log.info("Deactivated currency with ID: {}", id);
         }, () -> {
             log.warn("Currency with id {} not found", id);
-            throw new ApiResourceException("Currency not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            throw new ApiResourceException("Currency not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
     }
 }

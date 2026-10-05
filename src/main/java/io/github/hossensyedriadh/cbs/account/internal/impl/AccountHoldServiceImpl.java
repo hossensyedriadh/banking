@@ -71,7 +71,7 @@ public class AccountHoldServiceImpl implements AccountHoldService {
         AccountView account = this.accountService.getAccount(command.getAccountId())
                 .orElseThrow(() -> {
                     log.warn("Account not found with ID: {}", command.getAccountId());
-                    return new ApiResourceException("Account not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+                    return new ApiResourceException("Account not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
                 });
 
         if (account.getStatus() != AccountStatus.ACTIVE) {
@@ -99,7 +99,7 @@ public class AccountHoldServiceImpl implements AccountHoldService {
     public AccountHoldView releaseHold(Long holdId) {
         AccountHold hold = this.accountHoldRepository.findByIdForUpdate(holdId).orElseThrow(() -> {
             log.warn("Account hold not found with ID: {}", holdId);
-            return new ApiResourceException("Account hold not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            return new ApiResourceException("Account hold not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         if (hold.getStatus() != AccountHoldStatus.ACTIVE) {

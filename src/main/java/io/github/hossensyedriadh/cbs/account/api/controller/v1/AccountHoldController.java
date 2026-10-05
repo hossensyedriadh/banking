@@ -4,6 +4,13 @@ import io.github.hossensyedriadh.cbs.account.api.command.CreateAccountHoldComman
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountHoldStatus;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountHoldView;
 import io.github.hossensyedriadh.cbs.account.api.service.AccountHoldService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.http.MediaType;
@@ -18,6 +25,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping(value = "/account-holds/v1", produces = {MediaType.APPLICATION_JSON_VALUE})
+@Tag(name = "Account Hold API", description = "API endpoints for managing account holds")
 public class AccountHoldController {
     private final AccountHoldService accountHoldService;
 
@@ -32,6 +40,13 @@ public class AccountHoldController {
         binder.registerCustomEditor(String.class, stringTrimmerEditor);
     }
 
+    @Operation(summary = "Get account holds by account ID and status", description = "Retrieve a list of account holds based on the provided account ID and status.", parameters = {
+            @Parameter(name = "accountId", description = "The ID of the account to retrieve holds for", required = true),
+            @Parameter(name = "status", description = "The status of the holds to retrieve", required = true)
+    }, responses = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(array = @ArraySchema(schema = @Schema(implementation = AccountHoldView.class)))),
+            @ApiResponse(responseCode = "204", description = "No Content", content = @Content)
+    })
     @GetMapping("/account/{accountId}/status/{status}")
     public ResponseEntity<List<AccountHoldView>> getHolds(@PathVariable("accountId") Long accountId, @PathVariable("status") AccountHoldStatus status) {
         List<AccountHoldView> holds = this.accountHoldService.getHolds(accountId, status);
@@ -43,13 +58,27 @@ public class AccountHoldController {
         return ResponseEntity.ok(holds);
     }
 
+    @Operation(summary = "Get account hold by ID", description = "Retrieve an account hold based on the provided ID.", parameters = {
+            @Parameter(name = "id", description = "The ID of the hold to retrieve", required = true)
+    }, responses = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = AccountHoldView.class))),
+            @ApiResponse(responseCode = "404", description = "Account hold not found", content = @Content)
+    })
     @GetMapping("/{id}")
     public ResponseEntity<AccountHoldView> getHold(@PathVariable("id") Long holdId) {
         Optional<AccountHoldView> hold = this.accountHoldService.getHold(holdId);
 
-        return hold.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
+        return hold.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Create a new account hold", description = "Create a new account hold based on the provided command.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "The command to create the hold", required = true, content = @Content(schema = @Schema(implementation = CreateAccountHoldCommand.class))
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Created hold successfully", content = @Content(schema = @Schema(implementation = AccountHoldView.class))),
+                    @ApiResponse(responseCode = "404", description = "Account not found", content = @Content)
+            })
     @PostMapping(value = "/", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<AccountHoldView> createHold(@RequestBody CreateAccountHoldCommand command) {
         AccountHoldView saved = this.accountHoldService.createHold(command);
@@ -60,6 +89,10 @@ public class AccountHoldController {
         return ResponseEntity.created(location).body(saved);
     }
 
+    @Operation(summary = "Release an account hold", description = "Release an account hold based on the provided hold ID.", responses = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = AccountHoldView.class))),
+            @ApiResponse(responseCode = "404", description = "Account hold not found", content = @Content)
+    })
     @PostMapping("/release/{id}")
     public ResponseEntity<AccountHoldView> releaseHold(@PathVariable("id") Long holdId) {
         AccountHoldView released = this.accountHoldService.releaseHold(holdId);

@@ -245,7 +245,7 @@ public class TransactionServiceImpl implements TransactionService {
         Transaction originalTransaction = this.transactionRepository.findById(command.getTransactionId())
                 .orElseThrow(() -> {
                     log.warn("Transaction not found with ID {}", command.getTransactionId());
-                    return new ApiResourceException("Transaction not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+                    return new ApiResourceException("Transaction not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
                 });
 
         if (originalTransaction.getStatus() != TransactionStatus.COMPLETED) {
@@ -388,7 +388,7 @@ public class TransactionServiceImpl implements TransactionService {
     private AccountView getActiveAccount(Long accountId) {
         AccountView account = this.accountService.getAccount(accountId).orElseThrow(() -> {
             log.warn("Account not found with ID: {}", accountId);
-            return new ApiResourceException("Account not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            return new ApiResourceException("Account not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         if (account.getStatus() != AccountStatus.ACTIVE) {
@@ -406,8 +406,8 @@ public class TransactionServiceImpl implements TransactionService {
         }
 
         this.currencyService.getCurrency(transactionCurrencyId).filter(CurrencyView::isActive).orElseThrow(() -> {
-            log.warn("Current currency {} is not active", transactionCurrencyId);
-            return new ApiResourceException("Currency is inactive", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            log.warn("Active currency not found with ID: {}", transactionCurrencyId);
+            return new ApiResourceException("Active currency not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
     }
 

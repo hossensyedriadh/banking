@@ -54,6 +54,11 @@ public class BranchServiceImpl implements BranchService {
     @Transactional
     @Override
     public BranchView createBranch(@Valid CreateBranchCommand command) {
+        if (this.branchRepository.findByBranchCodeIgnoreCase(command.getBranchCode()).isPresent()) {
+            log.warn("Branch with code [{}] already exists.", command.getBranchCode());
+            throw new ApiResourceException("Branch already exists with code", HttpStatus.CONFLICT, this.httpServletRequest);
+        }
+
         Branch branch = this.branchMapper.toEntity(command);
         Branch saved = this.branchRepository.save(branch);
 
@@ -67,7 +72,7 @@ public class BranchServiceImpl implements BranchService {
     public BranchView updateBranch(Long id, @Valid UpdateBranchCommand command) {
         Branch branch = this.branchRepository.findByIdForUpdate(id).orElseThrow(() -> {
             log.warn("No Branch with ID: {}", id);
-            return new ApiResourceException("Branch not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            return new ApiResourceException("Branch not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         if (branch.getActive() == Boolean.FALSE) {
@@ -99,7 +104,7 @@ public class BranchServiceImpl implements BranchService {
             log.info("Activated Branch with ID: {}", id);
         }, () -> {
             log.warn("No Branch with ID: {}", id);
-            throw new ApiResourceException("Branch not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            throw new ApiResourceException("Branch not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
     }
 
@@ -118,7 +123,7 @@ public class BranchServiceImpl implements BranchService {
             log.info("Deactivated Branch with ID: {}", id);
         }, () -> {
             log.warn("No Branch with ID: {}", id);
-            throw new ApiResourceException("Branch not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            throw new ApiResourceException("Branch not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
     }
 }

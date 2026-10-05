@@ -63,7 +63,7 @@ public class AccountProductServiceImpl implements AccountProductService {
         if (this.accountProductRepository.existsByProductCode(command.getProductCode())) {
             log.warn("Account Product with code {} already exists", command.getProductCode());
             throw new ApiResourceException("Account Product with code " + command.getProductCode() + " already exists",
-                    HttpStatus.BAD_REQUEST, this.httpServletRequest);
+                    HttpStatus.CONFLICT, this.httpServletRequest);
         }
 
         AccountProduct product = this.accountProductMapper.toEntity(command);
@@ -79,7 +79,7 @@ public class AccountProductServiceImpl implements AccountProductService {
     public AccountProductView updateProduct(Long id, @Valid UpdateAccountProductCommand command) {
         AccountProduct product = this.accountProductRepository.findByIdForUpdate(id).orElseThrow(() -> {
             log.warn("Account product not found with id: {}", id);
-            return new ApiResourceException("Account product not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            return new ApiResourceException("Account product not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         if (product.getStatus() != AccountProductStatus.ACTIVE) {
@@ -110,7 +110,7 @@ public class AccountProductServiceImpl implements AccountProductService {
             log.info("Account product activated with code: {}", product.getProductCode());
         }, () -> {
             log.warn("Account product not found with id: {}", id);
-            throw new ApiResourceException("Account product not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            throw new ApiResourceException("Account product not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
     }
 
@@ -129,7 +129,7 @@ public class AccountProductServiceImpl implements AccountProductService {
             log.info("Account product deactivated with code: {}", product.getProductCode());
         }, () -> {
             log.warn("Account product not found with id: {}", id);
-            throw new ApiResourceException("Account product not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            throw new ApiResourceException("Account product not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
     }
 }

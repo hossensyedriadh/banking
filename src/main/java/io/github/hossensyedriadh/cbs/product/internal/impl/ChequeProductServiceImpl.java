@@ -73,7 +73,7 @@ public class ChequeProductServiceImpl implements ChequeProductService {
     public ChequeProductView updateProduct(Long id, @Valid UpdateChequeProductCommand command) {
         ChequeProduct product = this.chequeProductRepository.findByIdForUpdate(id).orElseThrow(() -> {
             log.warn("Cheque product not found with id: {}", id);
-            return new ApiResourceException("Cheque product not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            return new ApiResourceException("Cheque product not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         if (product.getStatus() != ChequeProductStatus.ACTIVE) {
@@ -104,7 +104,7 @@ public class ChequeProductServiceImpl implements ChequeProductService {
             log.info("Cheque product activated with code: {}", product.getProductCode());
         }, () -> {
             log.warn("Cheque product not found with id: {}", id);
-            throw new ApiResourceException("Cheque product not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            throw new ApiResourceException("Cheque product not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
     }
 
@@ -123,7 +123,7 @@ public class ChequeProductServiceImpl implements ChequeProductService {
             log.info("Cheque product deactivated with code: {}", product.getProductCode());
         }, () -> {
             log.warn("Cheque product not found with id: {}", id);
-            throw new ApiResourceException("Cheque product not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            throw new ApiResourceException("Cheque product not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
     }
 }

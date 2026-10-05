@@ -70,7 +70,7 @@ public class ChequePresentationServiceImpl implements ChequePresentationService 
     public ChequePresentationView presentCheque(@Valid PresentChequeCommand command) {
         Cheque cheque = this.chequeRepository.findByChequeNumberForUpdate(command.getChequeNumber()).orElseThrow(() -> {
             log.warn("Cheque with chequeNumber {} not found", command.getChequeNumber());
-            return new ApiResourceException("Cheque not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            return new ApiResourceException("Cheque not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         if (cheque.getStatus() != ChequeStatus.AVAILABLE) {
@@ -111,7 +111,7 @@ public class ChequePresentationServiceImpl implements ChequePresentationService 
     public ChequePresentationView acceptCheque(Long id) {
         ChequePresentation presentation = this.chequePresentationRepository.findByIdForUpdate(id).orElseThrow(() -> {
             log.warn("Cheque presentation with id {} not found", id);
-            return new ApiResourceException("Cheque presentation not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            return new ApiResourceException("Cheque presentation not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         if (presentation.getStatus() != ChequePresentationStatus.PENDING) {
@@ -121,7 +121,7 @@ public class ChequePresentationServiceImpl implements ChequePresentationService 
 
         this.chequeRepository.findById(presentation.getCheque().getId()).orElseThrow(() -> {
             log.warn("Cheque with id {} not found", presentation.getCheque().getId());
-            return new ApiResourceException("Cheque not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            return new ApiResourceException("Cheque not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         OffsetDateTime now = OffsetDateTime.now();
@@ -138,7 +138,7 @@ public class ChequePresentationServiceImpl implements ChequePresentationService 
     public ChequePresentationView payCheque(Long id) {
         ChequePresentation presentation = this.chequePresentationRepository.findByIdForUpdate(id).orElseThrow(() -> {
             log.warn("Cheque presentation with id {} not found", id);
-            return new ApiResourceException("Cheque presentation not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            return new ApiResourceException("Cheque presentation not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         if (presentation.getStatus() == ChequePresentationStatus.PAID) {
@@ -163,7 +163,7 @@ public class ChequePresentationServiceImpl implements ChequePresentationService 
 
         AccountView account = this.accountService.getAccount(drawerAccountId).orElseThrow(() -> {
             log.warn("Account with id {} not found", drawerAccountId);
-            return new ApiResourceException("Account not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            return new ApiResourceException("Account not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         this.transactionService.withdraw(new CreateWithdrawalCommand(account.getId(), account.getCurrencyId(), presentation.getPresentedAmount(),
@@ -195,7 +195,7 @@ public class ChequePresentationServiceImpl implements ChequePresentationService 
     public ChequePresentationView returnCheque(@Valid ReturnChequeCommand command) {
         ChequePresentation presentation = this.chequePresentationRepository.findByIdForUpdate(command.getPresentationId()).orElseThrow(() -> {
             log.warn("Cheque presentation with id {} not found", command.getPresentationId());
-            return new ApiResourceException("Cheque Presentation not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            return new ApiResourceException("Cheque Presentation not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         if (presentation.getStatus() != ChequePresentationStatus.PENDING
@@ -206,7 +206,7 @@ public class ChequePresentationServiceImpl implements ChequePresentationService 
 
         Cheque cheque = this.chequeRepository.findByIdForUpdate(presentation.getCheque().getId()).orElseThrow(() -> {
             log.warn("Cheque not found for presentation with id {} not found", presentation.getCheque().getId());
-            return new ApiResourceException("Cheque not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            return new ApiResourceException("Cheque not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         OffsetDateTime now = OffsetDateTime.now();

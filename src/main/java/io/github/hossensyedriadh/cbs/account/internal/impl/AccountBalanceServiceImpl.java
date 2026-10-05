@@ -36,7 +36,7 @@ public class AccountBalanceServiceImpl implements AccountBalanceService {
     public AccountBalanceView getBalance(Long accountId) {
         this.accountService.getAccount(accountId).orElseThrow(() -> {
             log.warn("Account with id {} not found", accountId);
-            return new ApiResourceException("Account not found", HttpStatus.BAD_REQUEST);
+            return new ApiResourceException("Account not found", HttpStatus.NOT_FOUND);
         });
 
         BigDecimal ledgerBalance = this.ledgerService.getSubLedgerAccountByAccountId(accountId)

@@ -5,9 +5,12 @@ import io.github.hossensyedriadh.cbs.ledger.api.command.UpdateLedgerAccountComma
 import io.github.hossensyedriadh.cbs.ledger.api.model.LedgerAccountView;
 import jakarta.validation.Valid;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface LedgerAccountService {
+    List<LedgerAccountView> getLedgerAccounts();
+
     Optional<LedgerAccountView> getLedgerAccount(Long id);
 
     Optional<LedgerAccountView> getLedgerAccountByCode(String accountCode);

@@ -4,6 +4,13 @@ import io.github.hossensyedriadh.cbs.card.api.command.*;
 import io.github.hossensyedriadh.cbs.card.api.model.CardView;
 import io.github.hossensyedriadh.cbs.card.api.service.CardPinService;
 import io.github.hossensyedriadh.cbs.card.api.service.CardService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.http.MediaType;
@@ -18,6 +25,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping(value = "/cards/v1", produces = {MediaType.APPLICATION_JSON_VALUE})
+@Tag(name = "Card API", description = "API endpoints for managing cards")
 public class CardController {
     private final CardService cardService;
     private final CardPinService cardPinService;
@@ -34,6 +42,14 @@ public class CardController {
         binder.registerCustomEditor(String.class, stringTrimmerEditor);
     }
 
+    @Operation(summary = "Get all cards for an account", description = "Retrieves all cards associated with the specified account",
+            parameters = {
+                    @Parameter(name = "id", description = "Account ID", required = true)
+            },
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "List of cards associated with the account", content = @Content(array = @ArraySchema(schema = @Schema(implementation = CardView.class)))),
+                    @ApiResponse(responseCode = "204", description = "No Content", content = @Content)
+            })
     @GetMapping("/account/{id}")
     public ResponseEntity<List<CardView>> getCards(@PathVariable("id") Long accountId) {
         List<CardView> cardViews = this.cardService.getCards(accountId);
@@ -45,6 +61,14 @@ public class CardController {
         return ResponseEntity.ok(cardViews);
     }
 
+    @Operation(summary = "Get a card by ID", description = "Retrieves a card associated with the specified ID",
+            parameters = {
+                    @Parameter(name = "id", description = "Card ID", required = true)
+            },
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Card associated with the ID", content = @Content(schema = @Schema(implementation = CardView.class))),
+                    @ApiResponse(responseCode = "204", description = "No Content", content = @Content)
+            })
     @GetMapping("/{id}")
     public ResponseEntity<CardView> getCard(@PathVariable("id") Long id) {
         Optional<CardView> cardView = this.cardService.getCard(id);
@@ -52,6 +76,15 @@ public class CardController {
         return cardView.map(ResponseEntity::ok).orElse(ResponseEntity.noContent().build());
     }
 
+    @Operation(summary = "Issue a new card", description = "Issues a new card based on the provided command",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Card issue command",
+                    content = {@Content(schema = @Schema(implementation = IssueCardCommand.class))},
+                    required = true
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Card issued successfully", content = @Content(schema = @Schema(implementation = CardView.class)))
+            })
     @PostMapping(value = "/", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<CardView> issueCard(@RequestBody IssueCardCommand command) {
         CardView cardView = this.cardService.issueCard(command);
@@ -62,6 +95,15 @@ public class CardController {
         return ResponseEntity.created(location).body(cardView);
     }
 
+    @Operation(summary = "Replace card", description = "Replaces card with a new one",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Replace card command",
+                    content = {@Content(schema = @Schema(implementation = ReplaceCardCommand.class))},
+                    required = true
+            ), responses = {
+            @ApiResponse(responseCode = "201", description = "Card replacement issued successfully", content = @Content(schema = @Schema(implementation = CardView.class))),
+            @ApiResponse(responseCode = "404", description = "Card not found", content = @Content)
+    })
     @PostMapping(value = "/replacement", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<CardView> replaceCard(@RequestBody ReplaceCardCommand command) {
         CardView cardView = this.cardService.replaceCard(command);
@@ -72,6 +114,19 @@ public class CardController {
         return ResponseEntity.created(location).body(cardView);
     }
 
+    @Operation(summary = "Activate card", description = "Activate a card using the provided activation details",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Card activation command",
+                    content = {@Content(schema = @Schema(implementation = ActivateCardCommand.class))},
+                    required = true
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Card activated successfully",
+                            content = {@Content(schema = @Schema(implementation = CardView.class))}
+                    ),
+                    @ApiResponse(responseCode = "404", description = "Card not found", content = @Content)
+            }
+    )
     @PostMapping(value = "/activation", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<CardView> activation(@RequestBody ActivateCardCommand command) {
         CardView cardView = this.cardService.activateCard(command);
@@ -79,6 +134,17 @@ public class CardController {
         return ResponseEntity.ok(cardView);
     }
 
+    @Operation(summary = "Change card PIN", description = "Change the PIN of a card",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "PIN change command",
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = ChangeCardPinCommand.class))
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "Card PIN changed successfully", content = @Content),
+                    @ApiResponse(responseCode = "404", description = "Card not found", content = @Content)
+            }
+    )
     @PostMapping(value = "/change-pin", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<Void> changePin(@RequestBody ChangeCardPinCommand command) {
         this.cardPinService.changePin(command);
@@ -86,6 +152,15 @@ public class CardController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Unblock card PIN", description = "Unblock the PIN of a card",
+            parameters = {
+                    @Parameter(name = "cardId", description = "Card ID", required = true)
+            },
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "Card PIN unblocked successfully", content = @Content),
+                    @ApiResponse(responseCode = "404", description = "Card not found", content = @Content)
+            }
+    )
     @PostMapping("/unblock-pin/{cardId}")
     public ResponseEntity<Void> unblockPin(@PathVariable("cardId") Long cardId) {
         this.cardPinService.unblockPin(cardId);
@@ -93,6 +168,16 @@ public class CardController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Temporary block card", description = "Temporarily block a card",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Block card command temporarily", required = true,
+                    content = {@Content(schema = @Schema(implementation = BlockCardCommand.class))}
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Card temporarily blocked successfully", content = @Content(schema = @Schema(implementation = CardView.class))),
+                    @ApiResponse(responseCode = "404", description = "Card not found", content = @Content)
+            }
+    )
     @PostMapping(value = "/temporary-block", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<CardView> temporaryBlockCard(@RequestBody BlockCardCommand command) {
         CardView cardView = this.cardService.temporarilyBlockCard(command);
@@ -100,6 +185,16 @@ public class CardController {
         return ResponseEntity.ok(cardView);
     }
 
+    @Operation(summary = "Permanently block card", description = "Permanently block a card",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Block card command permanently", required = true,
+                    content = {@Content(schema = @Schema(implementation = BlockCardCommand.class))}
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Card permanently blocked successfully", content = @Content(schema = @Schema(implementation = CardView.class))),
+                    @ApiResponse(responseCode = "404", description = "Card not found", content = @Content)
+            }
+    )
     @PostMapping(value = "/permanent-block", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<CardView> permanentlyBlockCard(@RequestBody BlockCardCommand command) {
         CardView cardView = this.cardService.permanentlyBlockCard(command);
@@ -107,6 +202,16 @@ public class CardController {
         return ResponseEntity.ok(cardView);
     }
 
+    @Operation(summary = "Unblock card", description = "Unblock a card",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Unblock card command", required = true,
+                    content = {@Content(schema = @Schema(implementation = UnblockCardCommand.class))}
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Card unblocked successfully", content = @Content(schema = @Schema(implementation = CardView.class))),
+                    @ApiResponse(responseCode = "404", description = "Card not found", content = @Content)
+            }
+    )
     @PostMapping(value = "/unblock", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<CardView> unblockCard(@RequestBody UnblockCardCommand command) {
         CardView cardView = this.cardService.unblockCard(command);
@@ -114,6 +219,16 @@ public class CardController {
         return ResponseEntity.ok(cardView);
     }
 
+    @Operation(summary = "Permanently close card", description = "Permanently close a card",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Close card command", required = true,
+                    content = {@Content(schema = @Schema(implementation = CloseCardCommand.class))}
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Card permanently closed successfully", content = @Content(schema = @Schema(implementation = CardView.class))),
+                    @ApiResponse(responseCode = "404", description = "Card not found", content = @Content)
+            }
+    )
     @PostMapping(value = "/closure", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<CardView> closeCard(@RequestBody CloseCardCommand command) {
         CardView cardView = this.cardService.closeCard(command);

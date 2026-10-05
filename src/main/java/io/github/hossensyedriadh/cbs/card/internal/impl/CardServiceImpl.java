@@ -82,7 +82,7 @@ public class CardServiceImpl implements CardService {
     public CardView activateCard(@Valid ActivateCardCommand command) {
         Card card = this.cardRepository.findByIdForUpdate(command.getCardId()).orElseThrow(() -> {
             log.warn("Card with id {} not found", command.getCardId());
-            return new ApiResourceException("Card not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            return new ApiResourceException("Card not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         if (card.getStatus() != CardStatus.INACTIVE) {
@@ -120,7 +120,7 @@ public class CardServiceImpl implements CardService {
     public CardView issueCard(@Valid IssueCardCommand command) {
         CardProductView cardProduct = this.cardProductService.getCardProduct(command.getCardProductId()).orElseThrow(() -> {
             log.warn("Card product not found with id {}", command.getCardProductId());
-            return new ApiResourceException("Card product not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            return new ApiResourceException("Card product not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         if (cardProduct.getStatus() != CardProductStatus.ACTIVE) {
@@ -130,7 +130,7 @@ public class CardServiceImpl implements CardService {
 
         AccountView account = this.accountService.getAccount(command.getAccountId()).orElseThrow(() -> {
             log.warn("Account not found with id {}", command.getAccountId());
-            return new ApiResourceException("Account not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            return new ApiResourceException("Account not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         if (account.getStatus() != AccountStatus.ACTIVE) {
@@ -172,7 +172,7 @@ public class CardServiceImpl implements CardService {
     private Card issueReplacement(Card oldCard, CardReplacementReason replacementReason) {
         CardProductView cardProduct = this.cardProductService.getCardProduct(oldCard.getCardProductId()).orElseThrow(() -> {
             log.warn("Card product not found with id {}", oldCard.getCardProductId());
-            return new ApiResourceException("Card product not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            return new ApiResourceException("Card product not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         if (cardProduct.getStatus() != CardProductStatus.ACTIVE) {
@@ -182,7 +182,7 @@ public class CardServiceImpl implements CardService {
 
         AccountView account = this.accountService.getAccount(oldCard.getAccountId()).orElseThrow(() -> {
             log.warn("Account not found with id {}", oldCard.getAccountId());
-            return new ApiResourceException("Account not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            return new ApiResourceException("Account not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         if (account.getStatus() != AccountStatus.ACTIVE) {
@@ -229,7 +229,7 @@ public class CardServiceImpl implements CardService {
         Card oldCard = this.cardRepository.findByIdForUpdate(command.getCardId())
                 .orElseThrow(() -> {
                     log.warn("Card not found with id {}", command.getCardId());
-                    return new ApiResourceException("Card not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+                    return new ApiResourceException("Card not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
                 });
 
         this.validateReplacement(oldCard, command.getReason());
@@ -286,7 +286,7 @@ public class CardServiceImpl implements CardService {
     public CardView temporarilyBlockCard(@Valid BlockCardCommand command) {
         Card card = this.cardRepository.findByIdForUpdate(command.getCardId()).orElseThrow(() -> {
             log.warn("Card not found with id: {}", command.getCardId());
-            return new ApiResourceException("Card not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            return new ApiResourceException("Card not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         if (card.getStatus() == CardStatus.CLOSED) {
@@ -319,7 +319,7 @@ public class CardServiceImpl implements CardService {
     public CardView permanentlyBlockCard(@Valid BlockCardCommand command) {
         Card card = this.cardRepository.findByIdForUpdate(command.getCardId()).orElseThrow(() -> {
             log.warn("Card not found with id: {}", command.getCardId());
-            return new ApiResourceException("Card not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            return new ApiResourceException("Card not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         if (card.getStatus() == CardStatus.CLOSED) {
@@ -347,7 +347,7 @@ public class CardServiceImpl implements CardService {
     public CardView unblockCard(@Valid UnblockCardCommand command) {
         Card card = this.cardRepository.findByIdForUpdate(command.getCardId()).orElseThrow(() -> {
             log.warn("Card not found with id: {}", command.getCardId());
-            return new ApiResourceException("Card not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            return new ApiResourceException("Card not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         if (card.getStatus() == CardStatus.CLOSED) {
@@ -375,7 +375,7 @@ public class CardServiceImpl implements CardService {
     public CardView closeCard(@Valid CloseCardCommand command) {
         Card card = this.cardRepository.findByIdForUpdate(command.getCardId()).orElseThrow(() -> {
             log.warn("Card not found with id: {}", command.getCardId());
-            return new ApiResourceException("Card not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            return new ApiResourceException("Card not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         if (card.getStatus() == CardStatus.CLOSED) {

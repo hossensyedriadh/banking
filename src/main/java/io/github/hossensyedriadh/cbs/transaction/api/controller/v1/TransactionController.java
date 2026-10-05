@@ -3,6 +3,12 @@ package io.github.hossensyedriadh.cbs.transaction.api.controller.v1;
 import io.github.hossensyedriadh.cbs.transaction.api.model.AccountTransactionView;
 import io.github.hossensyedriadh.cbs.transaction.api.model.TransactionView;
 import io.github.hossensyedriadh.cbs.transaction.api.service.TransactionService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.data.domain.Page;
@@ -16,6 +22,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping(value = "/transactions/v1", produces = {MediaType.APPLICATION_JSON_VALUE})
+@Tag(name = "Transaction API", description = "API endpoints for viewing transactions")
 public class TransactionController {
     private final TransactionService transactionService;
 
@@ -30,6 +37,14 @@ public class TransactionController {
         binder.registerCustomEditor(String.class, stringTrimmerEditor);
     }
 
+    @Operation(summary = "Get account transactions", description = "Retrieve a paginated list of transactions for a specific account",
+            parameters = {
+                    @Parameter(name = "id", description = "Account ID", required = true, example = "1234567890")
+            },
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = AccountTransactionView.class))),
+                    @ApiResponse(responseCode = "404", description = "Account not found", content = @Content)
+            })
     @GetMapping("/account/{id}")
     public ResponseEntity<Page<AccountTransactionView>> getAccountTransaction(@PathVariable("id") Long accountId, Pageable pageable) {
         Page<AccountTransactionView> page = this.transactionService.getAccountTransactions(accountId, pageable);
@@ -37,17 +52,33 @@ public class TransactionController {
         return ResponseEntity.ok(page);
     }
 
+    @Operation(summary = "Get a transaction by ID", description = "Retrieve a transaction by its ID",
+            parameters = {
+                    @Parameter(name = "id", description = "Transaction ID", required = true)
+            },
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = TransactionView.class))),
+                    @ApiResponse(responseCode = "404", description = "Transaction not found", content = @Content)
+            })
     @GetMapping("/{id}")
     public ResponseEntity<TransactionView> getTransaction(@PathVariable("id") Long id) {
         Optional<TransactionView> transaction = this.transactionService.getTransaction(id);
 
-        return transaction.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
+        return transaction.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Get a transaction by reference", description = "Retrieve a transaction by its reference",
+            parameters = {
+                    @Parameter(name = "ref", description = "Transaction reference", required = true)
+            },
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = TransactionView.class))),
+                    @ApiResponse(responseCode = "404", description = "Transaction not found", content = @Content)
+            })
     @GetMapping("/reference/{ref}")
     public ResponseEntity<TransactionView> getTransaction(@PathVariable("ref") String reference) {
         Optional<TransactionView> transaction = this.transactionService.getTransactionByReference(reference);
 
-        return transaction.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
+        return transaction.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 }

@@ -61,7 +61,7 @@ public class AccountRestrictionServiceImpl implements AccountRestrictionService 
         AccountView account = this.accountService.getAccountForUpdate(command.getAccountId())
                 .orElseThrow(() -> {
                     log.warn("Account not found with ID: {}", command.getAccountId());
-                    return new ApiResourceException("Account not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+                    return new ApiResourceException("Account not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
                 });
 
         if (account.getStatus() != AccountStatus.ACTIVE) {
@@ -91,7 +91,7 @@ public class AccountRestrictionServiceImpl implements AccountRestrictionService 
         AccountRestriction restriction = this.accountRestrictionRepository.findByIdForUpdate(restrictionId)
                 .orElseThrow(() -> {
                     log.warn("Account restriction not found with ID: {}", restrictionId);
-                    return new ApiResourceException("Account restriction not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+                    return new ApiResourceException("Account restriction not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
                 });
 
         if (restriction.getStatus() != AccountRestrictionStatus.ACTIVE) {

@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Log4j2
@@ -37,6 +38,11 @@ public class LedgerAccountServiceImpl implements LedgerAccountService {
         this.ledgerAccountMapper = ledgerAccountMapper;
         this.currencyService = currencyService;
         this.httpServletRequest = httpServletRequest;
+    }
+
+    @Override
+    public List<LedgerAccountView> getLedgerAccounts() {
+        return this.ledgerAccountRepository.findAll().stream().map(this.ledgerAccountMapper::toView).toList();
     }
 
     @Override
@@ -60,7 +66,7 @@ public class LedgerAccountServiceImpl implements LedgerAccountService {
         CurrencyView currency = this.currencyService.getCurrency(command.getCurrencyId())
                 .orElseThrow(() -> {
                     log.warn("Currency not found with ID: {}", command.getCurrencyId());
-                    return new ApiResourceException("Currency not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+                    return new ApiResourceException("Currency not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
                 });
 
         if (!currency.isActive()) {
@@ -81,7 +87,7 @@ public class LedgerAccountServiceImpl implements LedgerAccountService {
     public LedgerAccountView updateLedgerAccount(Long id, @Valid UpdateLedgerAccountCommand command) {
         LedgerAccount account = this.ledgerAccountRepository.findById(id).orElseThrow(() -> {
             log.warn("Ledger account with ID: {} not found", id);
-            return new ApiResourceException("Ledger account not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            return new ApiResourceException("Ledger account not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         if (account.getActive() == Boolean.FALSE) {
@@ -112,7 +118,7 @@ public class LedgerAccountServiceImpl implements LedgerAccountService {
             log.info("Activated ledger account with ID: {}", id);
         }, () -> {
             log.warn("Ledger account with ID: {} not found", id);
-            throw new ApiResourceException("Ledger account not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            throw new ApiResourceException("Ledger account not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
     }
 
@@ -131,7 +137,7 @@ public class LedgerAccountServiceImpl implements LedgerAccountService {
             log.info("Deactivated ledger account with ID: {}", id);
         }, () -> {
             log.warn("Ledger account with ID: {} not found", id);
-            throw new ApiResourceException("Ledger account not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            throw new ApiResourceException("Ledger account not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
     }
 }

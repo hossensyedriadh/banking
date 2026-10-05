@@ -2,8 +2,8 @@ package io.github.hossensyedriadh.cbs.exceptionhandler.v1;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
-import io.github.hossensyedriadh.cbs.model.GlobalErrorResponse;
-import io.github.hossensyedriadh.cbs.model.ValidationErrorResponse;
+import io.github.hossensyedriadh.cbs.exception.GlobalErrorResponse;
+import io.github.hossensyedriadh.cbs.exception.ValidationErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.common.KafkaException;

@@ -89,7 +89,7 @@ public class ChequeBookServiceImpl implements ChequeBookService {
         AccountView accountView = this.accountService.getAccount(command.getAccountId())
                 .orElseThrow(() -> {
                     log.warn("Account not found with id {}", command.getAccountId());
-                    return new ApiResourceException("Account not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+                    return new ApiResourceException("Account not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
                 });
 
         if (accountView.getStatus() != AccountStatus.ACTIVE) {
@@ -100,7 +100,7 @@ public class ChequeBookServiceImpl implements ChequeBookService {
         ChequeProductView product = this.chequeProductService.getChequeProduct(command.getChequeProductId())
                 .orElseThrow(() -> {
                     log.warn("Cheque Product not found with id {}", command.getChequeProductId());
-                    return new ApiResourceException("Cheque Product not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+                    return new ApiResourceException("Cheque Product not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
                 });
 
         if (product.getStatus() != ChequeProductStatus.ACTIVE) {
@@ -162,7 +162,7 @@ public class ChequeBookServiceImpl implements ChequeBookService {
         ChequeBook chequeBook = this.chequeBookRepository.findByIdForUpdate(command.getId())
                 .orElseThrow(() -> {
                     log.warn("Cheque Book with id {} is not found", command.getId());
-                    return new ApiResourceException("Cheque Book not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+                    return new ApiResourceException("Cheque Book not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
                 });
 
         if (chequeBook.getStatus() != ChequeBookStatus.ACTIVE) {

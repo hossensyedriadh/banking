@@ -73,7 +73,7 @@ public class CardProductServiceImpl implements CardProductService {
     public CardProductView updateProduct(Long id, @Valid UpdateCardProductCommand command) {
         CardProduct product = this.cardProductRepository.findByIdForUpdate(id).orElseThrow(() -> {
             log.warn("Card product not found with id: {}", id);
-            return new ApiResourceException("Card product not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            return new ApiResourceException("Card product not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         if (product.getStatus() != CardProductStatus.ACTIVE) {
@@ -104,7 +104,7 @@ public class CardProductServiceImpl implements CardProductService {
             log.info("Card product activated with code: {}", product.getProductCode());
         }, () -> {
             log.warn("Card product not found with id: {}", id);
-            throw new ApiResourceException("Card product not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            throw new ApiResourceException("Card product not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
     }
 
@@ -123,7 +123,7 @@ public class CardProductServiceImpl implements CardProductService {
             log.info("Card product deactivated with code: {}", product.getProductCode());
         }, () -> {
             log.warn("Card product not found with id: {}", id);
-            throw new ApiResourceException("Card product not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            throw new ApiResourceException("Card product not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
     }
 }

@@ -11,9 +11,11 @@ import io.github.hossensyedriadh.cbs.card.internal.domain.CardPin;
 import io.github.hossensyedriadh.cbs.card.internal.repository.CardPinRepository;
 import io.github.hossensyedriadh.cbs.card.internal.repository.CardRepository;
 import io.github.hossensyedriadh.cbs.card.internal.util.CardPinUtil;
+import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -165,24 +167,24 @@ public class CardPinServiceImpl implements CardPinService {
     private Card getCard(Long cardId) {
         return this.cardRepository.findById(cardId).orElseThrow(() -> {
             log.warn("Card not found with id {}", cardId);
-            return new IllegalStateException("Card not found");
+            return new ApiResourceException("Card not found", HttpStatus.NOT_FOUND);
         });
     }
 
     private void validateCardForPinOperation(Card card) {
         if (card.getStatus() == CardStatus.CLOSED) {
             log.warn("Card with id: {} is closed", card.getId());
-            throw new IllegalStateException("Card is closed");
+            throw new ApiResourceException("Card is closed", HttpStatus.BAD_REQUEST);
         }
 
         if (card.getStatus() == CardStatus.EXPIRED) {
             log.warn("Card with id: {} is expired", card.getId());
-            throw new IllegalStateException("Card is expired");
+            throw new ApiResourceException("Card is expired", HttpStatus.BAD_REQUEST);
         }
 
         if (card.getStatus() == CardStatus.PERMANENTLY_BLOCKED) {
             log.warn("Card with id: {} is permanently blocked", card.getId());
-            throw new IllegalStateException("Card is permanently blocked");
+            throw new ApiResourceException("Card is permanently blocked", HttpStatus.BAD_REQUEST);
         }
     }
 }

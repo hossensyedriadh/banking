@@ -69,7 +69,7 @@ public class CustomerServiceImpl implements CustomerService {
     public CustomerView updateCustomer(Long id, @Valid UpdateCustomerCommand command) {
         Customer customer = this.customerRepository.findByIdForUpdate(id).orElseThrow(() -> {
             log.warn("No customer found with ID: {}", id);
-            return new ApiResourceException("Customer not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            return new ApiResourceException("Customer not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         if (customer.getStatus().equals(CustomerStatus.INACTIVE)) {
@@ -102,7 +102,7 @@ public class CustomerServiceImpl implements CustomerService {
             log.info("Customer closed with ID: {}", id);
         }, () -> {
             log.warn("No customer found with ID: {}", id);
-            throw new ApiResourceException("Customer not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            throw new ApiResourceException("Customer not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
     }
 }

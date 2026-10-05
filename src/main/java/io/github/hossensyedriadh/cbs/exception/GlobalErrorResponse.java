@@ -1,4 +1,4 @@
-package io.github.hossensyedriadh.cbs.model;
+package io.github.hossensyedriadh.cbs.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.Getter;

@@ -26,7 +26,7 @@ public class Branch {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(name = "branch_code", updatable = false, nullable = false, length = 20)
+    @Column(name = "branch_code", unique = true, updatable = false, nullable = false, length = 20)
     private String branchCode;
 
     @Column(name = "name", nullable = false, length = 150)

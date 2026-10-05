@@ -112,7 +112,7 @@ public class AccountServiceImpl implements AccountService {
             }
         }, () -> {
             log.warn("Account product not found with id {}", command.getProductId());
-            throw new ApiResourceException("Account product not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            throw new ApiResourceException("Account product not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         this.branchService.getBranch(command.getBranchId()).ifPresentOrElse(branch -> {
@@ -123,7 +123,7 @@ public class AccountServiceImpl implements AccountService {
         }, () -> {
 
             log.warn("Branch not found with id {}", command.getBranchId());
-            throw new ApiResourceException("Branch not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            throw new ApiResourceException("Branch not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         this.currencyService.getCurrency(command.getCurrencyId()).ifPresentOrElse(currency -> {
@@ -133,7 +133,7 @@ public class AccountServiceImpl implements AccountService {
             }
         }, () -> {
             log.warn("Currency not found with id {}", command.getCurrencyId());
-            throw new ApiResourceException("Currency not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            throw new ApiResourceException("Currency not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         Account account = this.accountMapper.toEntity(command);
@@ -167,7 +167,7 @@ public class AccountServiceImpl implements AccountService {
 
         }, () -> {
             log.warn("No account found with ID: {}", id);
-            throw new ApiResourceException("Account not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            throw new ApiResourceException("Account not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
     }
 
@@ -187,7 +187,7 @@ public class AccountServiceImpl implements AccountService {
             log.info("Account with ID: {} successfully deactivated", saved.getId());
         }, () -> {
             log.warn("No account found with ID: {}", id);
-            throw new ApiResourceException("Account not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            throw new ApiResourceException("Account not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
     }
 
@@ -196,7 +196,7 @@ public class AccountServiceImpl implements AccountService {
     public AccountView closeAccount(@Valid CloseAccountCommand command) {
         Account account = this.accountRepository.findByIdForUpdate(command.getAccountId()).orElseThrow(() -> {
             log.warn("No account found with ID: {}", command.getAccountId());
-            return new ApiResourceException("Account not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            return new ApiResourceException("Account not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
         if (account.getStatus() != AccountStatus.ACTIVE) {
@@ -241,7 +241,7 @@ public class AccountServiceImpl implements AccountService {
         for (Long customerId : customerIds) {
             this.customerService.getCustomer(customerId).orElseThrow(() -> {
                 log.warn("Customer not found with ID: {}", customerId);
-                return new ApiResourceException("Customer not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+                return new ApiResourceException("Customer not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
             });
         }
     }
