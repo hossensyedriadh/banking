@@ -15,6 +15,8 @@ import io.github.hossensyedriadh.cbs.transaction.api.command.*;
 import io.github.hossensyedriadh.cbs.transaction.api.enumerator.TransactionDirection;
 import io.github.hossensyedriadh.cbs.transaction.api.enumerator.TransactionStatus;
 import io.github.hossensyedriadh.cbs.transaction.api.enumerator.TransactionType;
+import io.github.hossensyedriadh.cbs.transaction.api.event.TransactionCreatedEvent;
+import io.github.hossensyedriadh.cbs.transaction.api.event.TransactionReversedEvent;
 import io.github.hossensyedriadh.cbs.transaction.api.model.AccountTransactionView;
 import io.github.hossensyedriadh.cbs.transaction.api.model.TransactionView;
 import io.github.hossensyedriadh.cbs.transaction.api.service.TransactionService;
@@ -30,6 +32,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -55,6 +58,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final FeeCalculationService feeCalculationService;
     private final TransactionEventFactory transactionEventFactory;
     private final OutboxEventService outboxEventService;
+    private final ApplicationEventPublisher applicationEventPublisher;
     private final HttpServletRequest httpServletRequest;
 
     @Autowired
@@ -63,7 +67,7 @@ public class TransactionServiceImpl implements TransactionService {
                                   AccountRestrictionService accountRestrictionService, LedgerService ledgerService,
                                   CurrencyService currencyService, FeeCalculationService feeCalculationService,
                                   TransactionEventFactory transactionEventFactory, OutboxEventService outboxEventService,
-                                  HttpServletRequest httpServletRequest) {
+                                  ApplicationEventPublisher applicationEventPublisher, HttpServletRequest httpServletRequest) {
         this.transactionRepository = transactionRepository;
         this.transactionMapper = transactionMapper;
         this.accountService = accountService;
@@ -74,6 +78,7 @@ public class TransactionServiceImpl implements TransactionService {
         this.feeCalculationService = feeCalculationService;
         this.transactionEventFactory = transactionEventFactory;
         this.outboxEventService = outboxEventService;
+        this.applicationEventPublisher = applicationEventPublisher;
         this.httpServletRequest = httpServletRequest;
     }
 
@@ -114,6 +119,8 @@ public class TransactionServiceImpl implements TransactionService {
                 command.getAmount(), command.getDescription(), command.getIdempotencyKey());
 
         Transaction savedTransaction = this.transactionRepository.save(transaction);
+
+        this.applicationEventPublisher.publishEvent(new TransactionCreatedEvent(savedTransaction.getId(), savedTransaction.getTransactionReference(), savedTransaction.getTransactionType()));
 
         log.info("Deposit transaction saved: {}", savedTransaction.getId());
 
@@ -158,6 +165,9 @@ public class TransactionServiceImpl implements TransactionService {
                 TransactionType.WITHDRAWAL, command.getAmount(), command.getDescription(), command.getIdempotencyKey());
 
         Transaction savedTransaction = this.transactionRepository.save(transaction);
+
+        this.applicationEventPublisher.publishEvent(new TransactionCreatedEvent(savedTransaction.getId(), savedTransaction.getTransactionReference(), savedTransaction.getTransactionType()));
+
 
         log.info("Withdrawal transaction saved: {}", savedTransaction.getId());
 
@@ -211,6 +221,8 @@ public class TransactionServiceImpl implements TransactionService {
                 command.getIdempotencyKey());
 
         Transaction savedTransaction = this.transactionRepository.save(transaction);
+
+        this.applicationEventPublisher.publishEvent(new TransactionCreatedEvent(savedTransaction.getId(), savedTransaction.getTransactionReference(), savedTransaction.getTransactionType()));
 
         log.info("Transfer transaction saved: {}", savedTransaction.getId());
 
@@ -272,6 +284,8 @@ public class TransactionServiceImpl implements TransactionService {
 
         Transaction savedReversal = this.transactionRepository.save(reversal);
 
+        this.applicationEventPublisher.publishEvent(new TransactionReversedEvent(originalTransaction.getId(), savedReversal.getId(), savedReversal.getTransactionReference(), savedReversal.getTransactionType()));
+
         log.info("Reversal transaction created: id={}, originalTransactionId={}", savedReversal.getId(), originalTransaction.getId());
 
         this.postReversal(originalTransaction, savedReversal);
@@ -310,6 +324,8 @@ public class TransactionServiceImpl implements TransactionService {
                 TransactionType.FEE, command.getAmount(), command.getDescription(), command.getIdempotencyKey());
 
         Transaction savedTransaction = this.transactionRepository.save(transaction);
+
+        this.applicationEventPublisher.publishEvent(new TransactionCreatedEvent(savedTransaction.getId(), savedTransaction.getTransactionReference(), savedTransaction.getTransactionType()));
 
         log.info("Fee charge transaction saved: {}", savedTransaction.getId());
 
@@ -433,6 +449,8 @@ public class TransactionServiceImpl implements TransactionService {
         transaction.setCompletedAt(OffsetDateTime.now());
 
         this.transactionRepository.save(transaction);
+
+        this.applicationEventPublisher.publishEvent(new TransactionCreatedEvent(transaction.getId(), transaction.getTransactionReference(), transaction.getTransactionType()));
 
         log.info("Transaction with ID: {} marked as completed", transaction.getId());
     }
