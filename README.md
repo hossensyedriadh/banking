@@ -870,9 +870,9 @@ This is one of the reasons the initial architecture benefits from being a modula
 | Interest Posting        |   ✅   |
 | Cards                   |   ✅   |
 | Cheque Books            |   ✅   |
-| EOD                     |   🚧   |
-| REST API                |   🚧   |
-| Audit                   |   📋   |
+| EOD                     |   ✅   |
+| REST API                |   ✅   |
+| Audit                   |   🚧   |
 | Authentication          |   📋   |
 | Authorization           |   📋   |
 | Frontend                |   📋   |
