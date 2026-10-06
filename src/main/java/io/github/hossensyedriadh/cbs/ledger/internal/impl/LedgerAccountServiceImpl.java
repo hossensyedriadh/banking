@@ -3,6 +3,10 @@ package io.github.hossensyedriadh.cbs.ledger.internal.impl;
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import io.github.hossensyedriadh.cbs.ledger.api.command.CreateLedgerAccountCommand;
 import io.github.hossensyedriadh.cbs.ledger.api.command.UpdateLedgerAccountCommand;
+import io.github.hossensyedriadh.cbs.ledger.api.event.ledger.LedgerAccountActivatedEvent;
+import io.github.hossensyedriadh.cbs.ledger.api.event.ledger.LedgerAccountCreatedEvent;
+import io.github.hossensyedriadh.cbs.ledger.api.event.ledger.LedgerAccountDeactivatedEvent;
+import io.github.hossensyedriadh.cbs.ledger.api.event.ledger.LedgerAccountUpdatedEvent;
 import io.github.hossensyedriadh.cbs.ledger.api.model.LedgerAccountView;
 import io.github.hossensyedriadh.cbs.ledger.api.service.LedgerAccountService;
 import io.github.hossensyedriadh.cbs.ledger.internal.domain.LedgerAccount;
@@ -14,6 +18,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,15 +33,17 @@ public class LedgerAccountServiceImpl implements LedgerAccountService {
     private final LedgerAccountRepository ledgerAccountRepository;
     private final LedgerAccountMapper ledgerAccountMapper;
     private final CurrencyService currencyService;
+    private final ApplicationEventPublisher applicationEventPublisher;
     private final HttpServletRequest httpServletRequest;
 
     @Autowired
-    public LedgerAccountServiceImpl(LedgerAccountRepository ledgerAccountRepository,
-                                    LedgerAccountMapper ledgerAccountMapper, CurrencyService currencyService,
+    public LedgerAccountServiceImpl(LedgerAccountRepository ledgerAccountRepository, LedgerAccountMapper ledgerAccountMapper,
+                                    CurrencyService currencyService, ApplicationEventPublisher applicationEventPublisher,
                                     HttpServletRequest httpServletRequest) {
         this.ledgerAccountRepository = ledgerAccountRepository;
         this.ledgerAccountMapper = ledgerAccountMapper;
         this.currencyService = currencyService;
+        this.applicationEventPublisher = applicationEventPublisher;
         this.httpServletRequest = httpServletRequest;
     }
 
@@ -77,6 +84,8 @@ public class LedgerAccountServiceImpl implements LedgerAccountService {
         LedgerAccount account = this.ledgerAccountMapper.toEntity(command);
         LedgerAccount saved = this.ledgerAccountRepository.save(account);
 
+        this.applicationEventPublisher.publishEvent(new LedgerAccountCreatedEvent(saved.getId(), saved.getAccountCode()));
+
         log.info("Created ledger account with code: {}", saved.getAccountCode());
 
         return this.ledgerAccountMapper.toView(saved);
@@ -98,6 +107,8 @@ public class LedgerAccountServiceImpl implements LedgerAccountService {
         this.ledgerAccountMapper.toPatchedEntity(command, account);
         LedgerAccount updated = this.ledgerAccountRepository.save(account);
 
+        this.applicationEventPublisher.publishEvent(new LedgerAccountUpdatedEvent(updated.getId(), updated.getAccountCode()));
+
         log.info("Updated ledger account with ID: {}", id);
 
         return this.ledgerAccountMapper.toView(updated);
@@ -114,6 +125,8 @@ public class LedgerAccountServiceImpl implements LedgerAccountService {
 
             account.setActive(Boolean.TRUE);
             this.ledgerAccountRepository.save(account);
+
+            this.applicationEventPublisher.publishEvent(new LedgerAccountActivatedEvent(account.getId(), account.getAccountCode()));
 
             log.info("Activated ledger account with ID: {}", id);
         }, () -> {
@@ -133,6 +146,8 @@ public class LedgerAccountServiceImpl implements LedgerAccountService {
 
             account.setActive(Boolean.FALSE);
             this.ledgerAccountRepository.save(account);
+
+            this.applicationEventPublisher.publishEvent(new LedgerAccountDeactivatedEvent(account.getId(), account.getAccountCode()));
 
             log.info("Deactivated ledger account with ID: {}", id);
         }, () -> {

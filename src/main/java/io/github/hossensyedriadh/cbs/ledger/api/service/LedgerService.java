@@ -8,8 +8,6 @@ import java.math.BigDecimal;
 import java.util.Optional;
 
 public interface LedgerService {
-    Optional<Long> getLedgerAccountByAccountId(Long accountId);
-
     Optional<Long> getSubLedgerAccountIdByAccountId(Long accountId);
 
     Optional<SubLedgerAccountView> getSubLedgerAccountByAccountId(Long accountId);

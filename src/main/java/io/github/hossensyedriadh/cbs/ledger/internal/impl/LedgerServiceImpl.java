@@ -4,6 +4,7 @@ import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import io.github.hossensyedriadh.cbs.ledger.api.command.PostJournalEntryCommand;
 import io.github.hossensyedriadh.cbs.ledger.api.enumerator.JournalEntryType;
 import io.github.hossensyedriadh.cbs.ledger.api.enumerator.ProductLedgerRole;
+import io.github.hossensyedriadh.cbs.ledger.api.event.ledger.*;
 import io.github.hossensyedriadh.cbs.ledger.api.model.JournalEntryLine;
 import io.github.hossensyedriadh.cbs.ledger.api.model.SubLedgerAccountView;
 import io.github.hossensyedriadh.cbs.ledger.api.service.LedgerService;
@@ -19,6 +20,7 @@ import io.github.hossensyedriadh.cbs.ledger.internal.util.SystemLedgerAccountCod
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,23 +42,21 @@ public class LedgerServiceImpl implements LedgerService {
     private final SubLedgerAccountRepository subLedgerAccountRepository;
     private final ProductLedgerAccountRepository productLedgerAccountRepository;
     private final SubLedgerAccountMapper subLedgerAccountMapper;
+    private final ApplicationEventPublisher applicationEventPublisher;
     private final HttpServletRequest httpServletRequest;
 
     @Autowired
     public LedgerServiceImpl(JournalEntryRepository journalEntryRepository, LedgerAccountRepository ledgerAccountRepository,
                              SubLedgerAccountRepository subLedgerAccountRepository, ProductLedgerAccountRepository productLedgerAccountRepository,
-                             SubLedgerAccountMapper subLedgerAccountMapper, HttpServletRequest httpServletRequest) {
+                             SubLedgerAccountMapper subLedgerAccountMapper, ApplicationEventPublisher applicationEventPublisher,
+                             HttpServletRequest httpServletRequest) {
         this.journalEntryRepository = journalEntryRepository;
         this.ledgerAccountRepository = ledgerAccountRepository;
         this.subLedgerAccountRepository = subLedgerAccountRepository;
         this.productLedgerAccountRepository = productLedgerAccountRepository;
         this.subLedgerAccountMapper = subLedgerAccountMapper;
+        this.applicationEventPublisher = applicationEventPublisher;
         this.httpServletRequest = httpServletRequest;
-    }
-
-    @Override
-    public Optional<Long> getLedgerAccountByAccountId(Long accountId) {
-        return this.subLedgerAccountRepository.findLedgerAccountIdByAccountId(accountId);
     }
 
     @Override
@@ -97,7 +97,11 @@ public class LedgerServiceImpl implements LedgerService {
         subLedgerAccount.setAccountId(accountId);
         subLedgerAccount.setLedgerAccount(ledgerAccount);
 
-        this.subLedgerAccountRepository.save(subLedgerAccount);
+        SubLedgerAccount saved = this.subLedgerAccountRepository.save(subLedgerAccount);
+
+        this.applicationEventPublisher.publishEvent(new SubLedgerAccountCreatedEvent(saved.getId(), saved.getAccountId(), saved.getLedgerAccount().getAccountCode()));
+
+        log.info("Sub ledger account created for account ID: {} and ledger account code: {}", saved.getAccountId(), saved.getLedgerAccount().getAccountCode());
     }
 
     private void postJournalEntry(PostJournalEntryCommand command) {
@@ -161,6 +165,8 @@ public class LedgerServiceImpl implements LedgerService {
         this.adjustGLAccountBalance(customerDepositsLedgerAccountId, amount);
         this.adjustSubLedgerAccountBalance(customerLedgerAccountId, amount);
 
+        this.applicationEventPublisher.publishEvent(new DepositPostedEvent(transactionId));
+
         log.info("Deposit posted for transaction id: {}, amount: {}", transactionId, amount);
     }
 
@@ -180,6 +186,8 @@ public class LedgerServiceImpl implements LedgerService {
         this.adjustGLAccountBalance(cashLedgerAccountId, amount.negate());
         this.adjustGLAccountBalance(customerDepositsLedgerAccountId, amount.negate());
         this.adjustSubLedgerAccountBalance(customerLedgerAccountId, amount.negate());
+
+        this.applicationEventPublisher.publishEvent(new WithdrawalPostedEvent(transactionId));
 
         log.info("Withdrawal posted for transaction id: {}, amount: {}", transactionId, amount);
     }
@@ -205,6 +213,8 @@ public class LedgerServiceImpl implements LedgerService {
         this.adjustSubLedgerAccountBalance(sourceSubLedgerAccountId, totalDebit.negate());
         this.adjustSubLedgerAccountBalance(destinationSubLedgerAccountId, amount);
 
+        this.applicationEventPublisher.publishEvent(new TransferPostedEvent(transactionId));
+
         log.info("Customer transfer posted for transaction id: {}, amount: {}", transactionId, amount);
     }
 
@@ -223,6 +233,8 @@ public class LedgerServiceImpl implements LedgerService {
         this.adjustGLAccountBalance(customerDepositsLedgerAccountId, amount);
         this.adjustSubLedgerAccountBalance(customerLedgerAccountId, amount);
 
+        this.applicationEventPublisher.publishEvent(new InterestPostedEvent(accrualId));
+
         log.info("Interest posted for accrual id: {}, amount: {}", accrualId, amount);
     }
 
@@ -239,6 +251,8 @@ public class LedgerServiceImpl implements LedgerService {
         this.adjustGLAccountBalance(customerDepositsLedgerAccountId, amount.negate());
         this.adjustGLAccountBalance(feeIncomeLedgerAccountId, amount);
         this.adjustSubLedgerAccountBalance(customerLedgerAccountId, amount.negate());
+
+        this.applicationEventPublisher.publishEvent(new FeePostedEvent(transactionId));
 
         log.info("Fee posted for transaction id: {}, amount: {}", transactionId, amount);
     }
