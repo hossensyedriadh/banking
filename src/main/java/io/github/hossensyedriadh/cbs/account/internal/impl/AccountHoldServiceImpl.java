@@ -5,6 +5,7 @@ import io.github.hossensyedriadh.cbs.account.api.command.ReleaseAccountHoldComma
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountHoldStatus;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountStatus;
 import io.github.hossensyedriadh.cbs.account.api.event.AccountHoldCreatedEvent;
+import io.github.hossensyedriadh.cbs.account.api.event.AccountHoldReleasedEvent;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountBalanceView;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountHoldView;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
@@ -131,7 +132,7 @@ public class AccountHoldServiceImpl implements AccountHoldService {
 
         AccountHold saved = this.accountHoldRepository.save(hold);
 
-        this.applicationEventPublisher.publishEvent(new AccountHoldCreatedEvent(saved.getId(), command.getReason()));
+        this.applicationEventPublisher.publishEvent(new AccountHoldReleasedEvent(saved.getId(), command.getReason()));
 
         log.info("Released hold of amount: {} for account: {}, hold: {}", hold.getAmount(), saved.getAccountId(), saved.getId());
 

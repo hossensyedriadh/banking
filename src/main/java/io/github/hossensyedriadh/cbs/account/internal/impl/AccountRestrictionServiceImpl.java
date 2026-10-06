@@ -6,6 +6,7 @@ import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountRestrictionSt
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountRestrictionType;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountStatus;
 import io.github.hossensyedriadh.cbs.account.api.event.AccountRestrictionCreatedEvent;
+import io.github.hossensyedriadh.cbs.account.api.event.AccountRestrictionReleasedEvent;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountRestrictionView;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
 import io.github.hossensyedriadh.cbs.account.api.service.AccountRestrictionService;
@@ -124,7 +125,7 @@ public class AccountRestrictionServiceImpl implements AccountRestrictionService 
 
         AccountRestriction saved = this.accountRestrictionRepository.save(restriction);
 
-        this.applicationEventPublisher.publishEvent(new AccountRestrictionCreatedEvent(saved.getId(), command.getReason()));
+        this.applicationEventPublisher.publishEvent(new AccountRestrictionReleasedEvent(saved.getId(), command.getReason()));
 
         log.info("Released restriction of type: {} for Account ID: {}", restriction.getRestrictionType(), restriction.getAccountId());
 
