@@ -4,6 +4,7 @@ import io.github.hossensyedriadh.cbs.account.api.command.CreateAccountRestrictio
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountRestrictionStatus;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountRestrictionType;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountStatus;
+import io.github.hossensyedriadh.cbs.account.api.event.AccountRestrictionCreatedEvent;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountRestrictionView;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
 import io.github.hossensyedriadh.cbs.account.api.service.AccountRestrictionService;
@@ -16,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,14 +35,17 @@ public class AccountRestrictionServiceImpl implements AccountRestrictionService 
     private final AccountRestrictionRepository accountRestrictionRepository;
     private final AccountService accountService;
     private final AccountRestrictionMapper accountRestrictionMapper;
+    private final ApplicationEventPublisher applicationEventPublisher;
     private final HttpServletRequest httpServletRequest;
 
     @Autowired
     public AccountRestrictionServiceImpl(AccountRestrictionRepository accountRestrictionRepository, AccountService accountService,
-                                         AccountRestrictionMapper accountRestrictionMapper, HttpServletRequest httpServletRequest) {
+                                         AccountRestrictionMapper accountRestrictionMapper, ApplicationEventPublisher applicationEventPublisher,
+                                         HttpServletRequest httpServletRequest) {
         this.accountRestrictionRepository = accountRestrictionRepository;
         this.accountService = accountService;
         this.accountRestrictionMapper = accountRestrictionMapper;
+        this.applicationEventPublisher = applicationEventPublisher;
         this.httpServletRequest = httpServletRequest;
     }
 
@@ -80,6 +85,8 @@ public class AccountRestrictionServiceImpl implements AccountRestrictionService 
         AccountRestriction restriction = this.accountRestrictionMapper.toEntity(command);
         AccountRestriction saved = this.accountRestrictionRepository.save(restriction);
 
+        this.applicationEventPublisher.publishEvent(new AccountRestrictionCreatedEvent(saved.getId(), saved.getReason()));
+
         log.info("Created restriction of type: {} for Account ID: {}", restriction.getRestrictionType(), account.getId());
 
         return this.accountRestrictionMapper.toView(saved);
@@ -103,6 +110,8 @@ public class AccountRestrictionServiceImpl implements AccountRestrictionService 
         restriction.setReleasedAt(OffsetDateTime.now());
 
         AccountRestriction saved = this.accountRestrictionRepository.save(restriction);
+
+        this.applicationEventPublisher.publishEvent(new AccountRestrictionCreatedEvent(saved.getId(), saved.getReason()));
 
         log.info("Released restriction of type: {} for Account ID: {}", restriction.getRestrictionType(), restriction.getAccountId());
 

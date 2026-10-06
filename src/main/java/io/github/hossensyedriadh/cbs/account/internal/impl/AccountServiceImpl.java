@@ -6,6 +6,10 @@ import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountHoldStatus;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountHolderType;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountRestrictionStatus;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountStatus;
+import io.github.hossensyedriadh.cbs.account.api.event.AccountActivatedEvent;
+import io.github.hossensyedriadh.cbs.account.api.event.AccountClosedEvent;
+import io.github.hossensyedriadh.cbs.account.api.event.AccountCreatedEvent;
+import io.github.hossensyedriadh.cbs.account.api.event.AccountDeactivatedEvent;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
 import io.github.hossensyedriadh.cbs.account.api.service.AccountService;
 import io.github.hossensyedriadh.cbs.account.internal.domain.Account;
@@ -28,6 +32,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,6 +57,7 @@ public class AccountServiceImpl implements AccountService {
     private final BranchService branchService;
     private final CurrencyService currencyService;
     private final LedgerService ledgerService;
+    private final ApplicationEventPublisher applicationEventPublisher;
     private final HttpServletRequest httpServletRequest;
 
     @Autowired
@@ -60,7 +66,7 @@ public class AccountServiceImpl implements AccountService {
                               AccountMapper accountMapper, CustomerService customerService,
                               AccountProductService accountProductService, BranchService branchService,
                               CurrencyService currencyService, LedgerService ledgerService,
-                              HttpServletRequest httpServletRequest) {
+                              ApplicationEventPublisher applicationEventPublisher, HttpServletRequest httpServletRequest) {
         this.accountRepository = accountRepository;
         this.accountHolderRepository = accountHolderRepository;
         this.accountHoldRepository = accountHoldRepository;
@@ -71,6 +77,7 @@ public class AccountServiceImpl implements AccountService {
         this.branchService = branchService;
         this.currencyService = currencyService;
         this.ledgerService = ledgerService;
+        this.applicationEventPublisher = applicationEventPublisher;
         this.httpServletRequest = httpServletRequest;
     }
 
@@ -147,6 +154,8 @@ public class AccountServiceImpl implements AccountService {
 
         log.info("Created account with ID: {}", saved.getId());
 
+        this.applicationEventPublisher.publishEvent(new AccountCreatedEvent(saved.getId(), saved.getAccountNumber()));
+
         return this.accountMapper.toView(saved);
     }
 
@@ -163,8 +172,9 @@ public class AccountServiceImpl implements AccountService {
             account.setStatus(AccountStatus.ACTIVE);
             Account saved = this.accountRepository.save(account);
 
-            log.info("Account with ID: {} successfully activated", saved.getId());
+            this.applicationEventPublisher.publishEvent(new AccountActivatedEvent(saved.getId(), saved.getAccountNumber()));
 
+            log.info("Account with ID: {} successfully activated", saved.getId());
         }, () -> {
             log.warn("No account found with ID: {}", id);
             throw new ApiResourceException("Account not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
@@ -183,6 +193,8 @@ public class AccountServiceImpl implements AccountService {
 
             account.setStatus(AccountStatus.BLOCKED);
             Account saved = this.accountRepository.save(account);
+
+            this.applicationEventPublisher.publishEvent(new AccountDeactivatedEvent(saved.getId(), saved.getAccountNumber()));
 
             log.info("Account with ID: {} successfully deactivated", saved.getId());
         }, () -> {
@@ -231,6 +243,8 @@ public class AccountServiceImpl implements AccountService {
         account.setClosureReason(command.getReason());
 
         Account closed = this.accountRepository.save(account);
+
+        this.applicationEventPublisher.publishEvent(new AccountClosedEvent(closed.getId(), closed.getAccountNumber(), command.getReason()));
 
         log.info("Account with ID: {} successfully closed", closed.getId());
 

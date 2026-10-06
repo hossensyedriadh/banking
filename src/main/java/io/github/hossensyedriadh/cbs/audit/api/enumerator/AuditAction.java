@@ -4,6 +4,7 @@ public enum AuditAction {
     CREATED,
     UPDATED,
     ISSUED,
+    RELEASED,
     ACTIVATED,
     DEACTIVATED,
     BLOCKED,

@@ -3,6 +3,7 @@ package io.github.hossensyedriadh.cbs.account.internal.impl;
 import io.github.hossensyedriadh.cbs.account.api.command.CreateAccountHoldCommand;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountHoldStatus;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountStatus;
+import io.github.hossensyedriadh.cbs.account.api.event.AccountHoldCreatedEvent;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountBalanceView;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountHoldView;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
@@ -18,6 +19,7 @@ import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +39,7 @@ public class AccountHoldServiceImpl implements AccountHoldService {
     private final AccountService accountService;
     private final AccountBalanceService accountBalanceService;
     private final AccountHoldMapper accountHoldMapper;
+    private final ApplicationEventPublisher applicationEventPublisher;
     private final HttpServletRequest httpServletRequest;
 
     @Value("${cbs.timezone}")
@@ -45,11 +48,12 @@ public class AccountHoldServiceImpl implements AccountHoldService {
     @Autowired
     public AccountHoldServiceImpl(AccountHoldRepository accountHoldRepository, AccountService accountService,
                                   AccountBalanceService accountBalanceService, AccountHoldMapper accountHoldMapper,
-                                  HttpServletRequest httpServletRequest) {
+                                  ApplicationEventPublisher applicationEventPublisher, HttpServletRequest httpServletRequest) {
         this.accountHoldRepository = accountHoldRepository;
         this.accountService = accountService;
         this.accountBalanceService = accountBalanceService;
         this.accountHoldMapper = accountHoldMapper;
+        this.applicationEventPublisher = applicationEventPublisher;
         this.httpServletRequest = httpServletRequest;
     }
 
@@ -89,6 +93,8 @@ public class AccountHoldServiceImpl implements AccountHoldService {
         AccountHold hold = this.accountHoldMapper.toEntity(command);
         AccountHold saved = this.accountHoldRepository.save(hold);
 
+        this.applicationEventPublisher.publishEvent(new AccountHoldCreatedEvent(saved.getId(), saved.getReason()));
+
         log.info("Created hold of amount: {} for account: {}", command.getAmount(), saved);
 
         return this.accountHoldMapper.toView(saved);
@@ -111,6 +117,8 @@ public class AccountHoldServiceImpl implements AccountHoldService {
         hold.setReleasedAt(OffsetDateTime.now());
 
         AccountHold saved = this.accountHoldRepository.save(hold);
+
+        this.applicationEventPublisher.publishEvent(new AccountHoldCreatedEvent(saved.getId(), saved.getReason()));
 
         log.info("Released hold of amount: {} for account: {}, hold: {}", hold.getAmount(), saved.getAccountId(), saved.getId());
 
