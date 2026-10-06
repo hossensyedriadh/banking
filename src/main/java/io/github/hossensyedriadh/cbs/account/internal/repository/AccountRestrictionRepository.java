@@ -19,12 +19,52 @@ public interface AccountRestrictionRepository extends JpaRepository<AccountRestr
     @Query("select r from AccountRestriction r where r.id = :id")
     Optional<AccountRestriction> findByIdForUpdate(@Param("id") Long id);
 
-    List<AccountRestriction> findByAccountIdAndStatus(Long accountId, AccountRestrictionStatus status);
+    @Query("""
+            select r from AccountRestriction r
+            join r.history rh
+            where r.accountId = :accountId
+              and rh.status = :status
+              and rh.id = (
+                  select max(rh2.id)
+                  from AccountRestrictionStatusHistory rh2
+                  where rh2.accountRestriction.id = r.id
+              )""")
+    List<AccountRestriction> findByAccountIdAndStatus(@Param("accountId") Long accountId, @Param("status") AccountRestrictionStatus status);
 
-    boolean existsByAccountIdAndRestrictionTypeAndStatus(Long accountId, AccountRestrictionType type, AccountRestrictionStatus status);
+    @Query("""
+            select case when count(r) > 0 then true else false end
+            from AccountRestriction r join r.history rh
+            where r.accountId = :accountId
+              and r.restrictionType = :type
+              and rh.status = :status
+              and rh.id = (
+                  select max(rh2.id)
+                  from AccountRestrictionStatusHistory rh2
+                  where rh2.accountRestriction.id = r.id
+              )""")
+    boolean existsByAccountIdAndRestrictionTypeAndStatus(@Param("accountId") Long accountId, @Param("type") AccountRestrictionType type, @Param("status") AccountRestrictionStatus status);
 
-    @Query("select r.restrictionType from AccountRestriction r where r.accountId = :accountId and r.status = :status")
-    List<AccountRestrictionType> findActiveRestrictionTypes(@Param("accountId") Long accountId, @Param("status") AccountRestrictionStatus status);
+    @Query("""
+            select distinct r.restrictionType from AccountRestriction r
+            join r.history rh
+            where r.accountId = :accountId
+              and rh.status = 'ACTIVE'
+              and rh.id = (
+                  select max(rh2.id)
+                  from AccountRestrictionStatusHistory rh2
+                  where rh2.accountRestriction.id = r.id
+              )""")
+    List<AccountRestrictionType> findActiveRestrictionTypes(@Param("accountId") Long accountId);
 
-    boolean existsByAccountIdAndStatus(Long accountId, AccountRestrictionStatus status);
+    @Query("""
+            select case when count(r) > 0 then true else false end
+            from AccountRestriction r join r.history rh
+            where r.accountId = :accountId
+              and rh.status = :status
+              and rh.id = (
+                  select max(rh2.id)
+                  from AccountRestrictionStatusHistory rh2
+                  where rh2.accountRestriction.id = r.id
+              )""")
+    boolean existsByAccountIdAndStatus(@Param("accountId") Long accountId, @Param("status") AccountRestrictionStatus status);
 }

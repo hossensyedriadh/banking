@@ -1,18 +1,17 @@
 package io.github.hossensyedriadh.cbs.account.internal.domain;
 
-import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountRestrictionStatus;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountRestrictionType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -37,19 +36,11 @@ public class AccountRestriction {
     @Column(name = "restriction_type", updatable = false, nullable = false, length = 30)
     private AccountRestrictionType restrictionType;
 
-    @Enumerated(EnumType.STRING)
-    @ColumnDefault("'ACTIVE'")
-    @Column(name = "status", nullable = false, length = 20)
-    private AccountRestrictionStatus status;
-
-    @Column(name = "reason")
-    private String reason;
+    @OneToMany(mappedBy = "accountRestriction", fetch = FetchType.LAZY)
+    private List<AccountRestrictionStatusHistory> history;
 
     @Setter(AccessLevel.NONE)
     @CreatedDate
     @Column(name = "created_at", updatable = false, nullable = false)
     private OffsetDateTime createdAt;
-
-    @Column(name = "released_at")
-    private OffsetDateTime releasedAt;
 }

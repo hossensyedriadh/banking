@@ -1,6 +1,7 @@
 package io.github.hossensyedriadh.cbs.account.internal.impl;
 
 import io.github.hossensyedriadh.cbs.account.api.command.CreateAccountHoldCommand;
+import io.github.hossensyedriadh.cbs.account.api.command.ReleaseAccountHoldCommand;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountHoldStatus;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountStatus;
 import io.github.hossensyedriadh.cbs.account.api.event.AccountHoldCreatedEvent;
@@ -11,8 +12,10 @@ import io.github.hossensyedriadh.cbs.account.api.service.AccountBalanceService;
 import io.github.hossensyedriadh.cbs.account.api.service.AccountHoldService;
 import io.github.hossensyedriadh.cbs.account.api.service.AccountService;
 import io.github.hossensyedriadh.cbs.account.internal.domain.AccountHold;
+import io.github.hossensyedriadh.cbs.account.internal.domain.AccountHoldStatusHistory;
 import io.github.hossensyedriadh.cbs.account.internal.mapper.AccountHoldMapper;
 import io.github.hossensyedriadh.cbs.account.internal.repository.AccountHoldRepository;
+import io.github.hossensyedriadh.cbs.account.internal.repository.AccountHoldStatusHistoryRepository;
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -27,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
@@ -36,6 +40,7 @@ import java.util.Optional;
 @Transactional(readOnly = true)
 public class AccountHoldServiceImpl implements AccountHoldService {
     private final AccountHoldRepository accountHoldRepository;
+    private final AccountHoldStatusHistoryRepository accountHoldStatusHistoryRepository;
     private final AccountService accountService;
     private final AccountBalanceService accountBalanceService;
     private final AccountHoldMapper accountHoldMapper;
@@ -46,10 +51,11 @@ public class AccountHoldServiceImpl implements AccountHoldService {
     private ZoneId cbsTimezone;
 
     @Autowired
-    public AccountHoldServiceImpl(AccountHoldRepository accountHoldRepository, AccountService accountService,
-                                  AccountBalanceService accountBalanceService, AccountHoldMapper accountHoldMapper,
+    public AccountHoldServiceImpl(AccountHoldRepository accountHoldRepository, AccountHoldStatusHistoryRepository accountHoldStatusHistoryRepository,
+                                  AccountService accountService, AccountBalanceService accountBalanceService, AccountHoldMapper accountHoldMapper,
                                   ApplicationEventPublisher applicationEventPublisher, HttpServletRequest httpServletRequest) {
         this.accountHoldRepository = accountHoldRepository;
+        this.accountHoldStatusHistoryRepository = accountHoldStatusHistoryRepository;
         this.accountService = accountService;
         this.accountBalanceService = accountBalanceService;
         this.accountHoldMapper = accountHoldMapper;
@@ -93,7 +99,9 @@ public class AccountHoldServiceImpl implements AccountHoldService {
         AccountHold hold = this.accountHoldMapper.toEntity(command);
         AccountHold saved = this.accountHoldRepository.save(hold);
 
-        this.applicationEventPublisher.publishEvent(new AccountHoldCreatedEvent(saved.getId(), saved.getReason()));
+        this.addStatusHistory(saved, AccountHoldStatus.ACTIVE, command.getReason(), saved.getCreatedAt());
+
+        this.applicationEventPublisher.publishEvent(new AccountHoldCreatedEvent(saved.getId(), command.getReason()));
 
         log.info("Created hold of amount: {} for account: {}", command.getAmount(), saved);
 
@@ -102,23 +110,28 @@ public class AccountHoldServiceImpl implements AccountHoldService {
 
     @Transactional
     @Override
-    public AccountHoldView releaseHold(Long holdId) {
-        AccountHold hold = this.accountHoldRepository.findByIdForUpdate(holdId).orElseThrow(() -> {
-            log.warn("Account hold not found with ID: {}", holdId);
+    public AccountHoldView releaseHold(ReleaseAccountHoldCommand command) {
+        AccountHold hold = this.accountHoldRepository.findByIdForUpdate(command.getHoldId()).orElseThrow(() -> {
+            log.warn("Account hold not found with ID: {}", command.getHoldId());
             return new ApiResourceException("Account hold not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
 
-        if (hold.getStatus() != AccountHoldStatus.ACTIVE) {
-            log.warn("Account hold ID: {} is not active", holdId);
+        AccountHoldStatusHistory history = this.accountHoldStatusHistoryRepository.findFirstByAccountHold_IdOrderByCreatedAtDescIdDesc(hold.getId())
+                .orElseThrow(() -> {
+                    log.warn("Account hold status history not found for hold ID: {}", command.getHoldId());
+                    return new ApiResourceException("No history found for Account Hold", HttpStatus.NOT_FOUND, this.httpServletRequest);
+                });
+
+        if (history.getStatus() != AccountHoldStatus.ACTIVE) {
+            log.warn("Account hold ID: {} is not active", command.getHoldId());
             throw new ApiResourceException("Account hold is not active", HttpStatus.BAD_REQUEST, this.httpServletRequest);
         }
 
-        hold.setStatus(AccountHoldStatus.RELEASED);
-        hold.setReleasedAt(OffsetDateTime.now());
+        this.addStatusHistory(hold, AccountHoldStatus.RELEASED, command.getReason(), OffsetDateTime.now(ZoneOffset.UTC));
 
         AccountHold saved = this.accountHoldRepository.save(hold);
 
-        this.applicationEventPublisher.publishEvent(new AccountHoldCreatedEvent(saved.getId(), saved.getReason()));
+        this.applicationEventPublisher.publishEvent(new AccountHoldCreatedEvent(saved.getId(), command.getReason()));
 
         log.info("Released hold of amount: {} for account: {}, hold: {}", hold.getAmount(), saved.getAccountId(), saved.getId());
 
@@ -131,10 +144,32 @@ public class AccountHoldServiceImpl implements AccountHoldService {
         OffsetDateTime expirationBoundary = businessDate.plusDays(1).atStartOfDay(this.cbsTimezone).toOffsetDateTime();
 
         List<AccountHold> accountHolds = this.accountHoldRepository.findAllByStatusAndExpiresAtBefore(AccountHoldStatus.ACTIVE, expirationBoundary);
-        accountHolds.forEach(accountHold -> accountHold.setStatus(AccountHoldStatus.EXPIRED));
 
-        this.accountHoldRepository.saveAll(accountHolds);
+        List<AccountHoldStatusHistory> expired = accountHolds.stream().map(hold -> this.buildStatusHistory(hold, AccountHoldStatus.EXPIRED,
+                "Auto expire", OffsetDateTime.now(this.cbsTimezone))).toList();
+
+        this.accountHoldStatusHistoryRepository.saveAll(expired);
 
         log.info("Expired {} account balance holds expiring before: {}", accountHolds.size(), expirationBoundary.format(DateTimeFormatter.ISO_DATE_TIME));
+    }
+
+    private void addStatusHistory(AccountHold hold, AccountHoldStatus status, String reason, OffsetDateTime createdAt) {
+        AccountHoldStatusHistory history = new AccountHoldStatusHistory();
+        history.setStatus(status);
+        history.setReason(reason);
+        history.setAccountHold(hold);
+        history.setCreatedAt(createdAt);
+
+        this.accountHoldStatusHistoryRepository.save(history);
+    }
+
+    private AccountHoldStatusHistory buildStatusHistory(AccountHold hold, AccountHoldStatus status, String reason, OffsetDateTime createdAt) {
+        AccountHoldStatusHistory history = new AccountHoldStatusHistory();
+        history.setStatus(status);
+        history.setReason(reason);
+        history.setAccountHold(hold);
+        history.setCreatedAt(createdAt);
+
+        return history;
     }
 }

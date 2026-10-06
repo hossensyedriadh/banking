@@ -1,6 +1,7 @@
 package io.github.hossensyedriadh.cbs.account.api.controller.v1;
 
 import io.github.hossensyedriadh.cbs.account.api.command.CreateAccountRestrictionCommand;
+import io.github.hossensyedriadh.cbs.account.api.command.ReleaseAccountRestrictionCommand;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountRestrictionStatus;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountRestrictionView;
 import io.github.hossensyedriadh.cbs.account.api.service.AccountRestrictionService;
@@ -83,13 +84,17 @@ public class AccountRestrictionController {
         return ResponseEntity.created(location).body(saved);
     }
 
-    @Operation(summary = "Release account restriction", description = "Release an existing account restriction based on the provided restriction ID.", responses = {
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = AccountRestrictionView.class))),
-            @ApiResponse(responseCode = "404", description = "Account restriction not found", content = @Content)
-    })
-    @PostMapping("/release/{id}")
-    public ResponseEntity<AccountRestrictionView> releaseRestriction(@PathVariable("id") Long restrictionId) {
-        AccountRestrictionView released = this.accountRestrictionService.releaseRestriction(restrictionId);
+    @Operation(summary = "Release account restriction", description = "Release an existing account restriction based on the provided restriction ID.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Release account restriction command", required = true, content = @Content(schema = @Schema(implementation = ReleaseAccountRestrictionCommand.class))
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = AccountRestrictionView.class))),
+                    @ApiResponse(responseCode = "404", description = "Account restriction not found", content = @Content)
+            })
+    @PostMapping(value = "/release", consumes = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<AccountRestrictionView> releaseRestriction(@RequestBody ReleaseAccountRestrictionCommand command) {
+        AccountRestrictionView released = this.accountRestrictionService.releaseRestriction(command);
 
         return ResponseEntity.ok(released);
     }

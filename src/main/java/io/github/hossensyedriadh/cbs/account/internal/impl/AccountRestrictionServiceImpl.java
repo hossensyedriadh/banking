@@ -1,6 +1,7 @@
 package io.github.hossensyedriadh.cbs.account.internal.impl;
 
 import io.github.hossensyedriadh.cbs.account.api.command.CreateAccountRestrictionCommand;
+import io.github.hossensyedriadh.cbs.account.api.command.ReleaseAccountRestrictionCommand;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountRestrictionStatus;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountRestrictionType;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountStatus;
@@ -10,8 +11,10 @@ import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
 import io.github.hossensyedriadh.cbs.account.api.service.AccountRestrictionService;
 import io.github.hossensyedriadh.cbs.account.api.service.AccountService;
 import io.github.hossensyedriadh.cbs.account.internal.domain.AccountRestriction;
+import io.github.hossensyedriadh.cbs.account.internal.domain.AccountRestrictionStatusHistory;
 import io.github.hossensyedriadh.cbs.account.internal.mapper.AccountRestrictionMapper;
 import io.github.hossensyedriadh.cbs.account.internal.repository.AccountRestrictionRepository;
+import io.github.hossensyedriadh.cbs.account.internal.repository.AccountRestrictionStatusHistoryRepository;
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -23,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -33,16 +37,18 @@ import java.util.Set;
 @Transactional(readOnly = true)
 public class AccountRestrictionServiceImpl implements AccountRestrictionService {
     private final AccountRestrictionRepository accountRestrictionRepository;
+    private final AccountRestrictionStatusHistoryRepository accountRestrictionStatusHistoryRepository;
     private final AccountService accountService;
     private final AccountRestrictionMapper accountRestrictionMapper;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final HttpServletRequest httpServletRequest;
 
     @Autowired
-    public AccountRestrictionServiceImpl(AccountRestrictionRepository accountRestrictionRepository, AccountService accountService,
-                                         AccountRestrictionMapper accountRestrictionMapper, ApplicationEventPublisher applicationEventPublisher,
+    public AccountRestrictionServiceImpl(AccountRestrictionRepository accountRestrictionRepository, AccountRestrictionStatusHistoryRepository accountRestrictionStatusHistoryRepository,
+                                         AccountService accountService, AccountRestrictionMapper accountRestrictionMapper, ApplicationEventPublisher applicationEventPublisher,
                                          HttpServletRequest httpServletRequest) {
         this.accountRestrictionRepository = accountRestrictionRepository;
+        this.accountRestrictionStatusHistoryRepository = accountRestrictionStatusHistoryRepository;
         this.accountService = accountService;
         this.accountRestrictionMapper = accountRestrictionMapper;
         this.applicationEventPublisher = applicationEventPublisher;
@@ -85,7 +91,9 @@ public class AccountRestrictionServiceImpl implements AccountRestrictionService 
         AccountRestriction restriction = this.accountRestrictionMapper.toEntity(command);
         AccountRestriction saved = this.accountRestrictionRepository.save(restriction);
 
-        this.applicationEventPublisher.publishEvent(new AccountRestrictionCreatedEvent(saved.getId(), saved.getReason()));
+        this.addStatusHistory(saved, AccountRestrictionStatus.ACTIVE, command.getReason(), saved.getCreatedAt());
+
+        this.applicationEventPublisher.publishEvent(new AccountRestrictionCreatedEvent(saved.getId(), command.getReason()));
 
         log.info("Created restriction of type: {} for Account ID: {}", restriction.getRestrictionType(), account.getId());
 
@@ -94,24 +102,29 @@ public class AccountRestrictionServiceImpl implements AccountRestrictionService 
 
     @Transactional
     @Override
-    public AccountRestrictionView releaseRestriction(Long restrictionId) {
-        AccountRestriction restriction = this.accountRestrictionRepository.findByIdForUpdate(restrictionId)
+    public AccountRestrictionView releaseRestriction(ReleaseAccountRestrictionCommand command) {
+        AccountRestriction restriction = this.accountRestrictionRepository.findByIdForUpdate(command.getRestrictionId())
                 .orElseThrow(() -> {
-                    log.warn("Account restriction not found with ID: {}", restrictionId);
+                    log.warn("Account restriction not found with ID: {}", command.getRestrictionId());
                     return new ApiResourceException("Account restriction not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
                 });
 
-        if (restriction.getStatus() != AccountRestrictionStatus.ACTIVE) {
+        AccountRestrictionStatusHistory history = this.accountRestrictionStatusHistoryRepository.findFirstByAccountRestriction_IdOrderByCreatedAtDescIdDesc(restriction.getId())
+                .orElseThrow(() -> {
+                    log.warn("Account restriction status history not found for restriction ID: {}", restriction.getId());
+                    return new ApiResourceException("No history found for Account restriction", HttpStatus.NOT_FOUND, this.httpServletRequest);
+                });
+
+        if (history.getStatus() != AccountRestrictionStatus.ACTIVE) {
             log.warn("Account restriction: {} is not active", restriction.getAccountId());
             throw new ApiResourceException("Restriction is not active", HttpStatus.BAD_REQUEST, this.httpServletRequest);
         }
 
-        restriction.setStatus(AccountRestrictionStatus.RELEASED);
-        restriction.setReleasedAt(OffsetDateTime.now());
+        this.addStatusHistory(restriction, AccountRestrictionStatus.RELEASED, command.getReason(), OffsetDateTime.now(ZoneOffset.UTC));
 
         AccountRestriction saved = this.accountRestrictionRepository.save(restriction);
 
-        this.applicationEventPublisher.publishEvent(new AccountRestrictionCreatedEvent(saved.getId(), saved.getReason()));
+        this.applicationEventPublisher.publishEvent(new AccountRestrictionCreatedEvent(saved.getId(), command.getReason()));
 
         log.info("Released restriction of type: {} for Account ID: {}", restriction.getRestrictionType(), restriction.getAccountId());
 
@@ -120,7 +133,7 @@ public class AccountRestrictionServiceImpl implements AccountRestrictionService 
 
     @Override
     public void validateDebitAllowed(Long accountId) {
-        Set<AccountRestrictionType> restrictions = new HashSet<>(this.accountRestrictionRepository.findActiveRestrictionTypes(accountId, AccountRestrictionStatus.ACTIVE));
+        Set<AccountRestrictionType> restrictions = new HashSet<>(this.accountRestrictionRepository.findActiveRestrictionTypes(accountId));
 
         if (restrictions.contains(AccountRestrictionType.DEBIT_BLOCK) || restrictions.contains(AccountRestrictionType.FULL_FREEZE)) {
             log.warn("Account ID: {} is debit restricted", accountId);
@@ -130,11 +143,21 @@ public class AccountRestrictionServiceImpl implements AccountRestrictionService 
 
     @Override
     public void validateCreditAllowed(Long accountId) {
-        Set<AccountRestrictionType> restrictions = new HashSet<>(this.accountRestrictionRepository.findActiveRestrictionTypes(accountId, AccountRestrictionStatus.ACTIVE));
+        Set<AccountRestrictionType> restrictions = new HashSet<>(this.accountRestrictionRepository.findActiveRestrictionTypes(accountId));
 
         if (restrictions.contains(AccountRestrictionType.CREDIT_BLOCK) || restrictions.contains(AccountRestrictionType.FULL_FREEZE)) {
             log.warn("Account ID: {} is credit restricted", accountId);
             throw new ApiResourceException("Credit transactions are not allowed for this account", HttpStatus.BAD_REQUEST);
         }
+    }
+
+    private void addStatusHistory(AccountRestriction restriction, AccountRestrictionStatus status, String reason, OffsetDateTime createdAt) {
+        AccountRestrictionStatusHistory history = new AccountRestrictionStatusHistory();
+        history.setStatus(status);
+        history.setReason(reason);
+        history.setAccountRestriction(restriction);
+        history.setCreatedAt(createdAt);
+
+        this.accountRestrictionStatusHistoryRepository.save(history);
     }
 }

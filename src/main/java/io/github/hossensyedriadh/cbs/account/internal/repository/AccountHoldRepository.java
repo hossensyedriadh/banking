@@ -18,15 +18,55 @@ import java.util.Optional;
 public interface AccountHoldRepository extends JpaRepository<AccountHold, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select h from AccountHold h where h.id = :id")
-    Optional<AccountHold> findByIdForUpdate(Long id);
+    Optional<AccountHold> findByIdForUpdate(@Param("id") Long id);
 
-    List<AccountHold> findByAccountIdAndStatus(Long accountId, AccountHoldStatus status);
+    @Query("""
+            select h from AccountHold h
+            join h.history sh
+            where h.accountId = :accountId
+              and sh.status = :status
+              and sh.id = (
+                  select max(sh2.id)
+                  from AccountHoldStatusHistory sh2
+                  where sh2.accountHold.id = h.id
+              )""")
+    List<AccountHold> findByAccountIdAndStatus(@Param("accountId") Long accountId, @Param("status") AccountHoldStatus status);
 
-    @Query(value = "select coalesce(sum(h.amount), 0.0) from AccountHold h where h.accountId = :accountId and h.status = :status")
+    @Query("""
+            select coalesce(sum(h.amount), 0.0)
+            from AccountHold h join h.history sh
+            where h.accountId = :accountId
+              and sh.status = :status
+              and sh.id = (
+                  select max(sh2.id)
+                  from AccountHoldStatusHistory sh2
+                  where sh2.accountHold.id = h.id
+              )""")
     BigDecimal sumAmountByAccountIdAndStatus(@Param("accountId") Long accountId, @Param("status") AccountHoldStatus status);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    List<AccountHold> findAllByStatusAndExpiresAtBefore(AccountHoldStatus status, OffsetDateTime expiresAtBefore);
+    @Query("""
+            select h from AccountHold h
+            join h.history sh
+            where sh.status = :status
+              and sh.id = (
+                  select max(sh2.id)
+                  from AccountHoldStatusHistory sh2
+                  where sh2.accountHold.id = h.id
+              )
+              and h.expiresAt <= :expiresAtBefore
+            order by h.expiresAt asc, h.id asc""")
+    List<AccountHold> findAllByStatusAndExpiresAtBefore(@Param("status") AccountHoldStatus status, @Param("expiresAtBefore") OffsetDateTime expiresAtBefore);
 
-    boolean existsByAccountIdAndStatus(Long accountId, AccountHoldStatus status);
+    @Query("""
+            select case when count(h) > 0 then true else false end
+            from AccountHold h join h.history sh
+            where h.accountId = :accountId
+              and sh.status = :status
+              and sh.id = (
+                  select max(sh2.id)
+                  from AccountHoldStatusHistory sh2
+                  where sh2.accountHold.id = h.id
+              )""")
+    boolean existsByAccountIdAndStatus(@Param("accountId") Long accountId, @Param("status") AccountHoldStatus status);
 }

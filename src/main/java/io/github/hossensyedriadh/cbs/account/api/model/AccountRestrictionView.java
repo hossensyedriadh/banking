@@ -1,7 +1,6 @@
 package io.github.hossensyedriadh.cbs.account.api.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountRestrictionStatus;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountRestrictionType;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,6 +8,7 @@ import lombok.Setter;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -24,13 +24,8 @@ public class AccountRestrictionView implements Serializable {
     @JsonProperty("restriction_type")
     private AccountRestrictionType restrictionType;
 
-    private AccountRestrictionStatus status;
-
-    private String reason;
+    private List<AccountRestrictionStatusHistoryView> history;
 
     @JsonProperty("created_at")
     private OffsetDateTime createdAt;
-
-    @JsonProperty("released_at")
-    private OffsetDateTime releasedAt;
 }

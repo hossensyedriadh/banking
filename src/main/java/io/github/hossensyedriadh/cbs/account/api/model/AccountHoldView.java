@@ -9,6 +9,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -23,18 +24,13 @@ public class AccountHoldView implements Serializable {
 
     private BigDecimal amount;
 
-    private AccountHoldStatus status;
-
-    private String reason;
-
     private String reference;
+
+    private List<AccountHoldStatusHistoryView> history;
 
     @JsonProperty("expires_at")
     private OffsetDateTime expiresAt;
 
     @JsonProperty("created_at")
     private OffsetDateTime createdAt;
-
-    @JsonProperty("released_at")
-    private OffsetDateTime releasedAt;
 }

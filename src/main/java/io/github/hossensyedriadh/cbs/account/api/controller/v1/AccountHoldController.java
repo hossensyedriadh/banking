@@ -1,6 +1,7 @@
 package io.github.hossensyedriadh.cbs.account.api.controller.v1;
 
 import io.github.hossensyedriadh.cbs.account.api.command.CreateAccountHoldCommand;
+import io.github.hossensyedriadh.cbs.account.api.command.ReleaseAccountHoldCommand;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountHoldStatus;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountHoldView;
 import io.github.hossensyedriadh.cbs.account.api.service.AccountHoldService;
@@ -89,13 +90,17 @@ public class AccountHoldController {
         return ResponseEntity.created(location).body(saved);
     }
 
-    @Operation(summary = "Release an account hold", description = "Release an account hold based on the provided hold ID.", responses = {
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = AccountHoldView.class))),
-            @ApiResponse(responseCode = "404", description = "Account hold not found", content = @Content)
-    })
-    @PostMapping("/release/{id}")
-    public ResponseEntity<AccountHoldView> releaseHold(@PathVariable("id") Long holdId) {
-        AccountHoldView released = this.accountHoldService.releaseHold(holdId);
+    @Operation(summary = "Release an account hold", description = "Release an account hold based on the provided hold ID.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Release account hold command", required = true, content = @Content(schema = @Schema(implementation = ReleaseAccountHoldCommand.class))
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = AccountHoldView.class))),
+                    @ApiResponse(responseCode = "404", description = "Account hold not found", content = @Content)
+            })
+    @PostMapping(value = "/release", consumes = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<AccountHoldView> releaseHold(@RequestBody ReleaseAccountHoldCommand command) {
+        AccountHoldView released = this.accountHoldService.releaseHold(command);
 
         return ResponseEntity.ok(released);
     }

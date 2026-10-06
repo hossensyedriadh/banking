@@ -1,6 +1,7 @@
 package io.github.hossensyedriadh.cbs.account.api.service;
 
 import io.github.hossensyedriadh.cbs.account.api.command.CreateAccountRestrictionCommand;
+import io.github.hossensyedriadh.cbs.account.api.command.ReleaseAccountRestrictionCommand;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountRestrictionStatus;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountRestrictionView;
 import jakarta.validation.Valid;
@@ -15,7 +16,7 @@ public interface AccountRestrictionService {
 
     AccountRestrictionView createRestriction(@Valid CreateAccountRestrictionCommand command);
 
-    AccountRestrictionView releaseRestriction(Long restrictionId);
+    AccountRestrictionView releaseRestriction(@Valid ReleaseAccountRestrictionCommand command);
 
     void validateDebitAllowed(Long accountId);
 
