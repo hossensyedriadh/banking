@@ -3,6 +3,7 @@ package io.github.hossensyedriadh.cbs.eod.internal.impl;
 import io.github.hossensyedriadh.cbs.eod.api.enumerator.EodRunStatus;
 import io.github.hossensyedriadh.cbs.eod.api.enumerator.EodStep;
 import io.github.hossensyedriadh.cbs.eod.api.enumerator.EodStepStatus;
+import io.github.hossensyedriadh.cbs.eod.api.event.*;
 import io.github.hossensyedriadh.cbs.eod.internal.domain.EodRun;
 import io.github.hossensyedriadh.cbs.eod.internal.domain.EodRunStep;
 import io.github.hossensyedriadh.cbs.eod.internal.repository.EodRunRepository;
@@ -10,6 +11,7 @@ import io.github.hossensyedriadh.cbs.eod.internal.repository.EodRunStepRepositor
 import io.github.hossensyedriadh.cbs.eod.internal.service.EodRunService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,11 +23,14 @@ import java.time.OffsetDateTime;
 public class EodRunServiceImpl implements EodRunService {
     private final EodRunRepository eodRunRepository;
     private final EodRunStepRepository eodRunStepRepository;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Autowired
-    public EodRunServiceImpl(EodRunRepository eodRunRepository, EodRunStepRepository eodRunStepRepository) {
+    public EodRunServiceImpl(EodRunRepository eodRunRepository, EodRunStepRepository eodRunStepRepository,
+                             ApplicationEventPublisher applicationEventPublisher) {
         this.eodRunRepository = eodRunRepository;
         this.eodRunStepRepository = eodRunStepRepository;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     @Transactional
@@ -36,6 +41,8 @@ public class EodRunServiceImpl implements EodRunService {
         eodRun.setStatus(EodRunStatus.RUNNING);
 
         EodRun saved = this.eodRunRepository.save(eodRun);
+
+        this.applicationEventPublisher.publishEvent(new EodRunStartedEvent(saved.getId(), businessDate));
 
         log.info("Started EodRun with id: {}", saved.getId());
 
@@ -50,6 +57,8 @@ public class EodRunServiceImpl implements EodRunService {
 
         this.eodRunRepository.save(eodRun);
 
+        this.applicationEventPublisher.publishEvent(new EodRunCompletedEvent(eodRun.getId(), eodRun.getBusinessDate()));
+
         log.info("Completed EodRun with id: {}", eodRun.getId());
     }
 
@@ -61,6 +70,8 @@ public class EodRunServiceImpl implements EodRunService {
         eodRun.setCompletedAt(OffsetDateTime.now());
 
         this.eodRunRepository.save(eodRun);
+
+        this.applicationEventPublisher.publishEvent(new EodRunFailedEvent(eodRun.getId(), eodRun.getBusinessDate()));
 
         log.warn("Failed EodRun with id: {}", eodRun.getId());
     }
@@ -77,6 +88,8 @@ public class EodRunServiceImpl implements EodRunService {
 
         EodRunStep saved = this.eodRunStepRepository.save(eodRunStep);
 
+        this.applicationEventPublisher.publishEvent(new EodRunStepStartedEvent(saved.getId(), eodStep));
+
         log.info("Started EodRunStep with id: {}", saved.getId());
 
         return saved;
@@ -90,6 +103,8 @@ public class EodRunServiceImpl implements EodRunService {
 
         this.eodRunStepRepository.save(eodRunStep);
 
+        this.applicationEventPublisher.publishEvent(new EodRunStepCompletedEvent(eodRunStep.getId(), eodRunStep.getStepName()));
+
         log.info("Completed EodRunStep with id: {}", eodRunStep.getId());
     }
 
@@ -101,6 +116,8 @@ public class EodRunServiceImpl implements EodRunService {
         eodRunStep.setCompletedAt(OffsetDateTime.now());
 
         this.eodRunStepRepository.save(eodRunStep);
+
+        this.applicationEventPublisher.publishEvent(new EodRunStepFailedEvent(eodRunStep.getId(), eodRunStep.getStepName()));
 
         log.warn("Failed EodRunStep with id: {}", eodRunStep.getId());
     }
