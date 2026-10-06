@@ -4,6 +4,10 @@ import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import io.github.hossensyedriadh.cbs.product.api.command.CreateCardProductCommand;
 import io.github.hossensyedriadh.cbs.product.api.command.UpdateCardProductCommand;
 import io.github.hossensyedriadh.cbs.product.api.enumerator.CardProductStatus;
+import io.github.hossensyedriadh.cbs.product.api.event.cardproduct.CardProductActivatedEvent;
+import io.github.hossensyedriadh.cbs.product.api.event.cardproduct.CardProductCreatedEvent;
+import io.github.hossensyedriadh.cbs.product.api.event.cardproduct.CardProductDeactivatedEvent;
+import io.github.hossensyedriadh.cbs.product.api.event.cardproduct.CardProductUpdatedEvent;
 import io.github.hossensyedriadh.cbs.product.api.model.CardProductView;
 import io.github.hossensyedriadh.cbs.product.api.service.CardProductService;
 import io.github.hossensyedriadh.cbs.product.internal.domain.CardProduct;
@@ -13,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,13 +31,15 @@ import java.util.Optional;
 public class CardProductServiceImpl implements CardProductService {
     private final CardProductRepository cardProductRepository;
     private final CardProductMapper cardProductMapper;
+    private final ApplicationEventPublisher applicationEventPublisher;
     private final HttpServletRequest httpServletRequest;
 
     @Autowired
     public CardProductServiceImpl(CardProductRepository cardProductRepository, CardProductMapper cardProductMapper,
-                                  HttpServletRequest httpServletRequest) {
+                                  ApplicationEventPublisher applicationEventPublisher, HttpServletRequest httpServletRequest) {
         this.cardProductRepository = cardProductRepository;
         this.cardProductMapper = cardProductMapper;
+        this.applicationEventPublisher = applicationEventPublisher;
         this.httpServletRequest = httpServletRequest;
     }
 
@@ -63,6 +70,8 @@ public class CardProductServiceImpl implements CardProductService {
         CardProduct cardProduct = this.cardProductMapper.toEntity(command);
         CardProduct saved = this.cardProductRepository.save(cardProduct);
 
+        this.applicationEventPublisher.publishEvent(new CardProductCreatedEvent(saved.getId(), saved.getProductCode()));
+
         log.info("Card Product created with code: {}", saved.getProductCode());
 
         return this.cardProductMapper.toView(saved);
@@ -84,6 +93,8 @@ public class CardProductServiceImpl implements CardProductService {
         this.cardProductMapper.toPatchedEntity(command, product);
         CardProduct updated = this.cardProductRepository.save(product);
 
+        this.applicationEventPublisher.publishEvent(new CardProductUpdatedEvent(updated.getId(), updated.getProductCode()));
+
         log.info("Card Product updated with ID: {}", updated.getId());
 
         return this.cardProductMapper.toView(updated);
@@ -100,6 +111,8 @@ public class CardProductServiceImpl implements CardProductService {
 
             product.setStatus(CardProductStatus.ACTIVE);
             this.cardProductRepository.save(product);
+
+            this.applicationEventPublisher.publishEvent(new CardProductActivatedEvent(product.getId(), product.getProductCode()));
 
             log.info("Card product activated with code: {}", product.getProductCode());
         }, () -> {
@@ -119,6 +132,8 @@ public class CardProductServiceImpl implements CardProductService {
 
             product.setStatus(CardProductStatus.INACTIVE);
             this.cardProductRepository.save(product);
+
+            this.applicationEventPublisher.publishEvent(new CardProductDeactivatedEvent(product.getId(), product.getProductCode()));
 
             log.info("Card product deactivated with code: {}", product.getProductCode());
         }, () -> {

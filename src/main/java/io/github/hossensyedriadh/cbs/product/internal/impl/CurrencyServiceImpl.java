@@ -2,6 +2,9 @@ package io.github.hossensyedriadh.cbs.product.internal.impl;
 
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import io.github.hossensyedriadh.cbs.product.api.command.CreateCurrencyCommand;
+import io.github.hossensyedriadh.cbs.product.api.event.currency.CurrencyActivatedEvent;
+import io.github.hossensyedriadh.cbs.product.api.event.currency.CurrencyCreatedEvent;
+import io.github.hossensyedriadh.cbs.product.api.event.currency.CurrencyDeactivatedEvent;
 import io.github.hossensyedriadh.cbs.product.api.model.CurrencyView;
 import io.github.hossensyedriadh.cbs.product.api.service.CurrencyService;
 import io.github.hossensyedriadh.cbs.product.internal.domain.Currency;
@@ -11,6 +14,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,14 +27,16 @@ import java.util.Optional;
 @Transactional(readOnly = true)
 public class CurrencyServiceImpl implements CurrencyService {
     private final CurrencyRepository currencyRepository;
+    private final ApplicationEventPublisher applicationEventPublisher;
     private final CurrencyMapper currencyMapper;
     private final HttpServletRequest httpServletRequest;
 
     @Autowired
     public CurrencyServiceImpl(CurrencyRepository currencyRepository, CurrencyMapper currencyMapper,
-                               HttpServletRequest httpServletRequest) {
+                               ApplicationEventPublisher applicationEventPublisher, HttpServletRequest httpServletRequest) {
         this.currencyRepository = currencyRepository;
         this.currencyMapper = currencyMapper;
+        this.applicationEventPublisher = applicationEventPublisher;
         this.httpServletRequest = httpServletRequest;
     }
 
@@ -60,6 +66,8 @@ public class CurrencyServiceImpl implements CurrencyService {
         Currency currency = this.currencyMapper.toEntity(command);
         Currency saved = this.currencyRepository.save(currency);
 
+        this.applicationEventPublisher.publishEvent(new CurrencyCreatedEvent(saved.getId(), saved.getCode()));
+
         log.info("Created currency with code: {}", saved.getCode());
 
         return this.currencyMapper.toView(saved);
@@ -76,6 +84,8 @@ public class CurrencyServiceImpl implements CurrencyService {
 
             currency.setActive(true);
             this.currencyRepository.save(currency);
+
+            this.applicationEventPublisher.publishEvent(new CurrencyActivatedEvent(currency.getId(), currency.getCode()));
 
             log.info("Activated currency with ID: {}", id);
         }, () -> {
@@ -95,6 +105,8 @@ public class CurrencyServiceImpl implements CurrencyService {
 
             currency.setActive(false);
             this.currencyRepository.save(currency);
+
+            this.applicationEventPublisher.publishEvent(new CurrencyDeactivatedEvent(currency.getId(), currency.getCode()));
 
             log.info("Deactivated currency with ID: {}", id);
         }, () -> {

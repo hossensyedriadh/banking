@@ -4,6 +4,10 @@ import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import io.github.hossensyedriadh.cbs.product.api.command.CreateChequeProductCommand;
 import io.github.hossensyedriadh.cbs.product.api.command.UpdateChequeProductCommand;
 import io.github.hossensyedriadh.cbs.product.api.enumerator.ChequeProductStatus;
+import io.github.hossensyedriadh.cbs.product.api.event.chequeproduct.ChequeProductActivatedEvent;
+import io.github.hossensyedriadh.cbs.product.api.event.chequeproduct.ChequeProductCreatedEvent;
+import io.github.hossensyedriadh.cbs.product.api.event.chequeproduct.ChequeProductDeactivatedEvent;
+import io.github.hossensyedriadh.cbs.product.api.event.chequeproduct.ChequeProductUpdatedEvent;
 import io.github.hossensyedriadh.cbs.product.api.model.ChequeProductView;
 import io.github.hossensyedriadh.cbs.product.api.service.ChequeProductService;
 import io.github.hossensyedriadh.cbs.product.internal.domain.ChequeProduct;
@@ -13,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,13 +31,15 @@ import java.util.Optional;
 public class ChequeProductServiceImpl implements ChequeProductService {
     private final ChequeProductRepository chequeProductRepository;
     private final ChequeProductMapper chequeProductMapper;
+    private final ApplicationEventPublisher applicationEventPublisher;
     private final HttpServletRequest httpServletRequest;
 
     @Autowired
     public ChequeProductServiceImpl(ChequeProductRepository chequeProductRepository, ChequeProductMapper chequeProductMapper,
-                                    HttpServletRequest httpServletRequest) {
+                                    ApplicationEventPublisher applicationEventPublisher, HttpServletRequest httpServletRequest) {
         this.chequeProductRepository = chequeProductRepository;
         this.chequeProductMapper = chequeProductMapper;
+        this.applicationEventPublisher = applicationEventPublisher;
         this.httpServletRequest = httpServletRequest;
     }
 
@@ -63,6 +70,8 @@ public class ChequeProductServiceImpl implements ChequeProductService {
         ChequeProduct chequeProduct = this.chequeProductMapper.toEntity(command);
         ChequeProduct saved = this.chequeProductRepository.save(chequeProduct);
 
+        this.applicationEventPublisher.publishEvent(new ChequeProductCreatedEvent(saved.getId(), saved.getProductCode()));
+
         log.info("Cheque product created with code: {}", saved.getProductCode());
 
         return this.chequeProductMapper.toView(saved);
@@ -84,6 +93,8 @@ public class ChequeProductServiceImpl implements ChequeProductService {
         this.chequeProductMapper.toPatchedEntity(command, product);
         ChequeProduct updated = this.chequeProductRepository.save(product);
 
+        this.applicationEventPublisher.publishEvent(new ChequeProductUpdatedEvent(updated.getId(), updated.getProductCode()));
+
         log.info("Cheque product updated with ID: {}", updated.getId());
 
         return this.chequeProductMapper.toView(updated);
@@ -100,6 +111,8 @@ public class ChequeProductServiceImpl implements ChequeProductService {
 
             product.setStatus(ChequeProductStatus.ACTIVE);
             this.chequeProductRepository.save(product);
+
+            this.applicationEventPublisher.publishEvent(new ChequeProductActivatedEvent(product.getId(), product.getProductCode()));
 
             log.info("Cheque product activated with code: {}", product.getProductCode());
         }, () -> {
@@ -119,6 +132,8 @@ public class ChequeProductServiceImpl implements ChequeProductService {
 
             product.setStatus(ChequeProductStatus.INACTIVE);
             this.chequeProductRepository.save(product);
+
+            this.applicationEventPublisher.publishEvent(new ChequeProductDeactivatedEvent(product.getId(), product.getProductCode()));
 
             log.info("Cheque product deactivated with code: {}", product.getProductCode());
         }, () -> {

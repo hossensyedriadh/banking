@@ -4,6 +4,10 @@ import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import io.github.hossensyedriadh.cbs.product.api.command.CreateAccountProductCommand;
 import io.github.hossensyedriadh.cbs.product.api.command.UpdateAccountProductCommand;
 import io.github.hossensyedriadh.cbs.product.api.enumerator.AccountProductStatus;
+import io.github.hossensyedriadh.cbs.product.api.event.accountproduct.AccountProductActivatedEvent;
+import io.github.hossensyedriadh.cbs.product.api.event.accountproduct.AccountProductCreatedEvent;
+import io.github.hossensyedriadh.cbs.product.api.event.accountproduct.AccountProductDeactivatedEvent;
+import io.github.hossensyedriadh.cbs.product.api.event.accountproduct.AccountProductUpdatedEvent;
 import io.github.hossensyedriadh.cbs.product.api.model.AccountProductView;
 import io.github.hossensyedriadh.cbs.product.api.service.AccountProductService;
 import io.github.hossensyedriadh.cbs.product.internal.domain.AccountProduct;
@@ -13,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,13 +31,15 @@ import java.util.Optional;
 public class AccountProductServiceImpl implements AccountProductService {
     private final AccountProductRepository accountProductRepository;
     private final AccountProductMapper accountProductMapper;
+    private final ApplicationEventPublisher applicationEventPublisher;
     private final HttpServletRequest httpServletRequest;
 
     @Autowired
     public AccountProductServiceImpl(AccountProductRepository accountProductRepository, AccountProductMapper accountProductMapper,
-                                     HttpServletRequest httpServletRequest) {
+                                     ApplicationEventPublisher applicationEventPublisher, HttpServletRequest httpServletRequest) {
         this.accountProductRepository = accountProductRepository;
         this.accountProductMapper = accountProductMapper;
+        this.applicationEventPublisher = applicationEventPublisher;
         this.httpServletRequest = httpServletRequest;
     }
 
@@ -69,6 +76,8 @@ public class AccountProductServiceImpl implements AccountProductService {
         AccountProduct product = this.accountProductMapper.toEntity(command);
         AccountProduct saved = this.accountProductRepository.save(product);
 
+        this.applicationEventPublisher.publishEvent(new AccountProductCreatedEvent(saved.getId(), saved.getProductCode()));
+
         log.info("Account product created with code: {}", saved.getProductCode());
 
         return this.accountProductMapper.toView(saved);
@@ -90,6 +99,8 @@ public class AccountProductServiceImpl implements AccountProductService {
         this.accountProductMapper.toPatchedEntity(command, product);
         AccountProduct updated = this.accountProductRepository.save(product);
 
+        this.applicationEventPublisher.publishEvent(new AccountProductUpdatedEvent(updated.getId(), updated.getProductCode()));
+
         log.info("Account product updated with ID: {}", id);
 
         return this.accountProductMapper.toView(updated);
@@ -106,6 +117,8 @@ public class AccountProductServiceImpl implements AccountProductService {
 
             product.setStatus(AccountProductStatus.ACTIVE);
             this.accountProductRepository.save(product);
+
+            this.applicationEventPublisher.publishEvent(new AccountProductActivatedEvent(product.getId(), product.getProductCode()));
 
             log.info("Account product activated with code: {}", product.getProductCode());
         }, () -> {
@@ -125,6 +138,8 @@ public class AccountProductServiceImpl implements AccountProductService {
 
             product.setStatus(AccountProductStatus.INACTIVE);
             this.accountProductRepository.save(product);
+
+            this.applicationEventPublisher.publishEvent(new AccountProductDeactivatedEvent(product.getId(), product.getProductCode()));
 
             log.info("Account product deactivated with code: {}", product.getProductCode());
         }, () -> {
