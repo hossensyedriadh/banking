@@ -84,7 +84,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public Page<AccountTransactionView> getAccountTransactions(Long accountId, Pageable pageable) {
-        return this.transactionRepository.findAccountTransactions(accountId, pageable)
+        return this.transactionRepository.findAllByAccountId(accountId, pageable)
                 .map(transaction -> this.toAccountTransactionView(transaction, accountId));
     }
 
