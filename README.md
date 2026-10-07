@@ -872,7 +872,8 @@ This is one of the reasons the initial architecture benefits from being a modula
 | Cheque Books            |   ✅   |
 | EOD                     |   ✅   |
 | REST API                |   ✅   |
-| Audit                   |   🚧   |
+| Audit                   |   ✅   |
+| Account Statements      |   🚧   |
 | Authentication          |   📋   |
 | Authorization           |   📋   |
 | Frontend                |   📋   |
@@ -915,12 +916,12 @@ This is one of the reasons the initial architecture benefits from being a modula
 
 ## Phase 3 — Banking Products
 
+* [x] Cards
+* [x] Cheques
+* [x] Interest processing
 * [ ] Fixed deposits
 * [ ] Loans
 * [ ] Loan repayment
-* [ ] Cards
-* [ ] Cheques
-* [ ] Interest processing
 * [ ] Scheduled transactions
 
 ## Phase 4 — Controls & Operations
@@ -1140,7 +1141,7 @@ disaster-recovery, operational, and integration capabilities beyond the scope of
 
 Software Engineer
 
-**Focus:** Java · Spring Boot · PostgreSQL · System Architecture
+**Focus:** Java · Spring Boot · PostgreSQL · MySQL · System Architecture
 
 ---
 
