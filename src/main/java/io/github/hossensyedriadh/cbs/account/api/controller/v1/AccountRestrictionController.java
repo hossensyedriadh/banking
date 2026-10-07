@@ -6,6 +6,7 @@ import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountRestrictionSt
 import io.github.hossensyedriadh.cbs.account.api.model.AccountRestrictionView;
 import io.github.hossensyedriadh.cbs.account.api.service.AccountRestrictionService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -40,10 +41,15 @@ public class AccountRestrictionController {
         binder.registerCustomEditor(String.class, stringTrimmerEditor);
     }
 
-    @Operation(summary = "Get account restrictions", description = "Retrieve account restrictions based on the provided account ID and status.", responses = {
-            @ApiResponse(responseCode = "200", description = "OK", content = @Content(array = @ArraySchema(schema = @Schema(implementation = AccountRestrictionView.class)))),
-            @ApiResponse(responseCode = "204", description = "No Content", content = @Content)
-    })
+    @Operation(summary = "Get account restrictions", description = "Retrieve account restrictions based on the provided account ID and status.",
+            parameters = {
+                    @Parameter(name = "accountId", description = "The ID of the account to retrieve restrictions for", required = true),
+                    @Parameter(name = "status", description = "The status of the restrictions to retrieve", required = true)
+            },
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK", content = @Content(array = @ArraySchema(schema = @Schema(implementation = AccountRestrictionView.class)))),
+                    @ApiResponse(responseCode = "204", description = "No Content", content = @Content)
+            })
     @GetMapping("/account/{accountId}/status/{status}")
     public ResponseEntity<List<AccountRestrictionView>> getRestrictions(@PathVariable("accountId") Long accountId, @PathVariable("status") AccountRestrictionStatus status) {
         List<AccountRestrictionView> restrictions = this.accountRestrictionService.getRestrictions(accountId, status);
@@ -55,7 +61,10 @@ public class AccountRestrictionController {
         return ResponseEntity.ok(restrictions);
     }
 
-    @Operation(summary = "Get account restriction", description = "Retrieve an account restriction based on the provided ID.", responses = {
+    @Operation(summary = "Get account restriction", description = "Retrieve an account restriction based on the provided ID.",
+            parameters = {
+                    @Parameter(name = "id", description = "The ID of the restriction to retrieve", required = true)
+            }, responses = {
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = AccountRestrictionView.class))),
             @ApiResponse(responseCode = "404", description = "Account restriction not found", content = @Content)
     })
