@@ -6,7 +6,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
 
-public interface InterestAccrualService {
+public interface InterestService {
     void accrue(LocalDate businessDate);
 
     List<InterestAccrualView> getNotPostedAccrualsForMonth(YearMonth yearMonth);

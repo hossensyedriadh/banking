@@ -1,7 +1,7 @@
 package io.github.hossensyedriadh.cbs.account.internal.impl;
 
 import io.github.hossensyedriadh.cbs.account.api.model.InterestAccrualView;
-import io.github.hossensyedriadh.cbs.account.api.service.InterestAccrualService;
+import io.github.hossensyedriadh.cbs.account.api.service.InterestService;
 import io.github.hossensyedriadh.cbs.account.api.service.InterestBatchService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,18 +15,18 @@ import java.util.List;
 @Service
 // NOTE: no transactions should be opened in this class/any methods in this class
 public class InterestBatchServiceImpl implements InterestBatchService {
-    private final InterestAccrualService interestAccrualService;
+    private final InterestService interestService;
 
     @Autowired
-    public InterestBatchServiceImpl(InterestAccrualService interestAccrualService) {
-        this.interestAccrualService = interestAccrualService;
+    public InterestBatchServiceImpl(InterestService interestService) {
+        this.interestService = interestService;
     }
 
     @Override
     public void postInterests(LocalDate businessDate) {
         YearMonth previousMonth = YearMonth.from(businessDate).minusMonths(1);
 
-        List<InterestAccrualView> accrualViews = this.interestAccrualService.getNotPostedAccrualsForMonth(previousMonth);
+        List<InterestAccrualView> accrualViews = this.interestService.getNotPostedAccrualsForMonth(previousMonth);
 
         log.info("Processing interest posting for {} accruals for accrual year-month: {}", accrualViews.size(), previousMonth);
 
@@ -34,7 +34,7 @@ public class InterestBatchServiceImpl implements InterestBatchService {
 
         for (InterestAccrualView accrual : accrualViews) {
             try {
-                this.interestAccrualService.post(accrual.getId());
+                this.interestService.post(accrual.getId());
                 postedCount++;
             } catch (Exception e) {
                 log.error("Failed to process interest posting for accrual id {}", accrual.getId(), e);

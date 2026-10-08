@@ -1,20 +1,21 @@
 package io.github.hossensyedriadh.cbs.account.internal.impl;
 
+import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountStatus;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.InterestAccrualStatus;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
 import io.github.hossensyedriadh.cbs.account.api.model.InterestAccrualView;
 import io.github.hossensyedriadh.cbs.account.api.service.AccountBalanceService;
 import io.github.hossensyedriadh.cbs.account.api.service.AccountService;
-import io.github.hossensyedriadh.cbs.account.api.service.InterestAccrualService;
 import io.github.hossensyedriadh.cbs.account.api.service.InterestCalculationService;
+import io.github.hossensyedriadh.cbs.account.api.service.InterestService;
 import io.github.hossensyedriadh.cbs.account.internal.domain.InterestAccrual;
 import io.github.hossensyedriadh.cbs.account.internal.mapper.InterestAccrualMapper;
 import io.github.hossensyedriadh.cbs.account.internal.repository.InterestAccrualRepository;
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
-import io.github.hossensyedriadh.cbs.ledger.api.service.LedgerService;
 import io.github.hossensyedriadh.cbs.product.api.model.AccountProductView;
 import io.github.hossensyedriadh.cbs.product.api.service.AccountProductService;
-import jakarta.servlet.http.HttpServletRequest;
+import io.github.hossensyedriadh.cbs.transaction.api.command.PostInterestCommand;
+import io.github.hossensyedriadh.cbs.transaction.api.service.TransactionService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -34,29 +35,27 @@ import java.util.stream.Collectors;
 @Log4j2
 @Service
 @Transactional(readOnly = true)
-public class InterestAccrualServiceImpl implements InterestAccrualService {
+public class InterestServiceImpl implements InterestService {
     private final InterestAccrualRepository interestAccrualRepository;
     private final InterestCalculationService interestCalculationService;
     private final AccountService accountService;
     private final AccountBalanceService accountBalanceService;
     private final AccountProductService accountProductService;
-    private final LedgerService ledgerService;
+    private final TransactionService transactionService;
     private final InterestAccrualMapper interestAccrualMapper;
-    private final HttpServletRequest httpServletRequest;
 
     @Autowired
-    public InterestAccrualServiceImpl(InterestAccrualRepository interestAccrualRepository, InterestCalculationService interestCalculationService,
-                                      AccountService accountService, AccountBalanceService accountBalanceService,
-                                      AccountProductService accountProductService, LedgerService ledgerService,
-                                      InterestAccrualMapper interestAccrualMapper, HttpServletRequest httpServletRequest) {
+    public InterestServiceImpl(InterestAccrualRepository interestAccrualRepository, InterestCalculationService interestCalculationService,
+                               AccountService accountService, AccountBalanceService accountBalanceService,
+                               AccountProductService accountProductService, TransactionService transactionService,
+                               InterestAccrualMapper interestAccrualMapper) {
         this.interestAccrualRepository = interestAccrualRepository;
         this.interestCalculationService = interestCalculationService;
         this.accountService = accountService;
         this.accountBalanceService = accountBalanceService;
         this.accountProductService = accountProductService;
-        this.ledgerService = ledgerService;
+        this.transactionService = transactionService;
         this.interestAccrualMapper = interestAccrualMapper;
-        this.httpServletRequest = httpServletRequest;
     }
 
     @Transactional
@@ -123,20 +122,26 @@ public class InterestAccrualServiceImpl implements InterestAccrualService {
     public InterestAccrualView post(Long accrualId) {
         InterestAccrual accrual = this.interestAccrualRepository.findByIdForUpdate(accrualId).orElseThrow(() -> {
             log.warn("Interest accrual not found with id {}", accrualId);
-            return new ApiResourceException("Interest accrual not found", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            return new ApiResourceException("Interest accrual not found", HttpStatus.NOT_FOUND);
         });
 
         if (accrual.getStatus() != InterestAccrualStatus.ACCRUED) {
             log.warn("Interest accrual with id {} is not accrued", accrualId);
-            throw new ApiResourceException("Interest accrual is not yet ACCRUED", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            throw new ApiResourceException("Interest accrual is not yet ACCRUED", HttpStatus.BAD_REQUEST);
         }
 
-        Long customerLedgerAccountId = this.ledgerService.getSubLedgerAccountIdByAccountId(accrual.getAccountId()).orElseThrow(() -> {
-            log.warn("Sub-ledger account not found for account id: {}", accrual.getAccountId());
-            return new ApiResourceException("Sub-ledger account not found for account", HttpStatus.INTERNAL_SERVER_ERROR, this.httpServletRequest);
+        AccountView account = this.accountService.getAccount(accrual.getAccountId()).orElseThrow(() -> {
+            log.warn("Account with id {} not found", accrual.getAccountId());
+            return new ApiResourceException("Account not found", HttpStatus.NOT_FOUND);
         });
 
-        this.ledgerService.postInterest(accrual.getId(), customerLedgerAccountId, accrual.getInterestAmount());
+        if (account.getStatus() != AccountStatus.ACTIVE) {
+            log.warn("Account with id {} is not active", accrual.getAccountId());
+            throw new ApiResourceException("Account is not active", HttpStatus.BAD_REQUEST);
+        }
+
+        this.transactionService.interest(new PostInterestCommand(account.getId(), account.getCurrencyId(),
+                accrual.getInterestAmount(), String.format("INTEREST:%d:%d", accrual.getId(), account.getId()), "Interest deposit"));
 
         accrual.setStatus(InterestAccrualStatus.POSTED);
         accrual.setPostedAt(OffsetDateTime.now());
