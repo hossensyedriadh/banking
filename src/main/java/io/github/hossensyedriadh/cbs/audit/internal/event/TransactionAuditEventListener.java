@@ -12,13 +12,13 @@ import org.springframework.modulith.events.ApplicationModuleListener;
 import org.springframework.stereotype.Component;
 
 @Component
-public class TransactionEventListener {
+public class TransactionAuditEventListener {
     private final AuditService auditService;
 
     private final static String TRANSACTION_NAME = "TRANSACTION";
 
     @Autowired
-    public TransactionEventListener(AuditService auditService) {
+    public TransactionAuditEventListener(AuditService auditService) {
         this.auditService = auditService;
     }
 

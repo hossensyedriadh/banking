@@ -15,6 +15,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -61,23 +62,26 @@ public class Statement {
     @Column(name = "opening_balance", updatable = false, nullable = false, precision = 19, scale = 4)
     private BigDecimal openingBalance;
 
-    @Column(name = "closing_balance", updatable = false, nullable = false, precision = 19, scale = 4)
+    @Column(name = "closing_balance", nullable = false, precision = 19, scale = 4)
     private BigDecimal closingBalance;
 
     @ColumnDefault("0")
-    @Column(name = "total_debits", updatable = false, nullable = false, precision = 19, scale = 4)
+    @Column(name = "total_debits", nullable = false, precision = 19, scale = 4)
     private BigDecimal totalDebits;
 
     @ColumnDefault("0")
-    @Column(name = "total_credits", updatable = false, nullable = false, precision = 19, scale = 4)
+    @Column(name = "total_credits", nullable = false, precision = 19, scale = 4)
     private BigDecimal totalCredits;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private StatementStatus status;
 
+    @OneToMany(mappedBy = "statement", fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<StatementEntry> statementEntries;
+
     @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "generated_at", nullable = false)
+    @Column(name = "generated_at", updatable = false, nullable = false)
     private OffsetDateTime generatedAt;
 
     @Column(name = "issued_at")
