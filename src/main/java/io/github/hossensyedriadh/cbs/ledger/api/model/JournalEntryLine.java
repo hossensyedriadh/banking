@@ -22,6 +22,9 @@ public class JournalEntryLine implements Serializable {
     @JsonProperty("ledger_account_id")
     private Long ledgerAccountId;
 
+    @JsonProperty("sub_ledger_account_id")
+    private Long subLedgerAccountId;
+
     @JsonProperty("entry_type")
     private JournalEntryType entryType;
 

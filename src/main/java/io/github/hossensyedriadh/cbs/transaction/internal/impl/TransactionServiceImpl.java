@@ -41,6 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -89,6 +90,12 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
+    public List<TransactionView> getTransactions(Long accountId, OffsetDateTime from, OffsetDateTime to) {
+        return this.transactionRepository.findCompletedAccountTransactionsInDateRange(accountId, from, to)
+                .stream().map(this.transactionMapper::toView).toList();
+    }
+
+    @Override
     public Optional<TransactionView> getTransaction(Long id) {
         return this.transactionRepository.findById(id).map(this.transactionMapper::toView);
     }
@@ -131,6 +138,7 @@ public class TransactionServiceImpl implements TransactionService {
         this.completeTransaction(savedTransaction);
 
         TransactionCreated event = this.transactionEventFactory.createTransactionCreatedEvent(savedTransaction);
+
         this.outboxEventService.save(UUID.fromString(event.getEventId()), event, "TRANSACTION",
                 savedTransaction.getId().toString(), savedTransaction.getCreatedAt());
 
@@ -168,7 +176,6 @@ public class TransactionServiceImpl implements TransactionService {
 
         this.applicationEventPublisher.publishEvent(new TransactionCreatedEvent(savedTransaction.getId(), savedTransaction.getTransactionReference(), savedTransaction.getTransactionType()));
 
-
         log.info("Withdrawal transaction saved: {}", savedTransaction.getId());
 
         Long customerLedgerAccountId = this.getCustomerLedgerAccountId(account.getId());
@@ -178,6 +185,7 @@ public class TransactionServiceImpl implements TransactionService {
         this.completeTransaction(savedTransaction);
 
         TransactionCreated event = this.transactionEventFactory.createTransactionCreatedEvent(savedTransaction);
+
         this.outboxEventService.save(UUID.fromString(event.getEventId()), event, "TRANSACTION",
                 savedTransaction.getId().toString(), savedTransaction.getCreatedAt());
 
@@ -237,6 +245,7 @@ public class TransactionServiceImpl implements TransactionService {
         this.completeTransaction(savedTransaction);
 
         TransactionCreated event = this.transactionEventFactory.createTransactionCreatedEvent(savedTransaction);
+
         this.outboxEventService.save(UUID.fromString(event.getEventId()), event, "TRANSACTION",
                 savedTransaction.getId().toString(), savedTransaction.getCreatedAt());
 
@@ -293,6 +302,7 @@ public class TransactionServiceImpl implements TransactionService {
         this.completeTransaction(savedReversal);
 
         TransactionReversed event = this.transactionEventFactory.createTransactionReversedEvent(savedReversal);
+
         this.outboxEventService.save(UUID.fromString(event.getEventId()), event, "TRANSACTION",
                 savedReversal.getId().toString(), savedReversal.getCreatedAt());
 
@@ -336,10 +346,50 @@ public class TransactionServiceImpl implements TransactionService {
         this.completeTransaction(savedTransaction);
 
         TransactionCreated event = this.transactionEventFactory.createTransactionCreatedEvent(savedTransaction);
+
         this.outboxEventService.save(UUID.fromString(event.getEventId()), event, "TRANSACTION",
                 savedTransaction.getId().toString(), savedTransaction.getCreatedAt());
 
-        return transactionMapper.toView(savedTransaction);
+        return this.transactionMapper.toView(savedTransaction);
+    }
+
+    @Override
+    public TransactionView interest(@Valid PostInterestCommand command) {
+        this.accountRestrictionService.validateCreditAllowed(command.getAccountId());
+
+        Optional<TransactionView> existingTransaction = this.getCompletedOrPendingTransaction(command.getIdempotencyKey());
+
+        if (existingTransaction.isPresent()) {
+            log.info("Duplicate interest posting request detected for idempotency key: {}", command.getIdempotencyKey());
+
+            return existingTransaction.get();
+        }
+
+        AccountView account = this.getActiveAccount(command.getAccountId());
+
+        this.validateCurrency(command.getCurrencyId(), account.getCurrencyId());
+
+        Transaction transaction = this.createTransaction(account.getId(), null, command.getCurrencyId(), TransactionType.INTEREST,
+                command.getAmount(), command.getDescription(), command.getIdempotencyKey());
+
+        Transaction savedTransaction = this.transactionRepository.save(transaction);
+
+        this.applicationEventPublisher.publishEvent(new TransactionCreatedEvent(savedTransaction.getId(), savedTransaction.getTransactionReference(), savedTransaction.getTransactionType()));
+
+        log.info("Interest posting transaction saved: {}", savedTransaction.getId());
+
+        Long customerLedgerAccountId = this.getCustomerLedgerAccountId(account.getId());
+
+        this.ledgerService.postInterest(savedTransaction.getId(), customerLedgerAccountId, command.getAmount());
+
+        this.completeTransaction(savedTransaction);
+
+        TransactionCreated event = this.transactionEventFactory.createTransactionCreatedEvent(savedTransaction);
+
+        this.outboxEventService.save(UUID.fromString(event.getEventId()), event, "TRANSACTION",
+                savedTransaction.getId().toString(), savedTransaction.getCreatedAt());
+
+        return this.transactionMapper.toView(savedTransaction);
     }
 
     private void postReversal(Transaction originalTransaction, Transaction reversalTransaction) {

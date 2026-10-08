@@ -31,6 +31,10 @@ public class JournalEntry {
     @JoinColumn(name = "ledger_account_id", nullable = false)
     private LedgerAccount ledgerAccount;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sub_ledger_account_id")
+    private SubLedgerAccount subLedgerAccount;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "entry_type", nullable = false, length = 10)
     private JournalEntryType entryType;

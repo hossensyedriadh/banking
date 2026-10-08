@@ -5,12 +5,15 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.Optional;
 
 public interface LedgerService {
     Optional<Long> getSubLedgerAccountIdByAccountId(Long accountId);
 
     Optional<SubLedgerAccountView> getSubLedgerAccountByAccountId(Long accountId);
+
+    BigDecimal getBalanceAt(Long subLedgerAccountId, OffsetDateTime asOf);
 
     void createSubLedgerAccount(Long accountId, Long ledgerAccountId);
 
