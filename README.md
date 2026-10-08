@@ -871,16 +871,15 @@ This is one of the reasons the initial architecture benefits from being a modula
 | Cards                   |   ✅   |
 | Cheque Books            |   ✅   |
 | EOD                     |   ✅   |
+| Scheduled Fees          |   🚧   |
+| Account Statements      |   ✅   |
 | REST API                |   ✅   |
 | Audit                   |   ✅   |
-| Account Statements      |   🚧   |
 | Authentication          |   📋   |
 | Authorization           |   📋   |
 | Frontend                |   📋   |
 | Automated Tests         |   📋   |
 | Reporting               |   📋   |
-| Reconciliation UI       |   📋   |
-| End-of-Day Processing   |   📋   |
 | Maker-Checker           |   📋   |
 
 ### Legend
