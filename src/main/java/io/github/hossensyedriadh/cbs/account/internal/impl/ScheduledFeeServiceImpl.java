@@ -40,6 +40,9 @@ public class ScheduledFeeServiceImpl implements ScheduledFeeService {
     @Value("${cbs.timezone}")
     private ZoneId cbsTimezone;
 
+    @Value("${cbs.scheduled-fees.stale-processing-minutes:30}")
+    private long staleProcessingMinutes;
+
     @Autowired
     public ScheduledFeeServiceImpl(ScheduledFeeRepository scheduledFeeRepository, ScheduledFeeProcessor scheduledFeeProcessor,
                                    ScheduledFeeMapper scheduledFeeMapper, FeeRuleService feeRuleService) {
@@ -128,6 +131,16 @@ public class ScheduledFeeServiceImpl implements ScheduledFeeService {
 
     @Override
     public void processDueFees(LocalDate businessDate) {
+        OffsetDateTime now = OffsetDateTime.now(this.cbsTimezone);
+        OffsetDateTime cutoff = now.minusMinutes(this.staleProcessingMinutes);
+
+        int recovered = this.scheduledFeeRepository.recoverStaleProcessingFees(ScheduledFeeStatus.PROCESSING, ScheduledFeeStatus.FAILED,
+                cutoff, "Processing claim expired; eligible for retry");
+
+        if (recovered > 0) {
+            log.warn("Recovered {} stale scheduled-fee processing claims", recovered);
+        }
+
         List<ScheduledFee> dueFees = this.scheduledFeeRepository.findAllByScheduledDateLessThanEqualAndStatusInOrderByScheduledDateAscIdAsc(
                 businessDate, List.of(ScheduledFeeStatus.PENDING, ScheduledFeeStatus.FAILED));
 
