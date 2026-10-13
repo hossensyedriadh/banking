@@ -1,5 +1,6 @@
 package io.github.hossensyedriadh.cbs.account.internal.domain;
 
+import io.github.hossensyedriadh.cbs.account.api.enumerator.FeeRuleFrequency;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.FeeRuleStatus;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.FeeType;
 import jakarta.persistence.*;
@@ -56,6 +57,10 @@ public class FeeRule {
     @ColumnDefault("'ACTIVE'")
     @Column(name = "status", nullable = false, length = 20)
     private FeeRuleStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "frequency", nullable = false, length = 20)
+    private FeeRuleFrequency frequency;
 
     @Setter(AccessLevel.NONE)
     @CreatedDate

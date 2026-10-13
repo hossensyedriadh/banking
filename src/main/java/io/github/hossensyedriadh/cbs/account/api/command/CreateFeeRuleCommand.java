@@ -1,6 +1,7 @@
 package io.github.hossensyedriadh.cbs.account.api.command;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.github.hossensyedriadh.cbs.account.api.enumerator.FeeRuleFrequency;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.FeeType;
 import io.github.hossensyedriadh.cbs.account.api.validation.ValidFeeRule;
 import jakarta.validation.constraints.NotBlank;
@@ -41,6 +42,9 @@ public class CreateFeeRuleCommand implements Serializable {
 
     @Positive
     private BigDecimal percentage;
+
+    @NotNull
+    private FeeRuleFrequency frequency;
 
     @JsonProperty("currency_id")
     private Long currencyId;

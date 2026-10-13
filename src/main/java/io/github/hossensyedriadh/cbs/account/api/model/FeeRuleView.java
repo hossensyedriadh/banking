@@ -1,6 +1,7 @@
 package io.github.hossensyedriadh.cbs.account.api.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.github.hossensyedriadh.cbs.account.api.enumerator.FeeRuleFrequency;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.FeeRuleStatus;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.FeeType;
 import lombok.Getter;
@@ -37,6 +38,8 @@ public class FeeRuleView implements Serializable {
     private Long currencyId;
 
     private FeeRuleStatus status;
+
+    private FeeRuleFrequency frequency;
 
     @JsonProperty("created_at")
     private OffsetDateTime createdAt;
