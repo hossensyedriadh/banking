@@ -1,0 +1,39 @@
+spring:
+  datasource:
+    driver-class-name: "org.postgresql.Driver"
+    url: "${POSTGRES_URL}"
+    username: "${POSTGRES_USER}"
+    password: "${POSTGRES_PWD}"
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX_SIZE}
+      minimum-idle: ${DB_POOL_MIN_IDLE}
+      idle-timeout: ${DB_POOL_IDLE_TIMEOUT}
+      connection-timeout: ${DB_POOL_CONN_TIMEOUT}
+      max-lifetime: ${DB_POOL_MAX_LIFETIME}
+      leak-detection-threshold: ${DB_POOL_LEAK_THRESHOLD}
+      connection-test-query: "select 1;"
+      driver-class-name: "org.postgresql.Driver"
+      pool-name: "Hikari Connection Pool [CBS Core: Dev]"
+  jpa:
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+server:
+  tomcat:
+    connection-timeout: 15s
+    keep-alive-timeout: 30s
+  shutdown: immediate
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
