@@ -13,7 +13,7 @@ spring:
       leak-detection-threshold: ${DB_POOL_LEAK_THRESHOLD}
       connection-test-query: "select 1;"
       driver-class-name: "org.postgresql.Driver"
-      pool-name: "Hikari Connection Pool [CBS Core: Dev]"
+      pool-name: "Hikari Connection Pool [CBS: Dev]"
   jpa:
     properties:
       hibernate:
