@@ -11,6 +11,7 @@ import org.springframework.context.SmartLifecycle;
 import org.springframework.stereotype.Component;
 
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.*;
 import java.util.Set;
@@ -49,18 +50,18 @@ public class TcpServer implements SmartLifecycle {
         }
 
         try {
-            serverSocket = new ServerSocket();
-            serverSocket.setReuseAddress(true);
-            serverSocket.bind(new InetSocketAddress(properties.host(), properties.port()));
+            this.serverSocket = new ServerSocket();
+            this.serverSocket.setReuseAddress(true);
+            this.serverSocket.bind(new InetSocketAddress(properties.host(), properties.port()));
 
-            connectionExecutor = Executors.newVirtualThreadPerTaskExecutor();
-            running = true;
+            this.connectionExecutor = Executors.newVirtualThreadPerTaskExecutor();
+            this.running = true;
 
-            acceptThread = Thread.ofVirtual().name("switch-tcp-accept").start(this::acceptLoop);
+            this.acceptThread = Thread.ofVirtual().name("switch-tcp-accept").start(this::acceptLoop);
 
             log.info("ATM/POS TCP server started on {}:{}", properties.host(), properties.port());
         } catch (IOException ioe) {
-            closeServerSocket();
+            this.closeServerSocket();
 
             log.error("Failed to start ATM/POS TCP listener on {}:{}", properties.host(), properties.port(), ioe);
 
@@ -70,23 +71,23 @@ public class TcpServer implements SmartLifecycle {
 
     @Override
     public synchronized void stop() {
-        if (!running) {
-            closeServerSocket();
+        if (!this.running) {
+            this.closeServerSocket();
             return;
         }
 
-        running = false;
+        this.running = false;
 
-        closeServerSocket();
+        this.closeServerSocket();
 
-        activeSockets.forEach(this::closeSocket);
+        this.activeSockets.forEach(this::closeSocket);
 
         if (connectionExecutor != null) {
-            connectionExecutor.shutdownNow();
+            this.connectionExecutor.shutdownNow();
         }
 
         if (acceptThread != null) {
-            acceptThread.interrupt();
+            this.acceptThread.interrupt();
         }
 
         log.info("ATM/POS TCP server stopped");
@@ -95,7 +96,7 @@ public class TcpServer implements SmartLifecycle {
     @Override
     public void stop(@NonNull Runnable callback) {
         try {
-            stop();
+            this.stop();
         } finally {
             callback.run();
         }
@@ -103,35 +104,35 @@ public class TcpServer implements SmartLifecycle {
 
     @Override
     public boolean isRunning() {
-        return running;
+        return this.running;
     }
 
     private void acceptLoop() {
-        while (running) {
+        while (this.running) {
             try {
-                Socket socket = serverSocket.accept();
+                Socket socket = this.serverSocket.accept();
                 socket.setTcpNoDelay(true);
                 socket.setKeepAlive(true);
                 socket.setSoTimeout(properties.readTimeout());
 
-                activeSockets.add(socket);
+                this.activeSockets.add(socket);
 
                 log.info("Terminal TCP connection accepted from {}", socket.getRemoteSocketAddress());
 
                 try {
-                    connectionExecutor.submit(() -> handleConnection(socket));
+                    this.connectionExecutor.submit(() -> handleConnection(socket));
                 } catch (RuntimeException exception) {
-                    activeSockets.remove(socket);
-                    closeSocket(socket);
+                    this.activeSockets.remove(socket);
+                    this.closeSocket(socket);
                     throw exception;
                 }
             } catch (SocketException exception) {
-                if (running) {
+                if (this.running) {
                     log.error("TCP accept failed", exception);
                 }
                 break;
             } catch (IOException exception) {
-                if (running) {
+                if (this.running) {
                     log.error("Failed to accept terminal connection", exception);
                 }
             }
@@ -149,8 +150,9 @@ public class TcpServer implements SmartLifecycle {
     private void handleConnection(Socket socket) {
         long lastActivity = System.nanoTime();
 
-        try (socket; DataInputStream inputStream = new DataInputStream(socket.getInputStream())) {
-            while (running && !socket.isClosed()) {
+        try (socket; DataInputStream inputStream = new DataInputStream(socket.getInputStream());
+             DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream())) {
+            while (this.running && !socket.isClosed()) {
                 try {
                     byte[] payload = this.isoFrameReader.read(inputStream);
 
@@ -159,8 +161,25 @@ public class TcpServer implements SmartLifecycle {
                         break;
                     }
 
-                    ISOMsg msg = this.isoMessageParser.unpack(payload);
-                    this.isoMessageHandler.handle(msg);
+                    ISOMsg request = this.isoMessageParser.unpack(payload);
+                    ISOMsg response = this.isoMessageHandler.handle(request);
+
+                    if (response == null) {
+                        continue;
+                    }
+
+                    byte[] responsePayload = this.isoMessageParser.pack(response);
+
+                    if (responsePayload.length > 8192) {
+                        log.warn("Response payload exceeds maximum length: {}", responsePayload.length);
+                        throw new IOException("Response payload exceeds maximum length");
+                    }
+
+                    outputStream.writeShort(responsePayload.length);
+                    outputStream.write(responsePayload);
+                    outputStream.flush();
+
+                    log.info("Sent ISO 8583 response MTI={}", response.getMTI());
                 } catch (SocketTimeoutException exception) {
                     long idleMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - lastActivity);
 
@@ -172,19 +191,19 @@ public class TcpServer implements SmartLifecycle {
         } catch (ISOException e) {
             log.warn("Invalid ISO 8583 message from {}", socket.getRemoteSocketAddress());
         } catch (IOException exception) {
-            if (running) {
+            if (this.running) {
                 log.debug("Terminal connection ended: {}", socket.getRemoteSocketAddress());
             }
         } finally {
-            activeSockets.remove(socket);
+            this.activeSockets.remove(socket);
             log.debug("Terminal connection handler finished");
         }
     }
 
     private void closeServerSocket() {
-        if (serverSocket != null && !serverSocket.isClosed()) {
+        if (this.serverSocket != null && !this.serverSocket.isClosed()) {
             try {
-                serverSocket.close();
+                this.serverSocket.close();
                 log.debug("TCP server socket closed");
             } catch (IOException ioe) {
                 log.error("Failed to close TCP server socket", ioe);
