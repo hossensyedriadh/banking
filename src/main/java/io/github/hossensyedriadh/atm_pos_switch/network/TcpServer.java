@@ -1,13 +1,17 @@
 package io.github.hossensyedriadh.atm_pos_switch.network;
 
+import io.github.hossensyedriadh.atm_pos_switch.iso8583.IsoMessageHandler;
+import io.github.hossensyedriadh.atm_pos_switch.iso8583.IsoMessageParser;
 import lombok.extern.log4j.Log4j2;
+import org.jpos.iso.ISOException;
+import org.jpos.iso.ISOMsg;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.stereotype.Component;
 
+import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.*;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,9 +22,10 @@ import java.util.concurrent.TimeUnit;
 @Log4j2
 @Component
 public class TcpServer implements SmartLifecycle {
-    private static final int BUFFER_SIZE = 4096;
-
     private final TcpServerProperties properties;
+    private final IsoMessageParser isoMessageParser;
+    private final IsoFrameReader isoFrameReader;
+    private final IsoMessageHandler isoMessageHandler;
 
     private volatile boolean running;
     private ServerSocket serverSocket;
@@ -29,8 +34,12 @@ public class TcpServer implements SmartLifecycle {
     private final Set<Socket> activeSockets = ConcurrentHashMap.newKeySet();
 
     @Autowired
-    public TcpServer(TcpServerProperties properties) {
+    public TcpServer(TcpServerProperties properties, IsoMessageParser isoMessageParser,
+                     IsoFrameReader isoFrameReader, IsoMessageHandler isoMessageHandler) {
         this.properties = properties;
+        this.isoMessageParser = isoMessageParser;
+        this.isoFrameReader = isoFrameReader;
+        this.isoMessageHandler = isoMessageHandler;
     }
 
     @Override
@@ -140,32 +149,28 @@ public class TcpServer implements SmartLifecycle {
     private void handleConnection(Socket socket) {
         long lastActivity = System.nanoTime();
 
-        try (socket; InputStream inputStream = socket.getInputStream()) {
-            byte[] buffer = new byte[BUFFER_SIZE];
-
+        try (socket; DataInputStream inputStream = new DataInputStream(socket.getInputStream())) {
             while (running && !socket.isClosed()) {
                 try {
-                    int bytesRead = inputStream.read(buffer);
+                    byte[] payload = this.isoFrameReader.read(inputStream);
 
-                    if (bytesRead == -1) {
+                    if (payload == null) {
                         log.info("Terminal disconnected: {}", socket.getRemoteSocketAddress());
                         break;
                     }
 
-                    lastActivity = System.nanoTime();
-
-                    log.debug("Received {} TCP bytes from {}", bytesRead, socket.getRemoteSocketAddress());
-
-                    //todo: frame ISO8583
+                    ISOMsg msg = this.isoMessageParser.unpack(payload);
+                    this.isoMessageHandler.handle(msg);
                 } catch (SocketTimeoutException exception) {
                     long idleMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - lastActivity);
 
-                    if (idleMillis >= properties.idleTimeout()) {
+                    if (idleMillis >= this.properties.idleTimeout()) {
                         log.info("Closing idle terminal connection: {}", socket.getRemoteSocketAddress());
-                        break;
                     }
                 }
             }
+        } catch (ISOException e) {
+            log.warn("Invalid ISO 8583 message from {}", socket.getRemoteSocketAddress());
         } catch (IOException exception) {
             if (running) {
                 log.debug("Terminal connection ended: {}", socket.getRemoteSocketAddress());
