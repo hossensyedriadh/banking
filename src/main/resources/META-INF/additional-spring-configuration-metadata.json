@@ -1,0 +1,24 @@
+{
+  "properties": [
+    {
+      "name": "switch.tcp.host",
+      "type": "java.lang.String",
+      "description": "Hostname of the TCP server."
+    },
+    {
+      "name": "switch.tcp.port",
+      "type": "java.lang.Integer",
+      "description": "Port of the TCP server."
+    },
+    {
+      "name": "switch.tcp.read-timeout",
+      "type": "java.lang.Integer",
+      "description": "TCP Read timeout in milliseconds."
+    },
+    {
+      "name": "switch.tcp.idle-timeout",
+      "type": "java.lang.Integer",
+      "description": "TCP Idle timeout in milliseconds."
+    }
+  ]
+}
