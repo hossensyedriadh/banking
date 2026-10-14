@@ -3,6 +3,10 @@ package io.github.hossensyedriadh.cbs.account.internal.impl;
 import io.github.hossensyedriadh.cbs.account.api.command.ScheduleFeeCommand;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.FeeRuleStatus;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.ScheduledFeeStatus;
+import io.github.hossensyedriadh.cbs.account.api.event.ScheduledFeeCancelledEvent;
+import io.github.hossensyedriadh.cbs.account.api.event.ScheduledFeeCreatedEvent;
+import io.github.hossensyedriadh.cbs.account.api.event.ScheduledFeeProcessedEvent;
+import io.github.hossensyedriadh.cbs.account.api.event.ScheduledFeeWaivedEvent;
 import io.github.hossensyedriadh.cbs.account.api.model.FeeRuleView;
 import io.github.hossensyedriadh.cbs.account.api.model.ScheduledFeeView;
 import io.github.hossensyedriadh.cbs.account.api.service.FeeRuleService;
@@ -17,6 +21,7 @@ import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -36,6 +41,7 @@ public class ScheduledFeeServiceImpl implements ScheduledFeeService {
     private final ScheduledFeeProcessor scheduledFeeProcessor;
     private final ScheduledFeeMapper scheduledFeeMapper;
     private final FeeRuleService feeRuleService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Value("${cbs.timezone}")
     private ZoneId cbsTimezone;
@@ -45,11 +51,13 @@ public class ScheduledFeeServiceImpl implements ScheduledFeeService {
 
     @Autowired
     public ScheduledFeeServiceImpl(ScheduledFeeRepository scheduledFeeRepository, ScheduledFeeProcessor scheduledFeeProcessor,
-                                   ScheduledFeeMapper scheduledFeeMapper, FeeRuleService feeRuleService) {
+                                   ScheduledFeeMapper scheduledFeeMapper, FeeRuleService feeRuleService,
+                                   ApplicationEventPublisher applicationEventPublisher) {
         this.scheduledFeeRepository = scheduledFeeRepository;
         this.scheduledFeeProcessor = scheduledFeeProcessor;
         this.scheduledFeeMapper = scheduledFeeMapper;
         this.feeRuleService = feeRuleService;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -124,6 +132,8 @@ public class ScheduledFeeServiceImpl implements ScheduledFeeService {
 
         ScheduledFee saved = this.scheduledFeeRepository.save(fee);
 
+        this.applicationEventPublisher.publishEvent(new ScheduledFeeCreatedEvent(saved.getId(), saved.getScheduledDate()));
+
         log.info("Scheduled fee created with id: {}", saved.getId());
 
         return this.scheduledFeeMapper.toView(saved);
@@ -154,6 +164,7 @@ public class ScheduledFeeServiceImpl implements ScheduledFeeService {
                 }
 
                 this.scheduledFeeProcessor.processFee(fee.getId());
+                this.applicationEventPublisher.publishEvent(new ScheduledFeeProcessedEvent(fee.getId(), fee.getScheduledDate()));
             } catch (Exception e) {
                 log.error("Failed to process scheduled fee {}", fee.getId(), e);
             }
@@ -176,6 +187,8 @@ public class ScheduledFeeServiceImpl implements ScheduledFeeService {
         fee.setStatus(ScheduledFeeStatus.CANCELLED);
         this.scheduledFeeRepository.save(fee);
 
+        this.applicationEventPublisher.publishEvent(new ScheduledFeeCancelledEvent(fee.getId(), fee.getScheduledDate()));
+
         log.info("Scheduled fee: {} cancelled successfully", fee.getId());
     }
 
@@ -194,6 +207,8 @@ public class ScheduledFeeServiceImpl implements ScheduledFeeService {
 
         fee.setStatus(ScheduledFeeStatus.WAIVED);
         this.scheduledFeeRepository.save(fee);
+
+        this.applicationEventPublisher.publishEvent(new ScheduledFeeWaivedEvent(fee.getId(), fee.getScheduledDate()));
 
         log.info("Scheduled fee: {} waived successfully", fee.getId());
     }

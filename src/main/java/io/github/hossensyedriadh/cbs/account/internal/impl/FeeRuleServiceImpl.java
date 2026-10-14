@@ -2,6 +2,9 @@ package io.github.hossensyedriadh.cbs.account.internal.impl;
 
 import io.github.hossensyedriadh.cbs.account.api.command.CreateFeeRuleCommand;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.FeeRuleStatus;
+import io.github.hossensyedriadh.cbs.account.api.event.FeeRuleActivatedEvent;
+import io.github.hossensyedriadh.cbs.account.api.event.FeeRuleCreatedEvent;
+import io.github.hossensyedriadh.cbs.account.api.event.FeeRuleDeactivatedEvent;
 import io.github.hossensyedriadh.cbs.account.api.model.FeeRuleView;
 import io.github.hossensyedriadh.cbs.account.api.service.FeeRuleService;
 import io.github.hossensyedriadh.cbs.account.internal.domain.FeeRule;
@@ -14,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -30,14 +34,17 @@ public class FeeRuleServiceImpl implements FeeRuleService {
     private final FeeRuleRepository feeRuleRepository;
     private final CurrencyService currencyService;
     private final FeeRuleMapper feeRuleMapper;
+    private final ApplicationEventPublisher applicationEventPublisher;
     private final HttpServletRequest httpServletRequest;
 
     @Autowired
     public FeeRuleServiceImpl(FeeRuleRepository feeRuleRepository, CurrencyService currencyService,
-                              FeeRuleMapper feeRuleMapper, HttpServletRequest httpServletRequest) {
+                              FeeRuleMapper feeRuleMapper, ApplicationEventPublisher applicationEventPublisher,
+                              HttpServletRequest httpServletRequest) {
         this.feeRuleRepository = feeRuleRepository;
         this.currencyService = currencyService;
         this.feeRuleMapper = feeRuleMapper;
+        this.applicationEventPublisher = applicationEventPublisher;
         this.httpServletRequest = httpServletRequest;
     }
 
@@ -85,6 +92,8 @@ public class FeeRuleServiceImpl implements FeeRuleService {
         FeeRule rule = this.feeRuleMapper.toEntity(command);
         FeeRule saved = this.feeRuleRepository.save(rule);
 
+        this.applicationEventPublisher.publishEvent(new FeeRuleCreatedEvent(saved.getId(), saved.getFeeCode()));
+
         log.info("Created fee rule with code: {}", rule.getFeeCode());
 
         return this.feeRuleMapper.toView(saved);
@@ -101,6 +110,8 @@ public class FeeRuleServiceImpl implements FeeRuleService {
         feeRule.setStatus(FeeRuleStatus.ACTIVE);
         this.feeRuleRepository.save(feeRule);
 
+        this.applicationEventPublisher.publishEvent(new FeeRuleActivatedEvent(feeRule.getId(), feeRule.getFeeCode()));
+
         log.info("Activated fee rule with id: {}", feeRule.getId());
     }
 
@@ -114,6 +125,8 @@ public class FeeRuleServiceImpl implements FeeRuleService {
 
         feeRule.setStatus(FeeRuleStatus.INACTIVE);
         this.feeRuleRepository.save(feeRule);
+
+        this.applicationEventPublisher.publishEvent(new FeeRuleDeactivatedEvent(feeRule.getId(), feeRule.getFeeCode()));
 
         log.info("Deactivated fee rule with id: {}", feeRule.getId());
     }
