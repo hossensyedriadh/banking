@@ -1,5 +1,6 @@
 package io.github.hossensyedriadh.atm_pos_switch.iso8583.handler;
 
+import io.github.hossensyedriadh.atm_pos_switch.iso8583.parser.IsoMessageParser;
 import io.github.hossensyedriadh.atm_pos_switch.iso8583.response.IsoResponseFactory;
 import io.github.hossensyedriadh.atm_pos_switch.iso8583.router.TransactionRouter;
 import io.github.hossensyedriadh.atm_pos_switch.iso8583.validator.IsoRequestValidator;
@@ -18,16 +19,18 @@ import org.springframework.stereotype.Component;
 public class IsoMessageHandler {
     private final IsoResponseFactory isoResponseFactory;
     private final IsoRequestValidator isoRequestValidator;
+    private final IsoMessageParser isoMessageParser;
     private final TransactionRouter transactionRouter;
     private final SwitchTerminalService switchTerminalService;
     private final SwitchTransactionService switchTransactionService;
 
     @Autowired
     public IsoMessageHandler(IsoResponseFactory isoResponseFactory, IsoRequestValidator isoRequestValidator,
-                             TransactionRouter transactionRouter, SwitchTerminalService switchTerminalService,
-                             SwitchTransactionService switchTransactionService) {
+                             IsoMessageParser isoMessageParser, TransactionRouter transactionRouter,
+                             SwitchTerminalService switchTerminalService, SwitchTransactionService switchTransactionService) {
         this.isoResponseFactory = isoResponseFactory;
         this.isoRequestValidator = isoRequestValidator;
+        this.isoMessageParser = isoMessageParser;
         this.transactionRouter = transactionRouter;
         this.switchTerminalService = switchTerminalService;
         this.switchTransactionService = switchTransactionService;
@@ -77,7 +80,15 @@ public class IsoMessageHandler {
                 log.warn("Duplicate transaction received, transactionId={}, terminalId={}, stan={}",
                         registrationResult.transactionId(), terminalId, request.getString(11));
 
-                return this.isoResponseFactory.createResponse(request, "94");
+                return this.switchTransactionService.findResponsePayload(registrationResult.transactionId())
+                        .map(payload -> {
+                            try {
+                                return isoMessageParser.unpack(payload);
+                            } catch (ISOException e) {
+                                throw new RuntimeException("Could not unpack stored transaction response", e);
+                            }
+                        })
+                        .orElseGet(() -> this.isoResponseFactory.createResponse(request, "94"));
             }
 
             long transactionId = registrationResult.transactionId();
@@ -96,11 +107,16 @@ public class IsoMessageHandler {
                 String responseCode = response.getString(39);
                 TransactionStatus status = "00".equals(responseCode) ? TransactionStatus.APPROVED : TransactionStatus.DECLINED;
 
-                this.switchTransactionService.complete(transactionId, responseCode, status);
+                byte[] responsePayload = this.isoMessageParser.pack(response);
+
+                this.switchTransactionService.complete(transactionId, responseCode, status, responsePayload);
 
                 return response;
             } catch (RuntimeException e) {
                 log.error("Transaction processing failed; transactionId={}", transactionId, e);
+
+                this.switchTransactionService.markFailed(transactionId, TransactionStatus.FAILED);
+
                 throw e;
             }
         } catch (ISOException e) {

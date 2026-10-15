@@ -8,6 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.util.Optional;
+
 @Log4j2
 @Service
 class SwitchTransactionServiceImpl implements SwitchTransactionService {
@@ -19,13 +22,6 @@ class SwitchTransactionServiceImpl implements SwitchTransactionService {
     }
 
     @Override
-    public long recordReceived(String terminalId, String stan, String retrievalReference,
-                               String processingCode, String requestMti, String transmissionDateTime) {
-        return this.switchTransactionRepository.insertReceived(terminalId, stan, retrievalReference,
-                processingCode, requestMti, transmissionDateTime);
-    }
-
-    @Override
     public void markProcessing(long transactionId) {
         int updated = this.switchTransactionRepository.markAsProcessing(transactionId);
 
@@ -33,16 +29,48 @@ class SwitchTransactionServiceImpl implements SwitchTransactionService {
             log.warn("Fail to mark transaction as PROCESSING: {}", transactionId);
             throw new RuntimeException("Could not mark transaction as PROCESSING: " + transactionId);
         }
+
+        log.info("Marked transaction as {}", TransactionStatus.PROCESSING.toString());
     }
 
     @Override
-    public void complete(long transactionId, String responseCode, TransactionStatus status) {
-        int updated = this.switchTransactionRepository.markAsComplete(transactionId, responseCode, status);
+    public void complete(long transactionId, String responseCode, TransactionStatus status, byte[] responsePayload) {
+        int updated = this.switchTransactionRepository.markAsComplete(transactionId, responseCode, status, responsePayload);
 
         if (updated != 1) {
             log.warn("Fail to mark transaction as COMPLETE: {}", transactionId);
             throw new RuntimeException("Could not complete transaction: " + transactionId);
         }
+
+        log.info("Marked transaction as {}", status.toString());
+    }
+
+    @Override
+    public void markFailed(long transactionId, TransactionStatus status) {
+        int updated = this.switchTransactionRepository.markAsFailed(transactionId, status);
+
+        if (updated != 1) {
+            log.warn("Failed to mark transaction as {}: {}", status.toString(), transactionId);
+            throw new RuntimeException("Could not mark transaction as " + status + ": " + transactionId);
+        }
+
+        log.info("Marked transaction as {}", status.toString());
+    }
+
+    @Override
+    public int recoverStuckTransactions(Duration timeout) {
+        if (timeout == null || timeout.isZero() || timeout.isNegative()) {
+            log.warn("Timeout must be positive");
+            throw new IllegalArgumentException("Timeout must be positive");
+        }
+
+        int updated = this.switchTransactionRepository.markStuckProcessingAsUnknown(timeout);
+
+        if (updated > 0) {
+            log.info("Marked {} transactions as {}", updated, TransactionStatus.UNKNOWN);
+        }
+
+        return updated;
     }
 
     @Override
@@ -52,6 +80,8 @@ class SwitchTransactionServiceImpl implements SwitchTransactionService {
         try {
             long transactionId = this.switchTransactionRepository.insertReceived(terminalId, stan, retrievalReference, processingCode,
                     requestMti, transmissionDateTime);
+
+            log.info("Registered transaction request ID={}", transactionId);
 
             return new SwitchTransactionRegistrationResult(transactionId, false);
         } catch (DuplicateKeyException e) {
@@ -66,6 +96,11 @@ class SwitchTransactionServiceImpl implements SwitchTransactionService {
                         return new RuntimeException("Duplicate transaction index was violated", e);
                     });
         }
+    }
+
+    @Override
+    public Optional<byte[]> findResponsePayload(long transactionId) {
+        return this.switchTransactionRepository.findResponsePayloadById(transactionId);
     }
 
     private boolean violatesDuplicateTransactionIndex(Throwable exception) {
