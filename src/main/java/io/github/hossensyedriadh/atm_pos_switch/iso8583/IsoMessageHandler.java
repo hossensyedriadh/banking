@@ -10,10 +10,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class IsoMessageHandler {
     private final IsoResponseFactory isoResponseFactory;
+    private final IsoRequestValidator isoRequestValidator;
 
     @Autowired
-    public IsoMessageHandler(IsoResponseFactory isoResponseFactory) {
+    public IsoMessageHandler(IsoResponseFactory isoResponseFactory, IsoRequestValidator isoRequestValidator) {
         this.isoResponseFactory = isoResponseFactory;
+        this.isoRequestValidator = isoRequestValidator;
     }
 
     public ISOMsg handle(ISOMsg request) {
@@ -21,6 +23,14 @@ public class IsoMessageHandler {
             String mti = request.getMTI();
 
             log.info("Received ISO 8583 message with MTI: {}", mti);
+
+            String validationCode = this.isoRequestValidator.validate(request);
+
+            if (validationCode != null) {
+                log.warn("ISO 8583 request rejected: MTI={}, responseCode={}", mti, validationCode);
+
+                return this.isoResponseFactory.createResponse(request, validationCode);
+            }
 
             /*
              * ISO 8583 documentation: https://www.iso.org/standard/79451.html
