@@ -59,13 +59,13 @@ public class TcpServer implements SmartLifecycle {
 
             this.acceptThread = Thread.ofVirtual().name("switch-tcp-accept").start(this::acceptLoop);
 
-            log.info("ATM/POS TCP server started on {}:{}", properties.host(), properties.port());
+            log.info("ATM/POS Switch TCP server started on {}:{}", properties.host(), properties.port());
         } catch (IOException ioe) {
             this.closeServerSocket();
 
-            log.error("Failed to start ATM/POS TCP listener on {}:{}", properties.host(), properties.port(), ioe);
+            log.error("Failed to start ATM/POS Switch TCP listener on {}:{}", properties.host(), properties.port(), ioe);
 
-            throw new RuntimeException("Failed to start ATM/POS TCP listener on " + properties.host() + ":" + properties.port(), ioe);
+            throw new RuntimeException("Failed to start ATM/POS Switch TCP listener on " + properties.host() + ":" + properties.port(), ioe);
         }
     }
 
