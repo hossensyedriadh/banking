@@ -1,5 +1,6 @@
 package io.github.hossensyedriadh.atm_pos_switch.iso8583;
 
+import io.github.hossensyedriadh.atm_pos_switch.transaction.TransactionRouter;
 import lombok.extern.log4j.Log4j2;
 import org.jpos.iso.ISOException;
 import org.jpos.iso.ISOMsg;
@@ -11,11 +12,14 @@ import org.springframework.stereotype.Component;
 public class IsoMessageHandler {
     private final IsoResponseFactory isoResponseFactory;
     private final IsoRequestValidator isoRequestValidator;
+    private final TransactionRouter transactionRouter;
 
     @Autowired
-    public IsoMessageHandler(IsoResponseFactory isoResponseFactory, IsoRequestValidator isoRequestValidator) {
+    public IsoMessageHandler(IsoResponseFactory isoResponseFactory, IsoRequestValidator isoRequestValidator,
+                             TransactionRouter transactionRouter) {
         this.isoResponseFactory = isoResponseFactory;
         this.isoRequestValidator = isoRequestValidator;
+        this.transactionRouter = transactionRouter;
     }
 
     public ISOMsg handle(ISOMsg request) {
@@ -47,7 +51,14 @@ public class IsoMessageHandler {
                 log.info("Terminal ID={}", request.getString(41));
             }
 
-            return this.isoResponseFactory.createResponse(request, "00");
+            ISOMsg response = this.transactionRouter.route(request);
+
+            if (response == null) {
+                log.warn("Unsupported processing code={}", request.getString(3));
+                return this.isoResponseFactory.createResponse(request, "12");
+            }
+
+            return response;
         } catch (ISOException e) {
             log.error("Error occurred while handling ISO message", e);
             throw new RuntimeException("Error handling ISO message", e);

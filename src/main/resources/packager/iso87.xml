@@ -21,4 +21,6 @@
               class="org.jpos.iso.IF_CHAR"/>
     <isofield id="49" length="3" name="Transaction Currency"
               class="org.jpos.iso.IFA_NUMERIC"/>
+    <isofield id="54" length="20" name="Additional Amounts"
+              class="org.jpos.iso.IF_CHAR"/>
 </isopackager>

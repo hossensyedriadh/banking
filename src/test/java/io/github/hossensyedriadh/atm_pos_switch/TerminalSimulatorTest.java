@@ -56,6 +56,7 @@ public class TerminalSimulatorTest {
             Assertions.assertEquals("00", response.getString(39));
             Assertions.assertEquals(request.getString(11), response.getString(11));
             Assertions.assertEquals(request.getString(41), response.getString(41));
+            Assertions.assertEquals("0001050C000000012500", response.getString(54));
         }
     }
 }
