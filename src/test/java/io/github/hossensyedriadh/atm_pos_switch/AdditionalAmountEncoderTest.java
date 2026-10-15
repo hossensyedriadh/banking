@@ -1,7 +1,7 @@
 package io.github.hossensyedriadh.atm_pos_switch;
 
-import io.github.hossensyedriadh.atm_pos_switch.iso8583.AdditionalAmountEncoder;
-import io.github.hossensyedriadh.atm_pos_switch.iso8583.IsoMessageParser;
+import io.github.hossensyedriadh.atm_pos_switch.iso8583.encoder.AdditionalAmountEncoder;
+import io.github.hossensyedriadh.atm_pos_switch.iso8583.parser.IsoMessageParser;
 import org.jpos.iso.ISOMsg;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

@@ -1,7 +1,7 @@
 package io.github.hossensyedriadh.atm_pos_switch.network;
 
-import io.github.hossensyedriadh.atm_pos_switch.iso8583.IsoMessageHandler;
-import io.github.hossensyedriadh.atm_pos_switch.iso8583.IsoMessageParser;
+import io.github.hossensyedriadh.atm_pos_switch.iso8583.handler.IsoMessageHandler;
+import io.github.hossensyedriadh.atm_pos_switch.iso8583.parser.IsoMessageParser;
 import lombok.extern.log4j.Log4j2;
 import org.jpos.iso.ISOException;
 import org.jpos.iso.ISOMsg;

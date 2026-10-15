@@ -40,7 +40,3 @@ info:
     name: "Syed Riadh Hossen"
     email: "riadhhossen@gmail.com"
     url: "https://hossensyedriadh.github.io"
-springdoc:
-  swagger-ui:
-    supported-submit-methods: [ ]
-    path: "/ui-docs.html"

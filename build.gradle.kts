@@ -26,7 +26,7 @@ configurations.configureEach {
 
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
-	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+	implementation("org.springframework.boot:spring-boot-starter-jdbc")
 //	implementation("org.springframework.boot:spring-boot-starter-data-redis")
 //	implementation("org.springframework.boot:spring-boot-starter-flyway")
 //	implementation("org.springframework.boot:spring-boot-starter-kafka")
@@ -36,7 +36,6 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-webmvc")
 //	implementation("org.apache.commons:commons-pool2:2.13.1")
 	implementation("org.springframework.boot:spring-boot-starter-log4j2")
-	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1")
 	implementation("org.apache.httpcomponents.client5:httpclient5:5.6.4")
 	implementation("org.apache.httpcomponents.core5:httpcore5:5.4.4")
 	implementation("org.jpos:jpos:3.0.2")
@@ -54,7 +53,7 @@ dependencies {
 	annotationProcessor("org.projectlombok:lombok")
 	annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 	testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
-	testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
+	testImplementation("org.springframework.boot:spring-boot-starter-jdbc-test")
 //	testImplementation("org.springframework.boot:spring-boot-starter-data-redis-test")
 //	testImplementation("org.springframework.boot:spring-boot-starter-flyway-test")
 //	testImplementation("org.springframework.boot:spring-boot-starter-kafka-test")

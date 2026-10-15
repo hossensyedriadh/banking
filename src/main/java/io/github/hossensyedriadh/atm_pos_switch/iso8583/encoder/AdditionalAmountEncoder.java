@@ -1,4 +1,4 @@
-package io.github.hossensyedriadh.atm_pos_switch.iso8583;
+package io.github.hossensyedriadh.atm_pos_switch.iso8583.encoder;
 
 import org.springframework.stereotype.Component;
 
