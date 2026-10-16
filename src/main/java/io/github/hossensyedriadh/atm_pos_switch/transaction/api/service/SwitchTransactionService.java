@@ -4,6 +4,7 @@ import io.github.hossensyedriadh.atm_pos_switch.transaction.api.enumerator.Trans
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.OriginalDataElements;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.SwitchTransactionRegistrationResult;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.SwitchTransactionSummary;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -22,6 +23,8 @@ public interface SwitchTransactionService {
 
     Optional<Long> registerReversalRequest(String terminalId, String stan, String retrievalReference, String processingCode,
                                            String requestMti, String transmissionDateTime, long originalTransactionId);
+
+    void updateCbsTransactionIds(long id, Long cbsTxnId, @Nullable Long cbsReversalTxnId);
 
     Optional<byte[]> findResponsePayload(long transactionId);
 

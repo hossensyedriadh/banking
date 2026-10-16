@@ -19,6 +19,11 @@
       "name": "switch.tcp.idle-timeout",
       "type": "java.lang.Integer",
       "description": "TCP Idle timeout in milliseconds."
+    },
+    {
+      "name": "cbs.base-url",
+      "type": "java.lang.String",
+      "description": "Base URL of CBS application."
     }
   ]
 }

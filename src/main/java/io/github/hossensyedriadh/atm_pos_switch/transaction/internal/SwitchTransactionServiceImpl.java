@@ -6,6 +6,7 @@ import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.SwitchTran
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.SwitchTransactionSummary;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.service.SwitchTransactionService;
 import lombok.extern.log4j.Log4j2;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
@@ -32,7 +33,7 @@ class SwitchTransactionServiceImpl implements SwitchTransactionService {
             throw new RuntimeException("Could not mark transaction as PROCESSING: " + transactionId);
         }
 
-        log.info("Marked transaction as {}", TransactionStatus.PROCESSING.toString());
+        log.info("Marked transaction {} as {}", transactionId, TransactionStatus.PROCESSING.toString());
     }
 
     @Override
@@ -44,7 +45,7 @@ class SwitchTransactionServiceImpl implements SwitchTransactionService {
             throw new RuntimeException("Could not complete transaction: " + transactionId);
         }
 
-        log.info("Marked transaction as {}", status.toString());
+        log.info("Marked transaction {} as {}", transactionId, status.toString());
     }
 
     @Override
@@ -56,7 +57,7 @@ class SwitchTransactionServiceImpl implements SwitchTransactionService {
             throw new RuntimeException("Could not mark transaction as " + status + ": " + transactionId);
         }
 
-        log.info("Marked transaction as {}", status.toString());
+        log.info("Marked transaction {} as {}", transactionId, status.toString());
     }
 
     @Override
@@ -83,7 +84,7 @@ class SwitchTransactionServiceImpl implements SwitchTransactionService {
             long transactionId = this.switchTransactionRepository.insertReceived(terminalId, stan, retrievalReference, processingCode,
                     requestMti, transmissionDateTime);
 
-            log.info("Registered transaction request ID={}", transactionId);
+            log.info("Registered transaction ID={}", transactionId);
 
             return new SwitchTransactionRegistrationResult(transactionId, false);
         } catch (DuplicateKeyException e) {
@@ -105,6 +106,15 @@ class SwitchTransactionServiceImpl implements SwitchTransactionService {
                                                   String requestMti, String transmissionDateTime, long originalTransactionId) {
         return this.switchTransactionRepository.insertReversalReceived(terminalId, stan, retrievalReference, processingCode,
                 requestMti, transmissionDateTime, originalTransactionId);
+    }
+
+    @Override
+    public void updateCbsTransactionIds(long id, Long cbsTxnId, @Nullable Long cbsReversalTxnId) {
+        int updated = this.switchTransactionRepository.updateCbsTransactionIds(id, cbsTxnId, cbsReversalTxnId);
+
+        if (updated > 0) {
+            log.info("Updated CBS transaction IDs for transaction ID: {}", id);
+        }
     }
 
     @Override

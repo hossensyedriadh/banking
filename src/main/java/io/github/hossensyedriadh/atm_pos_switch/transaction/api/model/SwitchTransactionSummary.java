@@ -8,6 +8,6 @@ import java.time.OffsetDateTime;
 public record SwitchTransactionSummary(long id, String terminalId, String stan, String retrievalReference,
                                        String processingCode, BigDecimal transactionAmount, String currencyCode,
                                        String requestMti, String responseCode, TransactionStatus status,
-                                       OffsetDateTime receivedAt, OffsetDateTime processingStartedAt,
-                                       OffsetDateTime completedAt) {
+                                       Long cbsTxnId, Long cbsReversalTxnId, OffsetDateTime receivedAt,
+                                       OffsetDateTime processingStartedAt, OffsetDateTime completedAt) {
 }

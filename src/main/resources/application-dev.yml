@@ -16,11 +16,6 @@ spring:
       pool-name: "Hikari Connection Pool [ATM/POS Switch: Dev]"
   lifecycle:
     timeout-per-shutdown-phase: 20s
-  jpa:
-    properties:
-      hibernate:
-        show_sql: true
-        format_sql: true
 server:
   tomcat:
     connection-timeout: 15s
@@ -34,11 +29,6 @@ management:
   endpoint:
     health:
       show-details: always
-springdoc:
-  api-docs:
-    enabled: true
-  swagger-ui:
-    enabled: true
 
 #custom properties
 switch:
@@ -47,3 +37,5 @@ switch:
     port: "${SWITCH_TCP_PORT}"
     read-timeout: ${SWITCH_TCP_READ_TIMEOUT:30000}
     idle-timeout: ${SWITCH_TCP_IDLE_TIMEOUT:300000}
+cbs:
+  base-url: "${CBS_BASE_URL}"

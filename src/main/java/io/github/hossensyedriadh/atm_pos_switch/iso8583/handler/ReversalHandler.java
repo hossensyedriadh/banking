@@ -1,5 +1,8 @@
 package io.github.hossensyedriadh.atm_pos_switch.iso8583.handler;
 
+import io.github.hossensyedriadh.atm_pos_switch.corebanking.api.model.CoreBankingReversalResult;
+import io.github.hossensyedriadh.atm_pos_switch.corebanking.api.service.CoreBankingService;
+import io.github.hossensyedriadh.atm_pos_switch.iso8583.parser.IsoMessageParser;
 import io.github.hossensyedriadh.atm_pos_switch.iso8583.response.IsoResponseFactory;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.enumerator.TransactionStatus;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.OriginalDataElements;
@@ -18,11 +21,16 @@ import java.util.Optional;
 public class ReversalHandler {
     private final IsoResponseFactory isoResponseFactory;
     private final SwitchTransactionService switchTransactionService;
+    private final CoreBankingService coreBankingService;
+    private final IsoMessageParser isoMessageParser;
 
     @Autowired
-    public ReversalHandler(IsoResponseFactory isoResponseFactory, SwitchTransactionService switchTransactionService) {
+    public ReversalHandler(IsoResponseFactory isoResponseFactory, SwitchTransactionService switchTransactionService,
+                           CoreBankingService coreBankingService, IsoMessageParser isoMessageParser) {
         this.isoResponseFactory = isoResponseFactory;
         this.switchTransactionService = switchTransactionService;
+        this.coreBankingService = coreBankingService;
+        this.isoMessageParser = isoMessageParser;
     }
 
     public ISOMsg handle(ISOMsg request) throws ISOException {
@@ -61,8 +69,49 @@ public class ReversalHandler {
 
         this.switchTransactionService.markProcessing(transactionId);
 
-        //todo: call CBS for reversal execution
+        try {
+            CoreBankingReversalResult result = this.coreBankingService.reverseTransaction(originalTransaction, Long.toString(transactionId));
 
-        return this.isoResponseFactory.createResponse(request, "96");
+            String responseCode = result.getResponseCode();
+
+            if (responseCode == null || !responseCode.matches("\\d{2}")) {
+                this.switchTransactionService.markFailed(transactionId, TransactionStatus.UNKNOWN);
+                return this.isoResponseFactory.createResponse(request, "96");
+            }
+
+            ISOMsg response = this.isoResponseFactory.createResponse(request, responseCode);
+
+            byte[] responsePayload = this.isoMessageParser.pack(response);
+
+            TransactionStatus status = result.isSuccessful() ? TransactionStatus.APPROVED : TransactionStatus.DECLINED;
+
+            if (result.isSuccessful() && !"00".equals(responseCode)) {
+                this.switchTransactionService.markFailed(transactionId, TransactionStatus.UNKNOWN);
+                return isoResponseFactory.createResponse(request, "96");
+            }
+
+            if (!result.isSuccessful() && "00".equals(responseCode)) {
+                this.switchTransactionService.markFailed(transactionId, TransactionStatus.UNKNOWN);
+                return isoResponseFactory.createResponse(request, "96");
+            }
+
+            this.switchTransactionService.updateCbsTransactionIds(originalTransaction.id(), originalTransaction.cbsTxnId(), result.getCbsReversalTransactionId());
+            this.switchTransactionService.updateCbsTransactionIds(transactionId, result.getCbsReversalTransactionId(), null);
+
+            this.switchTransactionService.complete(transactionId, responseCode, status, responsePayload);
+
+            return response;
+        } catch (RuntimeException e) {
+            try {
+                this.switchTransactionService.markFailed(transactionId, TransactionStatus.UNKNOWN);
+            } catch (RuntimeException ex) {
+                e.addSuppressed(ex);
+            }
+
+            log.error("CBS transaction reversal failed. reversalTransactionId={}, originalTransactionId={}",
+                    transactionId, originalTransaction.id(), e);
+
+            return this.isoResponseFactory.createResponse(request, "96");
+        }
     }
 }

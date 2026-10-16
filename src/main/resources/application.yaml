@@ -8,11 +8,6 @@ spring:
       enabled: true
   main:
     keep-alive: true
-  jpa:
-    open-in-view: false
-    hibernate:
-      ddl-auto: validate
-    database-platform: "org.hibernate.dialect.PostgreSQLDialect"
   web:
     error:
       whitelabel:
