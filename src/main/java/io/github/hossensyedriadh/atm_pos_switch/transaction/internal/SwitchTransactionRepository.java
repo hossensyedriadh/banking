@@ -1,6 +1,7 @@
 package io.github.hossensyedriadh.atm_pos_switch.transaction.internal;
 
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.enumerator.TransactionStatus;
+import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.OriginalDataElements;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.SwitchTransactionSummary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -36,6 +38,28 @@ class SwitchTransactionRepository {
         }
 
         return id;
+    }
+
+    public Optional<Long> insertReversalReceived(String terminalId, String stan, String retrievalReference,
+                                                 String processingCode, String requestMti, String transmissionDateTime, long originalTransactionId) {
+        List<Long> ids = this.jdbcTemplate.query("""
+                        INSERT INTO switch.switch_transactions (
+                            terminal_id, stan, retrieval_reference,
+                            processing_code, request_mti,
+                            transmission_date_time, reversal_of_transaction_id,
+                            status
+                        )
+                        VALUES (?, ?, ?, ?, ?, ?, ?, 'RECEIVED')
+                        ON CONFLICT (reversal_of_transaction_id)
+                            WHERE reversal_of_transaction_id IS NOT NULL
+                        DO NOTHING
+                        RETURNING id
+                        """,
+                (rs, _) -> rs.getLong("id"),
+                terminalId, stan, retrievalReference, processingCode, requestMti, transmissionDateTime, originalTransactionId
+        );
+
+        return ids.stream().findFirst();
     }
 
     public Optional<Long> findIdByDuplicateKey(String terminalId, String stan, String transmissionDateTime) {
@@ -152,5 +176,42 @@ class SwitchTransactionRepository {
                         rs.getObject("completed_at", OffsetDateTime.class)
                 ), terminalId, stan, transmissionDateTime
         ).stream().findFirst();
+    }
+
+    public Optional<SwitchTransactionSummary> findOriginalTransaction(String terminalId, OriginalDataElements originalData) {
+        return this.jdbcTemplate.query("""
+                                SELECT id, terminal_id, stan,
+                                       retrieval_reference, processing_code,
+                                       transaction_amount, currency_code,
+                                       request_mti, response_code,
+                                       status, received_at, processing_started_at, completed_at
+                                FROM switch.switch_transactions
+                                """, (rs, _) -> new SwitchTransactionSummary(rs.getLong("id"),
+                                rs.getString("terminal_id"),
+                                rs.getString("stan"),
+                                rs.getString("retrieval_reference"),
+                                rs.getString("processing_code"),
+                                rs.getBigDecimal("transaction_amount"),
+                                rs.getString("currency_code"),
+                                rs.getString("request_mti"),
+                                rs.getString("response_code"),
+                                TransactionStatus.valueOf(rs.getString("status")),
+                                rs.getObject("received_at", OffsetDateTime.class),
+                                rs.getObject("processing_started_at", OffsetDateTime.class),
+                                rs.getObject("completed_at", OffsetDateTime.class)), terminalId, originalData.originalStan(),
+                        originalData.originalTransmissionDateTime(), originalData.originalMti())
+                .stream().findFirst();
+    }
+
+    public boolean hasReversal(long originalTransactionId) {
+        Boolean exists = this.jdbcTemplate.queryForObject("""
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM switch.switch_transactions
+                    WHERE reversal_of_transaction_id = ?
+                )
+                """, Boolean.class, originalTransactionId);
+
+        return Boolean.TRUE.equals(exists);
     }
 }

@@ -11,7 +11,14 @@ public class IsoResponseFactory {
     public ISOMsg createResponse(ISOMsg request, String responseCode) {
         try {
             ISOMsg response = new ISOMsg();
-            response.setMTI("0210");
+
+            String responseMti = switch (request.getMTI()) {
+                case "0200" -> "0210";
+                case "0400" -> "0410";
+                default -> throw new IllegalArgumentException("Unsupported request MTI: " + request.getMTI());
+            };
+
+            response.setMTI(responseMti);
 
             this.copyField(request, response, 3);
             this.copyField(request, response, 7);

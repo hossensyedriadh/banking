@@ -7,7 +7,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class IsoRequestValidator {
     public String validate(ISOMsg request) throws ISOException {
-        if (!"0200".equals(request.getMTI())) {
+        String mti = request.getMTI();
+
+        if (!"0200".equals(mti) && !"0400".equals(mti)) {
             return "12";
         }
 
@@ -25,6 +27,14 @@ public class IsoRequestValidator {
 
         if (request.getString(41).isBlank()) {
             return "30";
+        }
+
+        if ("0400".equals(mti)) {
+            String originalDataElements = request.getString(90);
+
+            if (originalDataElements == null || !originalDataElements.matches("\\d{42}")) {
+                return "30";
+            }
         }
 
         return null;

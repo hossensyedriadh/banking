@@ -1,6 +1,7 @@
 package io.github.hossensyedriadh.atm_pos_switch.transaction.internal;
 
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.enumerator.TransactionStatus;
+import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.OriginalDataElements;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.SwitchTransactionRegistrationResult;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.SwitchTransactionSummary;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.service.SwitchTransactionService;
@@ -100,6 +101,13 @@ class SwitchTransactionServiceImpl implements SwitchTransactionService {
     }
 
     @Override
+    public Optional<Long> registerReversalRequest(String terminalId, String stan, String retrievalReference, String processingCode,
+                                                  String requestMti, String transmissionDateTime, long originalTransactionId) {
+        return this.switchTransactionRepository.insertReversalReceived(terminalId, stan, retrievalReference, processingCode,
+                requestMti, transmissionDateTime, originalTransactionId);
+    }
+
+    @Override
     public Optional<byte[]> findResponsePayload(long transactionId) {
         return this.switchTransactionRepository.findResponsePayloadById(transactionId);
     }
@@ -112,6 +120,16 @@ class SwitchTransactionServiceImpl implements SwitchTransactionService {
     @Override
     public Optional<SwitchTransactionSummary> findTransaction(String terminalId, String stan, String transmissionDateTime) {
         return this.switchTransactionRepository.findByTerminalStanAndTransmissionDateTime(terminalId, stan, transmissionDateTime);
+    }
+
+    @Override
+    public Optional<SwitchTransactionSummary> findOriginalTransaction(String terminalId, OriginalDataElements originalData) {
+        return this.switchTransactionRepository.findOriginalTransaction(terminalId, originalData);
+    }
+
+    @Override
+    public boolean hasReversal(long originalTransactionId) {
+        return this.switchTransactionRepository.hasReversal(originalTransactionId);
     }
 
     private boolean violatesDuplicateTransactionIndex(Throwable exception) {
