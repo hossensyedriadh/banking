@@ -12,6 +12,8 @@ public interface CardService {
 
     Optional<CardView> getCard(Long cardId);
 
+    Optional<CardView> getActiveCard(String pan);
+
     CardView activateCard(@Valid ActivateCardCommand command);
 
     CardView issueCard(@Valid IssueCardCommand command);

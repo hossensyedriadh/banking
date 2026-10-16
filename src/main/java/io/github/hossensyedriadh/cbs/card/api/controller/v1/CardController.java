@@ -76,6 +76,21 @@ public class CardController {
         return cardView.map(ResponseEntity::ok).orElse(ResponseEntity.noContent().build());
     }
 
+    @Operation(summary = "Get active card by PAN", description = "Retrieves an active card associated with the specified PAN",
+            parameters = {
+                    @Parameter(name = "pan", description = "Card number", required = true)
+            },
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Card associated with the PAN", content = @Content(schema = @Schema(implementation = CardView.class))),
+                    @ApiResponse(responseCode = "204", description = "No Content", content = @Content)
+            })
+    @GetMapping("/pan/{pan}")
+    public ResponseEntity<CardView> getCard(@PathVariable("pan") String pan) {
+        Optional<CardView> cardView = this.cardService.getActiveCard(pan);
+
+        return cardView.map(ResponseEntity::ok).orElse(ResponseEntity.noContent().build());
+    }
+
     @Operation(summary = "Issue a new card", description = "Issues a new card based on the provided command",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Card issue command",

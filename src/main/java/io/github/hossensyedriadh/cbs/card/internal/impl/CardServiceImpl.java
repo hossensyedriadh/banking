@@ -82,6 +82,13 @@ public class CardServiceImpl implements CardService {
         return this.cardRepository.findById(cardId).map(this.cardMapper::toView);
     }
 
+    @Override
+    public Optional<CardView> getActiveCard(String pan) {
+        String panHash = this.cardNumberHasher.hash(pan);
+
+        return this.cardRepository.findActiveCardByPanHash(panHash, CardStatus.ACTIVE).map(this.cardMapper::toView);
+    }
+
     @Transactional
     @Override
     public CardView activateCard(@Valid ActivateCardCommand command) {
@@ -155,7 +162,7 @@ public class CardServiceImpl implements CardService {
         card.setLastFour(generatedPan.substring(Math.max(0, generatedPan.length() - 4)));
         card.setIssuedAt(issuedAt);
         card.setExpiryDate(issuedAt.toLocalDate().plusYears(cardProduct.getValidityYears())
-                .with(TemporalAdjusters.firstDayOfMonth()));
+                .with(TemporalAdjusters.lastDayOfMonth()));
 
         Card issued = this.cardRepository.save(card);
 
@@ -209,7 +216,7 @@ public class CardServiceImpl implements CardService {
         card.setLastFour(generatedPan.substring(Math.max(0, generatedPan.length() - 4)));
         card.setIssuedAt(issuedAt);
         card.setExpiryDate(issuedAt.toLocalDate().plusYears(cardProduct.getValidityYears())
-                .with(TemporalAdjusters.firstDayOfMonth()));
+                .with(TemporalAdjusters.lastDayOfMonth()));
         card.setReplacedCard(oldCard.getId());
         card.setReplacementReason(replacementReason);
 
