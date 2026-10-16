@@ -72,7 +72,7 @@ public class ReversalHandler {
         try {
             CoreBankingReversalResult result = this.coreBankingService.reverseTransaction(originalTransaction, Long.toString(transactionId));
 
-            String responseCode = result.getResponseCode();
+            String responseCode = result.responseCode();
 
             if (responseCode == null || !responseCode.matches("\\d{2}")) {
                 this.switchTransactionService.markFailed(transactionId, TransactionStatus.UNKNOWN);
@@ -83,20 +83,20 @@ public class ReversalHandler {
 
             byte[] responsePayload = this.isoMessageParser.pack(response);
 
-            TransactionStatus status = result.isSuccessful() ? TransactionStatus.APPROVED : TransactionStatus.DECLINED;
+            TransactionStatus status = result.successful() ? TransactionStatus.APPROVED : TransactionStatus.DECLINED;
 
-            if (result.isSuccessful() && !"00".equals(responseCode)) {
+            if (result.successful() && !"00".equals(responseCode)) {
                 this.switchTransactionService.markFailed(transactionId, TransactionStatus.UNKNOWN);
                 return isoResponseFactory.createResponse(request, "96");
             }
 
-            if (!result.isSuccessful() && "00".equals(responseCode)) {
+            if (!result.successful() && "00".equals(responseCode)) {
                 this.switchTransactionService.markFailed(transactionId, TransactionStatus.UNKNOWN);
                 return isoResponseFactory.createResponse(request, "96");
             }
 
-            this.switchTransactionService.updateCbsTransactionIds(originalTransaction.id(), originalTransaction.cbsTxnId(), result.getCbsReversalTransactionId());
-            this.switchTransactionService.updateCbsTransactionIds(transactionId, result.getCbsReversalTransactionId(), null);
+            this.switchTransactionService.updateCbsTransactionIds(originalTransaction.id(), originalTransaction.cbsTxnId(), result.cbsReversalTransactionId());
+            this.switchTransactionService.updateCbsTransactionIds(transactionId, result.cbsReversalTransactionId(), null);
 
             this.switchTransactionService.complete(transactionId, responseCode, status, responsePayload);
 
