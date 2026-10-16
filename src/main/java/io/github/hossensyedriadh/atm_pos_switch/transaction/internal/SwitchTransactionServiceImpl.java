@@ -2,6 +2,7 @@ package io.github.hossensyedriadh.atm_pos_switch.transaction.internal;
 
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.enumerator.TransactionStatus;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.SwitchTransactionRegistrationResult;
+import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.SwitchTransactionSummary;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.service.SwitchTransactionService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -103,17 +104,22 @@ class SwitchTransactionServiceImpl implements SwitchTransactionService {
         return this.switchTransactionRepository.findResponsePayloadById(transactionId);
     }
 
+    @Override
+    public Optional<TransactionStatus> findTransactionStatus(long transactionId) {
+        return this.switchTransactionRepository.findStatusById(transactionId);
+    }
+
+    @Override
+    public Optional<SwitchTransactionSummary> findTransaction(String terminalId, String stan, String transmissionDateTime) {
+        return this.switchTransactionRepository.findByTerminalStanAndTransmissionDateTime(terminalId, stan, transmissionDateTime);
+    }
+
     private boolean violatesDuplicateTransactionIndex(Throwable exception) {
-        for (Throwable cause = exception;
-             cause != null;
-             cause = cause.getCause()) {
+        for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
 
             if (cause instanceof org.postgresql.util.PSQLException pgException) {
                 var serverError = pgException.getServerErrorMessage();
-
-                return serverError != null
-                        && "uq_switch_transactions_terminal_stan_transmission"
-                        .equals(serverError.getConstraint());
+                return serverError != null && "uq_switch_transactions_terminal_stan_transmission".equals(serverError.getConstraint());
             }
         }
 

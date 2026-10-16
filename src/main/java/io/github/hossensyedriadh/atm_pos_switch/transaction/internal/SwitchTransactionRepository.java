@@ -1,11 +1,13 @@
 package io.github.hossensyedriadh.atm_pos_switch.transaction.internal;
 
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.enumerator.TransactionStatus;
+import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.SwitchTransactionSummary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.util.Optional;
 
 @Repository
@@ -118,5 +120,37 @@ class SwitchTransactionRepository {
 
             return Optional.of(TransactionStatus.valueOf(resultSet.getString("status")));
         }, id);
+    }
+
+    public Optional<SwitchTransactionSummary> findByTerminalStanAndTransmissionDateTime(String terminalId, String stan, String transmissionDateTime) {
+        return jdbcTemplate.query("""
+                        SELECT id, terminal_id, stan,
+                               retrieval_reference, processing_code,
+                               transaction_amount, currency_code,
+                               request_mti, response_code,
+                               status, received_at,
+                               processing_started_at,
+                               completed_at
+                        FROM switch.switch_transactions
+                        WHERE terminal_id = ?
+                          AND stan = ?
+                          AND transmission_date_time = ?
+                        LIMIT 1
+                        """, (rs, _) -> new SwitchTransactionSummary(
+                        rs.getLong("id"),
+                        rs.getString("terminal_id"),
+                        rs.getString("stan"),
+                        rs.getString("retrieval_reference"),
+                        rs.getString("processing_code"),
+                        rs.getBigDecimal("transaction_amount"),
+                        rs.getString("currency_code"),
+                        rs.getString("request_mti"),
+                        rs.getString("response_code"),
+                        TransactionStatus.valueOf(rs.getString("status")),
+                        rs.getObject("received_at", OffsetDateTime.class),
+                        rs.getObject("processing_started_at", OffsetDateTime.class),
+                        rs.getObject("completed_at", OffsetDateTime.class)
+                ), terminalId, stan, transmissionDateTime
+        ).stream().findFirst();
     }
 }

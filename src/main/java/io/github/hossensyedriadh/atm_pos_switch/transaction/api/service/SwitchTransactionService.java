@@ -2,6 +2,7 @@ package io.github.hossensyedriadh.atm_pos_switch.transaction.api.service;
 
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.enumerator.TransactionStatus;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.SwitchTransactionRegistrationResult;
+import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.SwitchTransactionSummary;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -19,4 +20,8 @@ public interface SwitchTransactionService {
                                                          String processingCode, String requestMti, String transmissionDateTime);
 
     Optional<byte[]> findResponsePayload(long transactionId);
+
+    Optional<TransactionStatus> findTransactionStatus(long transactionId);
+
+    Optional<SwitchTransactionSummary> findTransaction(String terminalId, String stan, String transmissionDateTime);
 }
