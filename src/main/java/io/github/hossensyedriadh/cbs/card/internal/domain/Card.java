@@ -57,8 +57,8 @@ public class Card {
     /**
      * Represents the expiry month.
      * i.e.:
-     * 2031-09-01 means the card expires
-     * at the end (31st day) of September 2031.
+     * 2031-09-30 means the card expires
+     * at the end (30th day) of September 2031.
      */
     @Column(name = "expiry_date", updatable = false, nullable = false)
     private LocalDate expiryDate;
