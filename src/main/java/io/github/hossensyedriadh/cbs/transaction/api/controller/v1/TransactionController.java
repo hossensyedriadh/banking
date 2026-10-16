@@ -1,5 +1,9 @@
 package io.github.hossensyedriadh.cbs.transaction.api.controller.v1;
 
+import io.github.hossensyedriadh.cbs.transaction.api.command.CreateDepositCommand;
+import io.github.hossensyedriadh.cbs.transaction.api.command.CreateTransferCommand;
+import io.github.hossensyedriadh.cbs.transaction.api.command.CreateWithdrawalCommand;
+import io.github.hossensyedriadh.cbs.transaction.api.command.ReverseTransactionCommand;
 import io.github.hossensyedriadh.cbs.transaction.api.model.AccountTransactionView;
 import io.github.hossensyedriadh.cbs.transaction.api.model.TransactionView;
 import io.github.hossensyedriadh.cbs.transaction.api.service.TransactionService;
@@ -17,12 +21,14 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
 import java.util.Optional;
 
 @RestController
 @RequestMapping(value = "/transactions/v1", produces = {MediaType.APPLICATION_JSON_VALUE})
-@Tag(name = "Transaction API", description = "API endpoints for viewing transactions")
+@Tag(name = "Transaction API", description = "API endpoints for transactions")
 public class TransactionController {
     private final TransactionService transactionService;
 
@@ -80,5 +86,73 @@ public class TransactionController {
         Optional<TransactionView> transaction = this.transactionService.getTransactionByReference(reference);
 
         return transaction.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @Operation(summary = "Create a new deposit transaction", description = "Create a new deposit transaction",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "The deposit command", required = true, content = @Content(schema = @Schema(implementation = CreateDepositCommand.class))
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Created", content = @Content(schema = @Schema(implementation = TransactionView.class)))
+            })
+    @PostMapping(value = "/deposits", consumes = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<TransactionView> deposit(@RequestBody CreateDepositCommand command) {
+        TransactionView deposit = this.transactionService.deposit(command);
+
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
+                .buildAndExpand(deposit.getId()).toUri();
+
+        return ResponseEntity.created(location).body(deposit);
+    }
+
+    @Operation(summary = "Create a new withdrawal transaction", description = "Create a new withdrawal transaction",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "The withdrawal command", required = true, content = @Content(schema = @Schema(implementation = CreateWithdrawalCommand.class))
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Created", content = @Content(schema = @Schema(implementation = TransactionView.class)))
+            })
+    @PostMapping(value = "/withdrawals", consumes = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<TransactionView> withdraw(@RequestBody CreateWithdrawalCommand command) {
+        TransactionView withdrawal = this.transactionService.withdraw(command);
+
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
+                .buildAndExpand(withdrawal.getId()).toUri();
+
+        return ResponseEntity.created(location).body(withdrawal);
+    }
+
+    @Operation(summary = "Reverse a transaction", description = "Reverse a transaction",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "The reversal command", required = true, content = @Content(schema = @Schema(implementation = ReverseTransactionCommand.class))
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Created", content = @Content(schema = @Schema(implementation = TransactionView.class)))
+            })
+    @PostMapping(value = "/reversals", consumes = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<TransactionView> reverse(@RequestBody ReverseTransactionCommand command) {
+        TransactionView reversal = this.transactionService.reverse(command);
+
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
+                .buildAndExpand(reversal.getId()).toUri();
+
+        return ResponseEntity.created(location).body(reversal);
+    }
+
+    @Operation(summary = "Create a new transfer transaction", description = "Create a new transfer transaction",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "The transfer command", required = true, content = @Content(schema = @Schema(implementation = CreateTransferCommand.class))
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Created", content = @Content(schema = @Schema(implementation = TransactionView.class)))
+            })
+    @PostMapping(value = "/transfers", consumes = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<TransactionView> transfer(@RequestBody CreateTransferCommand command) {
+        TransactionView transfer = this.transactionService.transfer(command);
+
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
+                .buildAndExpand(transfer.getId()).toUri();
+
+        return ResponseEntity.created(location).body(transfer);
     }
 }
