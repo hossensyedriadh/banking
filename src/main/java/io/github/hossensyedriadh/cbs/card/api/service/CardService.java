@@ -12,7 +12,7 @@ public interface CardService {
 
     Optional<CardView> getCard(Long cardId);
 
-    Optional<CardView> getActiveCard(String pan);
+    Optional<CardView> getCard(String pan);
 
     CardView activateCard(@Valid ActivateCardCommand command);
 

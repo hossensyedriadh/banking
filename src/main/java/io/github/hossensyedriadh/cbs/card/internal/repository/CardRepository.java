@@ -1,6 +1,5 @@
 package io.github.hossensyedriadh.cbs.card.internal.repository;
 
-import io.github.hossensyedriadh.cbs.card.api.enumerator.CardStatus;
 import io.github.hossensyedriadh.cbs.card.internal.domain.Card;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -20,6 +19,6 @@ public interface CardRepository extends JpaRepository<Card, Long> {
     @Query("select c from Card c where c.id = :id")
     Optional<Card> findByIdForUpdate(@Param("id") Long id);
 
-    @Query("select c from Card c where c.cardNumberHash = :panHash and c.status = :status and c.expiryDate >= CURRENT_DATE")
-    Optional<Card> findActiveCardByPanHash(@Param("panHash") String panHash, @Param("status") CardStatus status);
+    @Query("select c from Card c where c.cardNumberHash = :panHash")
+    Optional<Card> findCardByPanHash(@Param("panHash") String panHash);
 }

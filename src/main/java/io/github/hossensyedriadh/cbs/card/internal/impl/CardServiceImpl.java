@@ -83,10 +83,10 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    public Optional<CardView> getActiveCard(String pan) {
+    public Optional<CardView> getCard(String pan) {
         String panHash = this.cardNumberHasher.hash(pan);
 
-        return this.cardRepository.findActiveCardByPanHash(panHash, CardStatus.ACTIVE).map(this.cardMapper::toView);
+        return this.cardRepository.findCardByPanHash(panHash).map(this.cardMapper::toView);
     }
 
     @Transactional

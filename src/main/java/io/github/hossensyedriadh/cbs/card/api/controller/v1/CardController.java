@@ -76,7 +76,7 @@ public class CardController {
         return cardView.map(ResponseEntity::ok).orElse(ResponseEntity.noContent().build());
     }
 
-    @Operation(summary = "Get active card by PAN", description = "Retrieves an active card associated with the specified PAN",
+    @Operation(summary = "Get card by PAN", description = "Retrieves a card associated with the specified PAN",
             parameters = {
                     @Parameter(name = "pan", description = "Card number", required = true)
             },
@@ -86,7 +86,7 @@ public class CardController {
             })
     @GetMapping("/pan/{pan}")
     public ResponseEntity<CardView> getCard(@PathVariable("pan") String pan) {
-        Optional<CardView> cardView = this.cardService.getActiveCard(pan);
+        Optional<CardView> cardView = this.cardService.getCard(pan);
 
         return cardView.map(ResponseEntity::ok).orElse(ResponseEntity.noContent().build());
     }
