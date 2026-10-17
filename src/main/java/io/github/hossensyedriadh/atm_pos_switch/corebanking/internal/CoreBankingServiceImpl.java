@@ -13,10 +13,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 
+import java.util.Objects;
 import java.util.Optional;
 
 @Log4j2
@@ -91,40 +93,68 @@ class CoreBankingServiceImpl implements CoreBankingService {
     }
 
     @Override
+    public Optional<CoreBankingTransactionResponse> findTransactionByIdempotencyKey(String idempotencyKey) {
+        try {
+            CoreBankingTransactionResponse response = this.restClient.get().uri(this.cbsBaseUrl + "/transactions/v1/idempotency/{key}", idempotencyKey)
+                    .retrieve().body(CoreBankingTransactionResponse.class);
+
+            if (response == null) {
+                log.error("CBS returned an empty response for transaction lookup by idempotency key");
+                throw new CoreBankingCommunicationException("CBS returned an empty response for transaction lookup by idempotency key");
+            }
+
+            return Optional.of(response);
+        } catch (HttpClientErrorException.NotFound e) {
+            return Optional.empty();
+        } catch (RestClientResponseException e) {
+            log.error("CBS returned an error during idempotency lookup", e);
+            throw new CoreBankingCommunicationException("Could not determine CBS transaction outcome", e);
+        } catch (RestClientException e) {
+            log.error("CBS communication failure during idempotency lookup", e);
+            throw new CoreBankingCommunicationException("Could not determine CBS transaction outcome", e);
+        }
+    }
+
+    @Override
     public CoreBankingReversalResult reverseTransaction(SwitchTransactionSummary originalTransaction, String reversalReference) {
+        if (originalTransaction.cbsTxnId() == null) {
+            log.error("Cannot reverse a switch transaction without a CBS transaction ID");
+            throw new CoreBankingException("Cannot reverse a switch transaction without a CBS transaction ID");
+        }
+
         CoreBankingReversalRequest reversalRequest = new CoreBankingReversalRequest();
         reversalRequest.setTransactionId(originalTransaction.cbsTxnId());
         reversalRequest.setIdempotencyKey(reversalReference);
         reversalRequest.setDescription(String.format("Reversal of ATM/POS switch transaction ID: %d [Terminal: %s, STAN: %s, RRN: %s].",
-                originalTransaction.id(), originalTransaction.terminalId(), originalTransaction.stan(), originalTransaction.retrievalReference()
-        ));
+                originalTransaction.id(), originalTransaction.terminalId(), originalTransaction.stan(), originalTransaction.retrievalReference()));
 
         try {
             CoreBankingTransactionResponse reversalResponse = this.restClient.post().uri(this.cbsBaseUrl + "/transactions/v1/reversals")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(reversalRequest).retrieve()
+                    .contentType(MediaType.APPLICATION_JSON).body(reversalRequest).retrieve()
                     .body(CoreBankingTransactionResponse.class);
 
             if (reversalResponse == null) {
                 log.error("CBS returned an empty response for transaction reversal");
-                throw new CoreBankingException("CBS returned an empty response");
+                throw new CoreBankingCommunicationException("CBS returned an empty response for transaction reversal");
             }
 
-            boolean isSuccessful = reversalResponse.getStatus() == TransactionStatus.COMPLETED;
+            if (reversalResponse.getId() == null || !Objects.equals(reversalResponse.getReversalOfTransactionId(), originalTransaction.cbsTxnId())) {
+                log.error("CBS returned an incomplete or inconsistent reversal response");
+                throw new CoreBankingCommunicationException("CBS returned an incomplete or inconsistent reversal response");
+            }
 
-            return new CoreBankingReversalResult(isSuccessful, reversalResponse.getId(),
-                    reversalResponse.getReversalOfTransactionId(), isSuccessful ? ResponseCodes.APPROVED : ResponseCodes.SYSTEM_ERROR);
+            if (reversalResponse.getStatus() != TransactionStatus.COMPLETED) {
+                log.error("CBS did not confirm reversal completion; status=" + reversalResponse.getStatus());
+                throw new CoreBankingCommunicationException("CBS did not confirm reversal completion; status=" + reversalResponse.getStatus());
+            }
+
+            return new CoreBankingReversalResult(true, reversalResponse.getId(), reversalResponse.getReversalOfTransactionId(), ResponseCodes.APPROVED);
         } catch (RestClientResponseException e) {
-            log.error("CBS rejected reversal request. Original switch transaction ID: {}, HTTP status: {}", originalTransaction.id(),
-                    e.getStatusCode(), e
-            );
-
-            throw new CoreBankingException("CBS reversal request failed with HTTP status " + e.getStatusCode(), e);
+            log.error("CBS returned HTTP error during reversal. Switch transaction ID: {}, HTTP status: {}", originalTransaction.id(), e.getStatusCode(), e);
+            throw new CoreBankingCommunicationException("CBS reversal outcome could not be confirmed", e);
         } catch (RestClientException e) {
-            log.error("Failed to communicate with CBS for transaction reversal. Original switch transaction ID: {}",
-                    originalTransaction.id(), e);
-
-            throw new CoreBankingCommunicationException("Could not complete CBS transaction reversal request", e);
+            log.error("Communication failure during CBS reversal. Switch transaction ID: {}", originalTransaction.id(), e);
+            throw new CoreBankingCommunicationException("CBS reversal outcome could not be confirmed", e);
         }
     }
 }

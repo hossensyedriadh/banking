@@ -9,5 +9,5 @@ public record SwitchTransactionSummary(long id, String terminalId, String stan, 
                                        String processingCode, BigDecimal transactionAmount, String currencyCode,
                                        String requestMti, String responseCode, TransactionStatus status,
                                        Long cbsTxnId, Long cbsReversalTxnId, OffsetDateTime receivedAt,
-                                       OffsetDateTime processingStartedAt, OffsetDateTime completedAt) {
+                                       OffsetDateTime processingStartedAt, OffsetDateTime completedAt, byte[] requestPayload) {
 }

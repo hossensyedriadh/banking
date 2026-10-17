@@ -82,6 +82,8 @@ public class WithdrawalTransactionHandler implements TransactionHandler {
                 return this.isoResponseFactory.createResponse(request, ResponseCodes.INVALID_CURRENCY);
             }
 
+            this.switchTransactionService.updateCbsAccountAndCurrencyIds(transaction.id(), cardAccount.accountId(), cardAccount.currencyId());
+
             String idempotencyKey = Long.toString(transaction.id());
 
             CoreBankingWithdrawalResult result = this.coreBankingService.withdraw(transaction, cardAccount.accountId(), cardAccount.currencyId(), idempotencyKey);

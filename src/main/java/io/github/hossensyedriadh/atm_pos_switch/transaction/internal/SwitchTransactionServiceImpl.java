@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 
 @Log4j2
@@ -92,10 +93,10 @@ class SwitchTransactionServiceImpl implements SwitchTransactionService {
     public SwitchTransactionRegistrationResult registerRequest(String terminalId, String stan, String retrievalReference,
                                                                String processingCode, String requestMti,
                                                                String transmissionDateTime, BigDecimal transactionAmount,
-                                                               String currencyCode) {
+                                                               String currencyCode, byte[] requestPayload) {
         try {
             long transactionId = this.switchTransactionRepository.insertReceived(terminalId, stan, retrievalReference, processingCode,
-                    requestMti, transmissionDateTime, transactionAmount, currencyCode);
+                    requestMti, transmissionDateTime, transactionAmount, currencyCode, requestPayload);
 
             log.info("Registered transaction ID={}", transactionId);
 
@@ -122,24 +123,52 @@ class SwitchTransactionServiceImpl implements SwitchTransactionService {
     }
 
     @Override
-    public void updateCbsTransactionIds(long id, Long cbsTxnId, @Nullable Long cbsReversalTxnId) {
-        int updated = this.switchTransactionRepository.updateCbsTransactionIds(id, cbsTxnId, cbsReversalTxnId);
+    public void updateCbsAccountAndCurrencyIds(long transactionId, Long accountId, Long currencyId) {
+        int updated = this.switchTransactionRepository.updateCbsAccountAndCurrencyIds(transactionId, accountId, currencyId);
 
-        if (updated > 0) {
-            log.info("Updated CBS transaction IDs for transaction ID: {}", id);
+        if (updated != 1) {
+            log.error("Could not persist CBS account and currency IDs for switch transaction {}", transactionId);
+            throw new RuntimeException("Could not persist CBS account and currency IDs for switch transaction " + transactionId);
         }
+
+        log.info("Updated CBS account and currency IDs for transaction ID: {}", transactionId);
     }
 
     @Override
-    public void saveResponsePayload(long transactionId, byte[] responsePayload) {
-        int updated = this.switchTransactionRepository.saveResponsePayload(transactionId, responsePayload);
+    public void updateCbsTransactionIds(long id, Long cbsTxnId, @Nullable Long cbsReversalTxnId) {
+        int updated = this.switchTransactionRepository.updateCbsTransactionIds(id, cbsTxnId, cbsReversalTxnId);
 
         if (updated != 1) {
-            log.warn("Failed to save response payload for transaction: {}", transactionId);
-            throw new RuntimeException("Could not save response payload for transaction: " + transactionId);
+            log.error("Could not persist CBS transaction IDs for switch transaction {}", id);
+            throw new RuntimeException("Could not persist CBS transaction IDs for switch transaction " + id);
         }
 
-        log.info("Saved response payload for transaction ID: {}", transactionId);
+        log.info("Updated CBS transaction IDs for transaction ID: {}", id);
+    }
+
+    @Override
+    public Optional<Long> findCbsCurrencyId(long transactionId) {
+        return this.switchTransactionRepository.findCbsCurrencyId(transactionId);
+    }
+
+    @Override
+    public List<SwitchTransactionSummary> findUnknownWithdrawals(int batchSize) {
+        return this.switchTransactionRepository.findUnknownWithdrawals(batchSize);
+    }
+
+    @Override
+    public List<SwitchTransactionSummary> findUnknownReversals(int batchSize) {
+        return this.switchTransactionRepository.findUnknownReversals(batchSize);
+    }
+
+    @Override
+    public int resolveUnknownTransaction(long id, String responseCode, TransactionStatus resolvedStatus, Long cbsTransactionId, byte[] responsePayload) {
+        return this.switchTransactionRepository.resolveUnknownTransaction(id, responseCode, resolvedStatus, cbsTransactionId, responsePayload);
+    }
+
+    @Override
+    public int resolveUnknownReversal(long reversalTransactionId, String responseCode, TransactionStatus resolvedStatus, Long cbsReversalTransactionId, byte[] responsePayload) {
+        return this.switchTransactionRepository.resolveUnknownReversal(reversalTransactionId, responseCode, resolvedStatus, cbsReversalTransactionId, responsePayload);
     }
 
     @Override
@@ -148,8 +177,23 @@ class SwitchTransactionServiceImpl implements SwitchTransactionService {
     }
 
     @Override
+    public Optional<byte[]> findRequestPayload(long transactionId) {
+        return this.switchTransactionRepository.findRequestPayload(transactionId);
+    }
+
+    @Override
     public Optional<TransactionStatus> findTransactionStatus(long transactionId) {
         return this.switchTransactionRepository.findStatusById(transactionId);
+    }
+
+    @Override
+    public Optional<SwitchTransactionSummary> findTransactionById(long transactionId) {
+        return this.switchTransactionRepository.findTransactionById(transactionId);
+    }
+
+    @Override
+    public Optional<Long> findOriginalTransactionId(long reversalTransactionId) {
+        return this.switchTransactionRepository.findOriginalTransactionId(reversalTransactionId);
     }
 
     @Override

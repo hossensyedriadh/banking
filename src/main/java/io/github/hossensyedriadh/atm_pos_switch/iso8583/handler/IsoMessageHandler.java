@@ -86,9 +86,11 @@ public class IsoMessageHandler {
 
             BigDecimal transactionAmount = new BigDecimal(amountField).movePointLeft(2);
 
+            byte[] requestPayload = this.isoMessageParser.pack(request);
+
             SwitchTransactionRegistrationResult registrationResult = this.switchTransactionService.registerRequest(
                     terminalId, request.getString(11), request.getString(37), request.getString(3),
-                    request.getMTI(), request.getString(7), transactionAmount, currencyCode);
+                    request.getMTI(), request.getString(7), transactionAmount, currencyCode, requestPayload);
 
             if (registrationResult.duplicate()) {
                 log.warn("Duplicate transaction received, transactionId={}, terminalId={}, stan={}",

@@ -1,5 +1,6 @@
 package io.github.hossensyedriadh.atm_pos_switch.transaction.internal;
 
+import io.github.hossensyedriadh.atm_pos_switch.iso8583.util.ProcessingCodes;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.enumerator.TransactionStatus;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.OriginalDataElements;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.SwitchTransactionSummary;
@@ -27,16 +28,16 @@ class SwitchTransactionRepository {
 
     public long insertReceived(String terminalId, String stan, String retrievalReference,
                                String processingCode, String requestMti, String transmissionDateTime, BigDecimal transactionAmount,
-                               String currencyCode) {
+                               String currencyCode, byte[] requestPayload) {
         String sql = """
                 INSERT INTO switch.switch_transactions
                     (terminal_id, stan, retrieval_reference,
-                     processing_code, request_mti, transmission_date_time, transaction_amount, currency_code, status)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'RECEIVED') RETURNING id
+                     processing_code, request_mti, transmission_date_time, transaction_amount, currency_code, request_payload, status)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'RECEIVED') RETURNING id
                 """;
 
         Long id = this.jdbcTemplate.queryForObject(sql, Long.class, terminalId, stan, retrievalReference,
-                processingCode, requestMti, transmissionDateTime, transactionAmount, currencyCode);
+                processingCode, requestMti, transmissionDateTime, transactionAmount, currencyCode, requestPayload);
 
         if (id == null) {
             throw new RuntimeException("Failed to persist transaction");
@@ -142,10 +143,6 @@ class SwitchTransactionRepository {
                 """, status.name(), id);
     }
 
-    public int saveResponsePayload(long id, byte[] responsePayload) {
-        return this.jdbcTemplate.update(" UPDATE switch.switch_transactions SET response_payload = ? WHERE id = ?", responsePayload, id);
-    }
-
     public Optional<byte[]> findResponsePayloadById(long id) {
         return jdbcTemplate.query("SELECT response_payload FROM switch.switch_transactions WHERE id = ?",
                 rs -> {
@@ -160,6 +157,20 @@ class SwitchTransactionRepository {
         );
     }
 
+    public Optional<byte[]> findRequestPayload(long transactionId) {
+        List<byte[]> results = this.jdbcTemplate.query(
+                """
+                        SELECT request_payload
+                        FROM switch.switch_transactions
+                        WHERE id = ?
+                          AND request_payload IS NOT NULL
+                        """,
+                (rs, _) -> rs.getBytes("request_payload"),
+                transactionId);
+
+        return results.stream().findFirst();
+    }
+
     public Optional<TransactionStatus> findStatusById(long id) {
         return this.jdbcTemplate.query("SELECT t.status FROM switch.switch_transactions t WHERE t.id = ?", resultSet -> {
             if (!resultSet.next()) {
@@ -168,6 +179,33 @@ class SwitchTransactionRepository {
 
             return Optional.of(TransactionStatus.valueOf(resultSet.getString("status")));
         }, id);
+    }
+
+    public Optional<SwitchTransactionSummary> findTransactionById(long transactionId) {
+        List<SwitchTransactionSummary> results = this.jdbcTemplate.query("""
+                SELECT id, terminal_id, stan, retrieval_reference, processing_code,
+                       transaction_amount, currency_code, request_mti, response_code, status,
+                       cbs_txn_id, cbs_reversal_txn_id, received_at, processing_started_at, completed_at
+                FROM switch.switch_transactions
+                WHERE id = ?
+                """, this.transactionSummaryMapper, transactionId
+        );
+
+        return results.stream().findFirst();
+    }
+
+    public Optional<Long> findOriginalTransactionId(long reversalTransactionId) {
+        List<Long> results = this.jdbcTemplate.query("""
+                        SELECT reversal_of_transaction_id
+                        FROM switch.switch_transactions
+                        WHERE id = ?
+                          AND reversal_of_transaction_id IS NOT NULL
+                        """,
+                (rs, _) -> rs.getLong("reversal_of_transaction_id"),
+                reversalTransactionId
+        );
+
+        return results.stream().findFirst();
     }
 
     public Optional<SwitchTransactionSummary> findByTerminalStanAndTransmissionDateTime(String terminalId, String stan, String transmissionDateTime) {
@@ -207,6 +245,101 @@ class SwitchTransactionRepository {
         ).stream().findFirst();
     }
 
+    public List<SwitchTransactionSummary> findUnknownWithdrawals(int batchSize) {
+        if (batchSize < 1) {
+            throw new IllegalArgumentException("Batch size must be positive");
+        }
+
+        return this.jdbcTemplate.query("""
+                SELECT id, terminal_id, stan,
+                       retrieval_reference, processing_code,
+                       transaction_amount, currency_code,
+                       request_mti, response_code, status,
+                       cbs_txn_id, cbs_reversal_txn_id,
+                       received_at, processing_started_at, completed_at
+                FROM switch.switch_transactions
+                WHERE status = 'UNKNOWN'
+                  AND request_mti = '0200'
+                  AND processing_code = ?
+                ORDER BY completed_at NULLS FIRST, id
+                LIMIT ?
+                """, this.transactionSummaryMapper, ProcessingCodes.CASH_WITHDRAWAL, batchSize);
+    }
+
+    public List<SwitchTransactionSummary> findUnknownReversals(int batchSize) {
+        if (batchSize < 1) {
+            throw new IllegalArgumentException("Batch size must be positive");
+        }
+
+        return this.jdbcTemplate.query("""
+                SELECT id, terminal_id, stan, retrieval_reference, processing_code,
+                       transaction_amount, currency_code, request_mti, response_code, status,
+                       cbs_txn_id, cbs_reversal_txn_id, received_at, processing_started_at, completed_at
+                FROM switch.switch_transactions
+                WHERE status = 'UNKNOWN'
+                  AND request_mti = '0400'
+                  AND reversal_of_transaction_id IS NOT NULL
+                ORDER BY completed_at NULLS FIRST, id
+                LIMIT ?
+                """, this.transactionSummaryMapper, batchSize
+        );
+    }
+
+    public int resolveUnknownTransaction(long id, String responseCode, TransactionStatus resolvedStatus, Long cbsTransactionId, byte[] responsePayload) {
+        if (resolvedStatus != TransactionStatus.APPROVED && resolvedStatus != TransactionStatus.DECLINED) {
+            throw new IllegalArgumentException("Resolved status must be APPROVED or DECLINED");
+        }
+
+        return this.jdbcTemplate.update(
+                """
+                        UPDATE switch.switch_transactions
+                        SET response_code = ?,
+                            status = ?,
+                            cbs_txn_id = COALESCE(?, cbs_txn_id),
+                            response_payload = ?,
+                            completed_at = CURRENT_TIMESTAMP
+                        WHERE id = ?
+                          AND status = 'UNKNOWN'
+                        """, responseCode, resolvedStatus.name(), cbsTransactionId, responsePayload, id);
+    }
+
+    public int resolveUnknownReversal(long reversalTransactionId, String responseCode, TransactionStatus resolvedStatus, Long cbsReversalTransactionId, byte[] responsePayload) {
+        if (resolvedStatus != TransactionStatus.APPROVED && resolvedStatus != TransactionStatus.DECLINED) {
+            throw new IllegalArgumentException("Resolved status must be APPROVED or DECLINED");
+        }
+
+        return this.jdbcTemplate.update("""
+                        UPDATE switch.switch_transactions
+                        SET response_code = ?,
+                            status = ?,
+                            cbs_txn_id = COALESCE(?, cbs_txn_id),
+                            response_payload = ?,
+                            completed_at = CURRENT_TIMESTAMP
+                        WHERE id = ?
+                          AND status = 'UNKNOWN'
+                          AND request_mti = '0400'
+                          AND reversal_of_transaction_id IS NOT NULL
+                        """,
+                responseCode, resolvedStatus.name(), cbsReversalTransactionId,
+                responsePayload, reversalTransactionId
+        );
+    }
+
+    public int updateCbsAccountAndCurrencyIds(long transactionId, Long accountId, Long currencyId) {
+        if (accountId == null || currencyId == null) {
+            throw new IllegalArgumentException("CBS account ID and currency ID must not be null");
+        }
+
+        return this.jdbcTemplate.update("""
+                UPDATE switch.switch_transactions
+                SET cbs_account_id = ?,
+                    cbs_currency_id = ?
+                WHERE id = ?
+                  AND status = 'PROCESSING'
+                """, accountId, currencyId, transactionId
+        );
+    }
+
     public int updateCbsTransactionIds(long id, Long cbsTxnId, @Nullable Long cbsReversalTxnId) {
         return this.jdbcTemplate.update("""
                         UPDATE switch.switch_transactions
@@ -216,6 +349,20 @@ class SwitchTransactionRepository {
                         """,
                 cbsTxnId, cbsReversalTxnId, id
         );
+    }
+
+    public Optional<Long> findCbsCurrencyId(long transactionId) {
+        List<Long> results = this.jdbcTemplate.query("""
+                        SELECT cbs_currency_id
+                        FROM switch.switch_transactions
+                        WHERE id = ?
+                          AND cbs_currency_id IS NOT NULL
+                        """,
+                (rs, _) -> rs.getLong("cbs_currency_id"),
+                transactionId
+        );
+
+        return results.stream().findFirst();
     }
 
     public boolean hasReversal(long originalTransactionId) {
@@ -246,6 +393,7 @@ class SwitchTransactionRepository {
                     rs.getObject("cbs_reversal_txn_id", Long.class),
                     rs.getObject("received_at", OffsetDateTime.class),
                     rs.getObject("processing_started_at", OffsetDateTime.class),
-                    rs.getObject("completed_at", OffsetDateTime.class)
+                    rs.getObject("completed_at", OffsetDateTime.class),
+                    rs.getBytes("response_payload")
             );
 }
