@@ -20,6 +20,8 @@ public interface TransactionService {
 
     Optional<TransactionView> getTransactionByReference(String reference);
 
+    Optional<TransactionView> getTransactionByIdempotencyKey(String idempotencyKey);
+
     TransactionView deposit(@Valid CreateDepositCommand command);
 
     TransactionView withdraw(@Valid CreateWithdrawalCommand command);

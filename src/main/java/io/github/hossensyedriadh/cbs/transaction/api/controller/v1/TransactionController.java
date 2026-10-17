@@ -88,6 +88,21 @@ public class TransactionController {
         return transaction.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Get a transaction by idempotency key", description = "Retrieve a transaction by its idempotency key",
+            parameters = {
+                    @Parameter(name = "key", description = "Transaction idempotency key", required = true)
+            },
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = TransactionView.class))),
+                    @ApiResponse(responseCode = "404", description = "Transaction not found", content = @Content)
+            })
+    @GetMapping("/idempotency/{key}")
+    public ResponseEntity<TransactionView> getTransactionByIdempotencyKey(@PathVariable("key") String key) {
+        Optional<TransactionView> transaction = this.transactionService.getTransactionByIdempotencyKey(key);
+
+        return transaction.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @Operation(summary = "Create a new deposit transaction", description = "Create a new deposit transaction",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "The deposit command", required = true, content = @Content(schema = @Schema(implementation = CreateDepositCommand.class))

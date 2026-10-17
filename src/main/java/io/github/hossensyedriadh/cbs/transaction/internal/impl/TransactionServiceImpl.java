@@ -106,6 +106,11 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
+    public Optional<TransactionView> getTransactionByIdempotencyKey(String idempotencyKey) {
+        return this.transactionRepository.findByIdempotencyKey(idempotencyKey).map(this.transactionMapper::toView);
+    }
+
+    @Override
     @Transactional
     public TransactionView deposit(@Valid CreateDepositCommand command) {
         this.accountRestrictionService.validateCreditAllowed(command.getAccountId());
