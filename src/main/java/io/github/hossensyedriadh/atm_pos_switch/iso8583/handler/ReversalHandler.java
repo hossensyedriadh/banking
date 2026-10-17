@@ -4,6 +4,7 @@ import io.github.hossensyedriadh.atm_pos_switch.corebanking.api.model.CoreBankin
 import io.github.hossensyedriadh.atm_pos_switch.corebanking.api.service.CoreBankingService;
 import io.github.hossensyedriadh.atm_pos_switch.iso8583.parser.IsoMessageParser;
 import io.github.hossensyedriadh.atm_pos_switch.iso8583.response.IsoResponseFactory;
+import io.github.hossensyedriadh.atm_pos_switch.iso8583.util.ResponseCodes;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.enumerator.TransactionStatus;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.OriginalDataElements;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.SwitchTransactionSummary;
@@ -53,7 +54,7 @@ public class ReversalHandler {
         SwitchTransactionSummary originalTransaction = original.get();
 
         if (originalTransaction.status() != TransactionStatus.APPROVED
-                || !"00".equals(originalTransaction.responseCode())) {
+                || !ResponseCodes.APPROVED.equals(originalTransaction.responseCode())) {
             return this.isoResponseFactory.createResponse(request, "12");
         }
 
@@ -76,7 +77,7 @@ public class ReversalHandler {
 
             if (responseCode == null || !responseCode.matches("\\d{2}")) {
                 this.switchTransactionService.markFailed(transactionId, TransactionStatus.UNKNOWN);
-                return this.isoResponseFactory.createResponse(request, "96");
+                return this.isoResponseFactory.createResponse(request, ResponseCodes.SYSTEM_ERROR);
             }
 
             ISOMsg response = this.isoResponseFactory.createResponse(request, responseCode);
@@ -85,14 +86,14 @@ public class ReversalHandler {
 
             TransactionStatus status = result.successful() ? TransactionStatus.APPROVED : TransactionStatus.DECLINED;
 
-            if (result.successful() && !"00".equals(responseCode)) {
+            if (result.successful() && !ResponseCodes.APPROVED.equals(responseCode)) {
                 this.switchTransactionService.markFailed(transactionId, TransactionStatus.UNKNOWN);
-                return isoResponseFactory.createResponse(request, "96");
+                return isoResponseFactory.createResponse(request, ResponseCodes.SYSTEM_ERROR);
             }
 
-            if (!result.successful() && "00".equals(responseCode)) {
+            if (!result.successful() && ResponseCodes.APPROVED.equals(responseCode)) {
                 this.switchTransactionService.markFailed(transactionId, TransactionStatus.UNKNOWN);
-                return isoResponseFactory.createResponse(request, "96");
+                return isoResponseFactory.createResponse(request, ResponseCodes.SYSTEM_ERROR);
             }
 
             this.switchTransactionService.updateCbsTransactionIds(originalTransaction.id(), originalTransaction.cbsTxnId(), result.cbsReversalTransactionId());
@@ -111,7 +112,7 @@ public class ReversalHandler {
             log.error("CBS transaction reversal failed. reversalTransactionId={}, originalTransactionId={}",
                     transactionId, originalTransaction.id(), e);
 
-            return this.isoResponseFactory.createResponse(request, "96");
+            return this.isoResponseFactory.createResponse(request, ResponseCodes.SYSTEM_ERROR);
         }
     }
 }

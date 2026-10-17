@@ -4,6 +4,7 @@ import io.github.hossensyedriadh.atm_pos_switch.transaction.api.enumerator.Trans
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.OriginalDataElements;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.SwitchTransactionRegistrationResult;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.SwitchTransactionSummary;
+import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.TransactionCompletionResult;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.service.SwitchTransactionService;
 import lombok.extern.log4j.Log4j2;
 import org.jspecify.annotations.Nullable;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.Optional;
 
@@ -37,15 +39,25 @@ class SwitchTransactionServiceImpl implements SwitchTransactionService {
     }
 
     @Override
-    public void complete(long transactionId, String responseCode, TransactionStatus status, byte[] responsePayload) {
-        int updated = this.switchTransactionRepository.markAsComplete(transactionId, responseCode, status, responsePayload);
+    public TransactionCompletionResult complete(long transactionId, String responseCode, TransactionStatus status, byte[] responsePayload) {
+        int updated = this.switchTransactionRepository.completeTransaction(transactionId, responseCode, status, responsePayload);
 
-        if (updated != 1) {
-            log.warn("Fail to mark transaction as COMPLETE: {}", transactionId);
-            throw new RuntimeException("Could not complete transaction: " + transactionId);
+        Optional<TransactionCompletionResult> result = this.switchTransactionRepository.findCompletionResult(transactionId, updated == 1);
+
+        if (result.isEmpty()) {
+            log.error("Transaction {} not found during completion", transactionId);
+            throw new RuntimeException("Transaction not found during completion: " + transactionId);
         }
 
-        log.info("Marked transaction {} as {}", transactionId, status.toString());
+        TransactionCompletionResult completionResult = result.get();
+
+        if (completionResult.completed()) {
+            log.info("Completed transaction {} as {}", transactionId, status);
+        } else {
+            log.warn("Could not complete transaction {} because its status is {}. Returning the stored response if available.", transactionId, completionResult.currentStatus());
+        }
+
+        return completionResult;
     }
 
     @Override
@@ -79,10 +91,11 @@ class SwitchTransactionServiceImpl implements SwitchTransactionService {
     @Override
     public SwitchTransactionRegistrationResult registerRequest(String terminalId, String stan, String retrievalReference,
                                                                String processingCode, String requestMti,
-                                                               String transmissionDateTime) {
+                                                               String transmissionDateTime, BigDecimal transactionAmount,
+                                                               String currencyCode) {
         try {
             long transactionId = this.switchTransactionRepository.insertReceived(terminalId, stan, retrievalReference, processingCode,
-                    requestMti, transmissionDateTime);
+                    requestMti, transmissionDateTime, transactionAmount, currencyCode);
 
             log.info("Registered transaction ID={}", transactionId);
 
@@ -115,6 +128,18 @@ class SwitchTransactionServiceImpl implements SwitchTransactionService {
         if (updated > 0) {
             log.info("Updated CBS transaction IDs for transaction ID: {}", id);
         }
+    }
+
+    @Override
+    public void saveResponsePayload(long transactionId, byte[] responsePayload) {
+        int updated = this.switchTransactionRepository.saveResponsePayload(transactionId, responsePayload);
+
+        if (updated != 1) {
+            log.warn("Failed to save response payload for transaction: {}", transactionId);
+            throw new RuntimeException("Could not save response payload for transaction: " + transactionId);
+        }
+
+        log.info("Saved response payload for transaction ID: {}", transactionId);
     }
 
     @Override

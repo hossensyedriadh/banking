@@ -5,6 +5,8 @@
               class="org.jpos.iso.IFA_NUMERIC"/>
     <isofield id="1" length="16" name="Bitmap"
               class="org.jpos.iso.IFA_BITMAP"/>
+    <isofield id="2" length="19" name="Primary Account Number"
+            class="org.jpos.iso.IFA_LLNUM"/>
     <isofield id="3" length="6" name="Processing Code"
               class="org.jpos.iso.IFA_NUMERIC"/>
     <isofield id="4" length="12" name="Transaction Amount"
@@ -19,7 +21,7 @@
               class="org.jpos.iso.IF_CHAR"/>
     <isofield id="41" length="8" name="Terminal ID"
               class="org.jpos.iso.IF_CHAR"/>
-    <isofield id="49" length="3" name="Transaction Currency"
+    <isofield id="49" length="3" name="Transaction Currency Code"
               class="org.jpos.iso.IFA_NUMERIC"/>
     <isofield id="54" length="20" name="Additional Amounts"
               class="org.jpos.iso.IF_CHAR"/>

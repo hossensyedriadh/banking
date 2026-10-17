@@ -3,12 +3,14 @@ package io.github.hossensyedriadh.atm_pos_switch.transaction.internal;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.enumerator.TransactionStatus;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.OriginalDataElements;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.SwitchTransactionSummary;
+import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.TransactionCompletionResult;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -24,16 +26,17 @@ class SwitchTransactionRepository {
     }
 
     public long insertReceived(String terminalId, String stan, String retrievalReference,
-                               String processingCode, String requestMti, String transmissionDateTime) {
+                               String processingCode, String requestMti, String transmissionDateTime, BigDecimal transactionAmount,
+                               String currencyCode) {
         String sql = """
                 INSERT INTO switch.switch_transactions
                     (terminal_id, stan, retrieval_reference,
-                     processing_code, request_mti, transmission_date_time, status)
-                     VALUES (?, ?, ?, ?, ?, ?, 'RECEIVED') RETURNING id
+                     processing_code, request_mti, transmission_date_time, transaction_amount, currency_code, status)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'RECEIVED') RETURNING id
                 """;
 
         Long id = this.jdbcTemplate.queryForObject(sql, Long.class, terminalId, stan, retrievalReference,
-                processingCode, requestMti, transmissionDateTime);
+                processingCode, requestMti, transmissionDateTime, transactionAmount, currencyCode);
 
         if (id == null) {
             throw new RuntimeException("Failed to persist transaction");
@@ -96,9 +99,9 @@ class SwitchTransactionRepository {
                 """, timeout.toSeconds());
     }
 
-    public int markAsComplete(Long id, String responseCode, TransactionStatus status, byte[] responsePayload) {
+    public int completeTransaction(long id, String responseCode, TransactionStatus status, byte[] responsePayload) {
         if (status != TransactionStatus.APPROVED && status != TransactionStatus.DECLINED) {
-            throw new RuntimeException("Transaction completion status must be APPROVED or DECLINED");
+            throw new IllegalArgumentException("Transaction completion status must be APPROVED or DECLINED");
         }
 
         return this.jdbcTemplate.update("""
@@ -107,8 +110,23 @@ class SwitchTransactionRepository {
                     response_payload = ?,
                     status = ?,
                     completed_at = CURRENT_TIMESTAMP
-                WHERE id = ? AND status = 'PROCESSING'
+                WHERE id = ?
+                  AND status = 'PROCESSING'
                 """, responseCode, responsePayload, status.name(), id);
+    }
+
+    public Optional<TransactionCompletionResult> findCompletionResult(long id, boolean completed) {
+        return this.jdbcTemplate.query("SELECT status, response_payload FROM switch.switch_transactions WHERE id = ?",
+                rs -> {
+                    if (!rs.next()) {
+                        return Optional.empty();
+                    }
+
+                    return Optional.of(new TransactionCompletionResult(
+                            completed,
+                            TransactionStatus.valueOf(rs.getString("status")),
+                            rs.getBytes("response_payload")));
+                }, id);
     }
 
     public int markAsFailed(long id, TransactionStatus status) {
@@ -122,6 +140,10 @@ class SwitchTransactionRepository {
                     completed_at = CURRENT_TIMESTAMP
                 WHERE id = ? AND status = 'PROCESSING'
                 """, status.name(), id);
+    }
+
+    public int saveResponsePayload(long id, byte[] responsePayload) {
+        return this.jdbcTemplate.update(" UPDATE switch.switch_transactions SET response_payload = ? WHERE id = ?", responsePayload, id);
     }
 
     public Optional<byte[]> findResponsePayloadById(long id) {

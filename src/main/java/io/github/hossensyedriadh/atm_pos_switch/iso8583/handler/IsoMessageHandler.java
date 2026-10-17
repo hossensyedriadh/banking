@@ -3,16 +3,20 @@ package io.github.hossensyedriadh.atm_pos_switch.iso8583.handler;
 import io.github.hossensyedriadh.atm_pos_switch.iso8583.parser.IsoMessageParser;
 import io.github.hossensyedriadh.atm_pos_switch.iso8583.response.IsoResponseFactory;
 import io.github.hossensyedriadh.atm_pos_switch.iso8583.router.TransactionRouter;
+import io.github.hossensyedriadh.atm_pos_switch.iso8583.util.ResponseCodes;
 import io.github.hossensyedriadh.atm_pos_switch.iso8583.validator.IsoRequestValidator;
 import io.github.hossensyedriadh.atm_pos_switch.terminal.api.service.SwitchTerminalService;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.enumerator.TransactionStatus;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.SwitchTransactionRegistrationResult;
+import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.TransactionCompletionResult;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.service.SwitchTransactionService;
 import lombok.extern.log4j.Log4j2;
 import org.jpos.iso.ISOException;
 import org.jpos.iso.ISOMsg;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
 
 @Log4j2
 @Component
@@ -72,9 +76,19 @@ public class IsoMessageHandler {
                 return this.isoResponseFactory.createResponse(request, "03");
             }
 
+            String amountField = request.getString(4);
+            String currencyCode = request.getString(49);
+
+            if (amountField == null || !amountField.matches("\\d{12}")
+                    || currencyCode == null || !currencyCode.matches("\\d{3}")) {
+                return this.isoResponseFactory.createResponse(request, ResponseCodes.FORMAT_ERROR);
+            }
+
+            BigDecimal transactionAmount = new BigDecimal(amountField).movePointLeft(2);
+
             SwitchTransactionRegistrationResult registrationResult = this.switchTransactionService.registerRequest(
                     terminalId, request.getString(11), request.getString(37), request.getString(3),
-                    request.getMTI(), request.getString(7));
+                    request.getMTI(), request.getString(7), transactionAmount, currencyCode);
 
             if (registrationResult.duplicate()) {
                 log.warn("Duplicate transaction received, transactionId={}, terminalId={}, stan={}",
@@ -100,23 +114,33 @@ public class IsoMessageHandler {
 
                 if (response == null) {
                     log.warn("Unsupported processing code={}", request.getString(3));
-
-                    response = this.isoResponseFactory.createResponse(request, "05");
+                    response = this.isoResponseFactory.createResponse(request, ResponseCodes.INVALID_TRANSACTION);
                 }
 
                 String responseCode = response.getString(39);
-                TransactionStatus status = "00".equals(responseCode) ? TransactionStatus.APPROVED : TransactionStatus.DECLINED;
+                TransactionStatus status = ResponseCodes.APPROVED.equals(responseCode) ? TransactionStatus.APPROVED : TransactionStatus.DECLINED;
 
                 byte[] responsePayload = this.isoMessageParser.pack(response);
 
-                this.switchTransactionService.complete(transactionId, responseCode, status, responsePayload);
+                TransactionCompletionResult completionResult = this.switchTransactionService.complete(transactionId, responseCode, status, responsePayload);
 
-                return response;
+                if (completionResult.completed()) {
+                    return response;
+                }
+
+                byte[] storedPayload = completionResult.responsePayload();
+
+                if (storedPayload != null) {
+                    return this.isoMessageParser.unpack(storedPayload);
+                }
+
+                log.error("Transaction {} has status {} but no stored response payload", transactionId, completionResult.currentStatus());
+
+                return this.isoResponseFactory.createResponse(request, ResponseCodes.SYSTEM_ERROR);
             } catch (RuntimeException e) {
                 log.error("Transaction processing failed; transactionId={}", transactionId, e);
 
                 this.switchTransactionService.markFailed(transactionId, TransactionStatus.FAILED);
-
                 throw e;
             }
         } catch (ISOException e) {

@@ -1,12 +1,11 @@
 package io.github.hossensyedriadh.atm_pos_switch.corebanking.internal;
 
 import io.github.hossensyedriadh.atm_pos_switch.corebanking.api.enumerator.TransactionStatus;
-import io.github.hossensyedriadh.atm_pos_switch.corebanking.api.model.CoreBankingReversalRequest;
-import io.github.hossensyedriadh.atm_pos_switch.corebanking.api.model.CoreBankingReversalResult;
-import io.github.hossensyedriadh.atm_pos_switch.corebanking.api.model.CoreBankingTransactionResponse;
+import io.github.hossensyedriadh.atm_pos_switch.corebanking.api.model.*;
 import io.github.hossensyedriadh.atm_pos_switch.corebanking.api.service.CoreBankingService;
 import io.github.hossensyedriadh.atm_pos_switch.exception.CoreBankingCommunicationException;
 import io.github.hossensyedriadh.atm_pos_switch.exception.CoreBankingException;
+import io.github.hossensyedriadh.atm_pos_switch.iso8583.util.ResponseCodes;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.SwitchTransactionSummary;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,17 +17,77 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 
+import java.util.Optional;
+
 @Log4j2
 @Service
 class CoreBankingServiceImpl implements CoreBankingService {
     private final RestClient restClient;
+    private final CoreBankingResponseCodeMapper coreBankingResponseCodeMapper;
 
     @Value("${cbs.base-url}")
     private String cbsBaseUrl;
 
     @Autowired
-    public CoreBankingServiceImpl(@Qualifier("cbsRestClient") RestClient restClient) {
+    public CoreBankingServiceImpl(@Qualifier("cbsRestClient") RestClient restClient, CoreBankingResponseCodeMapper coreBankingResponseCodeMapper) {
         this.restClient = restClient;
+        this.coreBankingResponseCodeMapper = coreBankingResponseCodeMapper;
+    }
+
+    @Override
+    public CoreBankingWithdrawalResult withdraw(SwitchTransactionSummary transaction, Long accountId, Long currencyId, String idempotencyKey) {
+        CoreBankingWithdrawalRequest withdrawalRequest = new CoreBankingWithdrawalRequest();
+        withdrawalRequest.setAccountId(accountId);
+        withdrawalRequest.setCurrencyId(currencyId);
+        withdrawalRequest.setIdempotencyKey(idempotencyKey);
+        withdrawalRequest.setAmount(transaction.transactionAmount());
+        withdrawalRequest.setDescription(String.format("ATM cash withdrawal [Switch transaction ID: %d, Terminal: %s, STAN: %s, RRN: %s].", transaction.id(), transaction.terminalId(),
+                transaction.stan(), transaction.retrievalReference()));
+
+        try {
+            CoreBankingTransactionResponse response = this.restClient.post().uri(this.cbsBaseUrl + "/transactions/v1/withdrawals")
+                    .contentType(MediaType.APPLICATION_JSON).body(withdrawalRequest).retrieve()
+                    .body(CoreBankingTransactionResponse.class);
+
+            if (response == null) {
+                log.error("CBS returned an empty withdrawal response. Switch transaction ID: {}", transaction.id());
+                throw new CoreBankingCommunicationException("CBS returned an empty withdrawal response");
+            }
+
+            if (response.getStatus() == TransactionStatus.COMPLETED) {
+                if (response.getId() == null) {
+                    log.error("CBS reported a completed withdrawal without a transaction ID. Switch transaction ID: {}", transaction.id());
+                    throw new CoreBankingCommunicationException("CBS returned an incomplete withdrawal response");
+                }
+
+                return new CoreBankingWithdrawalResult(true, response.getId(), ResponseCodes.APPROVED);
+            }
+
+            log.error("CBS returned a non-completed withdrawal status. Switch transaction ID: {}, CBS status: {}", transaction.id(), response.getStatus());
+            throw new CoreBankingCommunicationException("CBS withdrawal outcome is not confirmed");
+        } catch (RestClientResponseException e) {
+            CoreBankingErrorResponse errorResponse = null;
+
+            try {
+                errorResponse = e.getResponseBodyAs(CoreBankingErrorResponse.class);
+            } catch (RestClientException parseException) {
+                log.warn("Could not deserialize CBS error response. Switch transaction ID: {}", transaction.id(), parseException);
+            }
+
+            Optional<String> responseCode = this.coreBankingResponseCodeMapper.toIsoResponseCode(errorResponse);
+
+            if (responseCode.isPresent()) {
+                log.info("CBS definitively declined withdrawal. Switch Transaction ID: {}, response code: {}", transaction.id(), responseCode.get());
+
+                return new CoreBankingWithdrawalResult(false, null, responseCode.get());
+            }
+
+            log.error("CBS returned an unrecognized or ambiguous error during withdrawal. Switch transaction ID: {}, HTTP status: {}", transaction.id(), e.getStatusCode(), e);
+            throw new CoreBankingCommunicationException("CBS withdrawal result could not be confirmed", e);
+        } catch (RestClientException e) {
+            log.error("CBS communication failure during withdrawal. Switch transaction ID: {}", transaction.id(), e);
+            throw new CoreBankingCommunicationException("Could not confirm CBS withdrawal outcome", e);
+        }
     }
 
     @Override
@@ -54,7 +113,7 @@ class CoreBankingServiceImpl implements CoreBankingService {
             boolean isSuccessful = reversalResponse.getStatus() == TransactionStatus.COMPLETED;
 
             return new CoreBankingReversalResult(isSuccessful, reversalResponse.getId(),
-                    reversalResponse.getReversalOfTransactionId(), isSuccessful ? "00" : "96");
+                    reversalResponse.getReversalOfTransactionId(), isSuccessful ? ResponseCodes.APPROVED : ResponseCodes.SYSTEM_ERROR);
         } catch (RestClientResponseException e) {
             log.error("CBS rejected reversal request. Original switch transaction ID: {}, HTTP status: {}", originalTransaction.id(),
                     e.getStatusCode(), e
