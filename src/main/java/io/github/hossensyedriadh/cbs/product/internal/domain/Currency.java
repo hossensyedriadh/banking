@@ -29,6 +29,9 @@ public class Currency {
     @Column(name = "code", unique = true, nullable = false, length = 3)
     private String code;
 
+    @Column(name = "numeric_code", unique = true, nullable = false, length = 3)
+    private String numericCode;
+
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 

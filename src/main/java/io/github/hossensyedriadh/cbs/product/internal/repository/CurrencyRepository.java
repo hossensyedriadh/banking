@@ -11,4 +11,6 @@ public interface CurrencyRepository extends JpaRepository<Currency, Long> {
     Optional<Currency> findByCode(String code);
 
     boolean existsByCode(String code);
+
+    boolean existsByNumericCode(String numericCode);
 }

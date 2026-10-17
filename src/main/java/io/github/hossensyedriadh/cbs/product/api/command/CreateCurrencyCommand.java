@@ -15,9 +15,14 @@ public class CreateCurrencyCommand implements Serializable {
     @Serial
     private static final long serialVersionUID = -109698950084191822L;
 
-    @Size(max = 3)
+    @Size(min = 3, max = 3)
     @NotBlank
     private String code;
+
+    @Size(min = 3, max = 3)
+    @NotBlank
+    @JsonProperty("numeric_code")
+    private String numericCode;
 
     @Size(max = 100)
     @NotBlank

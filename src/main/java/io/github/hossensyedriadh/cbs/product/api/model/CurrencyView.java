@@ -18,6 +18,9 @@ public class CurrencyView implements Serializable {
 
     private String code;
 
+    @JsonProperty("numeric_code")
+    private String numericCode;
+
     private String name;
 
     private String symbol;

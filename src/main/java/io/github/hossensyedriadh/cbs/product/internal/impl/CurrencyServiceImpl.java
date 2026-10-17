@@ -63,6 +63,11 @@ public class CurrencyServiceImpl implements CurrencyService {
             throw new ApiResourceException("Currency already exists", HttpStatus.BAD_REQUEST, this.httpServletRequest);
         }
 
+        if (this.currencyRepository.existsByNumericCode(command.getNumericCode())) {
+            log.warn("Currency with numeric code {} already exists", command.getNumericCode());
+            throw new ApiResourceException("Currency already exists", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        }
+
         Currency currency = this.currencyMapper.toEntity(command);
         Currency saved = this.currencyRepository.save(currency);
 
