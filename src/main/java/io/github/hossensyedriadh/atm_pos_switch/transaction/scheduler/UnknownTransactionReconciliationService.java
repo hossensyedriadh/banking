@@ -198,6 +198,27 @@ public class UnknownTransactionReconciliationService {
             return;
         }
 
+        if (cbsReversal.getAmount() == null || reversal.transactionAmount() == null
+                || cbsReversal.getAmount().compareTo(reversal.transactionAmount()) != 0) {
+            log.error("Amount mismatch for switch reversal {}: switch amount={}, CBS amount={}. Leaving UNKNOWN.",
+                    reversal.id(), reversal.transactionAmount(), cbsReversal.getAmount());
+            return;
+        }
+
+        if (cbsReversal.getCurrencyId() == null) {
+            log.error("CBS reversal {} has no currency ID. Leaving switch reversal {} UNKNOWN.", cbsReversal.getId(), reversal.id());
+            return;
+        }
+
+        Optional<Long> expectedCurrencyId = this.switchTransactionService.findCbsCurrencyId(original.id());
+
+        if (expectedCurrencyId.isEmpty() || !Objects.equals(cbsReversal.getCurrencyId(), expectedCurrencyId.get())) {
+            log.error(
+                    "Currency mismatch for switch reversal {}: CBS currency ID={}, expected={}. Leaving UNKNOWN.",
+                    reversal.id(), cbsReversal.getCurrencyId(), expectedCurrencyId.orElse(null));
+            return;
+        }
+
         if (cbsReversal.getStatus() != io.github.hossensyedriadh.atm_pos_switch.corebanking.api.enumerator.TransactionStatus.COMPLETED) {
             log.info("Switch reversal {} remains UNKNOWN because CBS status is {}.", reversal.id(), cbsReversal.getStatus());
             return;
@@ -219,12 +240,10 @@ public class UnknownTransactionReconciliationService {
             return;
         }
 
-        int updated = this.switchTransactionService.resolveUnknownReversal(reversal.id(), ResponseCodes.APPROVED, TransactionStatus.APPROVED, cbsReversal.getId(), responsePayload);
+        int updated = this.switchTransactionService.resolveUnknownReversalAndUpdateOriginal(reversal.id(), original.cbsTxnId(), ResponseCodes.APPROVED, cbsReversal.getId(), responsePayload);
 
         if (updated == 1) {
             log.info("Resolved UNKNOWN reversal {} as APPROVED using CBS reversal {}.", reversal.id(), cbsReversal.getId());
-
-            this.switchTransactionService.updateCbsTransactionIds(original.id(), original.cbsTxnId(), cbsReversal.getId());
         } else {
             log.debug("Switch reversal {} was no longer UNKNOWN; no changes made.", reversal.id());
         }

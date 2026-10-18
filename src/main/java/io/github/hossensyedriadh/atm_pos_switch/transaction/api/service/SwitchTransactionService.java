@@ -1,10 +1,7 @@
 package io.github.hossensyedriadh.atm_pos_switch.transaction.api.service;
 
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.enumerator.TransactionStatus;
-import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.OriginalDataElements;
-import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.SwitchTransactionRegistrationResult;
-import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.SwitchTransactionSummary;
-import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.TransactionCompletionResult;
+import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.*;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
@@ -13,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface SwitchTransactionService {
-    void markProcessing(long transactionId);
+    int markProcessing(long transactionId);
 
     TransactionCompletionResult complete(long transactionId, String responseCode, TransactionStatus status, byte[] responsePayload);
 
@@ -25,8 +22,8 @@ public interface SwitchTransactionService {
                                                         String processingCode, String requestMti, String transmissionDateTime, BigDecimal transactionAmount,
                                                         String currencyCode, byte[] requestPayload);
 
-    Optional<Long> registerReversalRequest(String terminalId, String stan, String retrievalReference, String processingCode,
-                                           String requestMti, String transmissionDateTime, long originalTransactionId);
+    ReversalRegistrationResult registerReversalRequest(String terminalId, String stan, String retrievalReference, String processingCode,
+                                                       String requestMti, String transmissionDateTime, long originalTransactionId);
 
     void updateCbsAccountAndCurrencyIds(long transactionId, Long accountId, Long currencyId);
 
@@ -40,7 +37,9 @@ public interface SwitchTransactionService {
 
     int resolveUnknownTransaction(long id, String responseCode, TransactionStatus resolvedStatus, Long cbsTransactionId, byte[] responsePayload);
 
-    int resolveUnknownReversal(long reversalTransactionId, String responseCode, TransactionStatus resolvedStatus, Long cbsReversalTransactionId, byte[] responsePayload);
+    int resolveUnknownReversalAndUpdateOriginal(long reversalTransactionId, long originalCbsTransactionId, String responseCode, Long cbsReversalTransactionId, byte[] responsePayload);
+
+    int completeReversalAtomically(long reversalTransactionId, long originalTransactionId, Long originalCbsTransactionId, String responseCode, TransactionStatus resolvedStatus, Long cbsReversalTransactionId, byte[] responsePayload);
 
     Optional<byte[]> findResponsePayload(long transactionId);
 

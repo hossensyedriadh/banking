@@ -50,13 +50,9 @@ public class IsoMessageHandler {
 
             if (validationCode != null) {
                 log.warn("ISO 8583 request rejected: MTI={}, responseCode={}", mti, validationCode);
-
                 return this.isoResponseFactory.createResponse(request, validationCode);
             }
 
-            /*
-             * ISO 8583 documentation: https://www.iso.org/standard/79451.html
-             * */
             if (request.hasField(3)) {
                 log.info("Processing code={}", request.getString(3));
             }
@@ -85,32 +81,51 @@ public class IsoMessageHandler {
             }
 
             BigDecimal transactionAmount = new BigDecimal(amountField).movePointLeft(2);
-
             byte[] requestPayload = this.isoMessageParser.pack(request);
 
-            SwitchTransactionRegistrationResult registrationResult = this.switchTransactionService.registerRequest(
-                    terminalId, request.getString(11), request.getString(37), request.getString(3),
-                    request.getMTI(), request.getString(7), transactionAmount, currencyCode, requestPayload);
+            SwitchTransactionRegistrationResult registrationResult = this.switchTransactionService.registerRequest(terminalId,
+                    request.getString(11), request.getString(37), request.getString(3), mti,
+                    request.getString(7), transactionAmount, currencyCode, requestPayload
+            );
 
-            if (registrationResult.duplicate()) {
-                log.warn("Duplicate transaction received, transactionId={}, terminalId={}, stan={}",
-                        registrationResult.transactionId(), terminalId, request.getString(11));
+            switch (registrationResult.outcome()) {
+                case REQUEST_IDENTITY_CONFLICT -> {
+                    log.warn("Transaction identity conflict: existingTransactionId={}, terminalId={}, stan={}", registrationResult.transactionId(), terminalId, request.getString(11));
 
-                return this.switchTransactionService.findResponsePayload(registrationResult.transactionId())
-                        .map(payload -> {
-                            try {
-                                return isoMessageParser.unpack(payload);
-                            } catch (ISOException e) {
-                                throw new RuntimeException("Could not unpack stored transaction response", e);
-                            }
-                        })
-                        .orElseGet(() -> this.isoResponseFactory.createResponse(request, "94"));
+                    return this.isoResponseFactory.createResponse(request, ResponseCodes.DUPLICATE_TRANSACTION);
+                }
+
+                case DUPLICATE_REQUEST -> {
+                    log.warn("Duplicate transaction received, transactionId={}, terminalId={}, stan={}", registrationResult.transactionId(), terminalId, request.getString(11));
+
+                    return this.switchTransactionService.findResponsePayload(registrationResult.transactionId())
+                            .map(payload -> {
+                                try {
+                                    return this.isoMessageParser.unpack(payload);
+                                } catch (ISOException e) {
+                                    throw new IllegalStateException(
+                                            "Could not unpack stored transaction response", e
+                                    );
+                                }
+                            })
+                            .orElseGet(() -> this.isoResponseFactory.createResponse(request, ResponseCodes.DUPLICATE_TRANSACTION));
+                }
+
+                case REGISTERED -> {
+                    // Continue with normal transaction processing.
+                }
             }
 
             long transactionId = registrationResult.transactionId();
 
             try {
-                this.switchTransactionService.markProcessing(transactionId);
+                int processingStarted = this.switchTransactionService.markProcessing(transactionId);
+
+                if (processingStarted != 1) {
+                    log.warn("Could not start transaction {}; status is no longer RECEIVED", transactionId);
+
+                    return this.isoResponseFactory.createResponse(request, ResponseCodes.SYSTEM_ERROR);
+                }
 
                 ISOMsg response = this.transactionRouter.route(request);
 
@@ -120,6 +135,7 @@ public class IsoMessageHandler {
                 }
 
                 String responseCode = response.getString(39);
+
                 TransactionStatus status = ResponseCodes.APPROVED.equals(responseCode) ? TransactionStatus.APPROVED : TransactionStatus.DECLINED;
 
                 byte[] responsePayload = this.isoMessageParser.pack(response);
@@ -141,7 +157,6 @@ public class IsoMessageHandler {
                 return this.isoResponseFactory.createResponse(request, ResponseCodes.SYSTEM_ERROR);
             } catch (RuntimeException e) {
                 log.error("Transaction processing failed; transactionId={}", transactionId, e);
-
                 this.switchTransactionService.markFailed(transactionId, TransactionStatus.FAILED);
                 throw e;
             }

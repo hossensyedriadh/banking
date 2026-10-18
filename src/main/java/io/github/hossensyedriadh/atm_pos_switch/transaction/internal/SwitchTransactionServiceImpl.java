@@ -1,10 +1,8 @@
 package io.github.hossensyedriadh.atm_pos_switch.transaction.internal;
 
+import io.github.hossensyedriadh.atm_pos_switch.transaction.api.enumerator.TransactionRegistrationOutcome;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.enumerator.TransactionStatus;
-import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.OriginalDataElements;
-import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.SwitchTransactionRegistrationResult;
-import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.SwitchTransactionSummary;
-import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.TransactionCompletionResult;
+import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.*;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.service.SwitchTransactionService;
 import lombok.extern.log4j.Log4j2;
 import org.jspecify.annotations.Nullable;
@@ -15,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Log4j2
@@ -28,7 +27,7 @@ class SwitchTransactionServiceImpl implements SwitchTransactionService {
     }
 
     @Override
-    public void markProcessing(long transactionId) {
+    public int markProcessing(long transactionId) {
         int updated = this.switchTransactionRepository.markAsProcessing(transactionId);
 
         if (updated != 1) {
@@ -37,6 +36,8 @@ class SwitchTransactionServiceImpl implements SwitchTransactionService {
         }
 
         log.info("Marked transaction {} as {}", transactionId, TransactionStatus.PROCESSING.toString());
+
+        return updated;
     }
 
     @Override
@@ -90,34 +91,50 @@ class SwitchTransactionServiceImpl implements SwitchTransactionService {
     }
 
     @Override
-    public SwitchTransactionRegistrationResult registerRequest(String terminalId, String stan, String retrievalReference,
-                                                               String processingCode, String requestMti,
-                                                               String transmissionDateTime, BigDecimal transactionAmount,
-                                                               String currencyCode, byte[] requestPayload) {
+    public SwitchTransactionRegistrationResult registerRequest(String terminalId, String stan, String retrievalReference, String processingCode, String requestMti, String transmissionDateTime,
+                                                               BigDecimal transactionAmount, String currencyCode, byte[] requestPayload) {
         try {
-            long transactionId = this.switchTransactionRepository.insertReceived(terminalId, stan, retrievalReference, processingCode,
-                    requestMti, transmissionDateTime, transactionAmount, currencyCode, requestPayload);
+            long transactionId = this.switchTransactionRepository.insertReceived(terminalId, stan, retrievalReference, processingCode, requestMti,
+                    transmissionDateTime, transactionAmount, currencyCode, requestPayload);
 
             log.info("Registered transaction ID={}", transactionId);
 
-            return new SwitchTransactionRegistrationResult(transactionId, false);
+            return new SwitchTransactionRegistrationResult(
+                    transactionId, TransactionRegistrationOutcome.REGISTERED);
         } catch (DuplicateKeyException e) {
             if (!violatesDuplicateTransactionIndex(e)) {
                 throw e;
             }
 
-            return this.switchTransactionRepository.findIdByDuplicateKey(terminalId, stan, transmissionDateTime)
-                    .map(id -> new SwitchTransactionRegistrationResult(id, true))
+            DuplicateTransactionCandidate candidate = this.switchTransactionRepository.findDuplicateTransaction(
+                            terminalId, stan, transmissionDateTime)
                     .orElseThrow(() -> {
                         log.warn("Duplicate transaction index was violated, but the original transaction could not be found");
-                        return new RuntimeException("Duplicate transaction index was violated", e);
+                        return new IllegalStateException("Duplicate transaction index was violated", e);
                     });
+
+            boolean sameRequest = Objects.equals(candidate.retrievalReference(), retrievalReference)
+                    && Objects.equals(candidate.processingCode(), processingCode)
+                    && Objects.equals(candidate.requestMti(), requestMti)
+                    && candidate.transactionAmount() != null && transactionAmount != null
+                    && candidate.transactionAmount().compareTo(transactionAmount) == 0
+                    && Objects.equals(candidate.currencyCode() == null ? null : candidate.currencyCode().trim(),
+                    currencyCode == null ? null : currencyCode.trim());
+
+            if (!sameRequest) {
+                log.warn("Transaction identity conflict: terminalId={}, STAN={}, transmissionDateTime={}", terminalId, stan, transmissionDateTime);
+                return new SwitchTransactionRegistrationResult(candidate.id(), TransactionRegistrationOutcome.REQUEST_IDENTITY_CONFLICT);
+            }
+
+            log.info("Duplicate request matches existing transaction ID={}", candidate.id());
+
+            return new SwitchTransactionRegistrationResult(candidate.id(), TransactionRegistrationOutcome.DUPLICATE_REQUEST);
         }
     }
 
     @Override
-    public Optional<Long> registerReversalRequest(String terminalId, String stan, String retrievalReference, String processingCode,
-                                                  String requestMti, String transmissionDateTime, long originalTransactionId) {
+    public ReversalRegistrationResult registerReversalRequest(String terminalId, String stan, String retrievalReference, String processingCode,
+                                                              String requestMti, String transmissionDateTime, long originalTransactionId) {
         return this.switchTransactionRepository.insertReversalReceived(terminalId, stan, retrievalReference, processingCode,
                 requestMti, transmissionDateTime, originalTransactionId);
     }
@@ -167,8 +184,13 @@ class SwitchTransactionServiceImpl implements SwitchTransactionService {
     }
 
     @Override
-    public int resolveUnknownReversal(long reversalTransactionId, String responseCode, TransactionStatus resolvedStatus, Long cbsReversalTransactionId, byte[] responsePayload) {
-        return this.switchTransactionRepository.resolveUnknownReversal(reversalTransactionId, responseCode, resolvedStatus, cbsReversalTransactionId, responsePayload);
+    public int resolveUnknownReversalAndUpdateOriginal(long reversalTransactionId, long originalCbsTransactionId, String responseCode, Long cbsReversalTransactionId, byte[] responsePayload) {
+        return this.switchTransactionRepository.resolveUnknownReversalAndUpdateOriginal(reversalTransactionId, originalCbsTransactionId, responseCode, cbsReversalTransactionId, responsePayload);
+    }
+
+    @Override
+    public int completeReversalAtomically(long reversalTransactionId, long originalTransactionId, Long originalCbsTransactionId, String responseCode, TransactionStatus resolvedStatus, Long cbsReversalTransactionId, byte[] responsePayload) {
+        return this.switchTransactionRepository.completeReversalAtomically(reversalTransactionId, originalTransactionId, originalCbsTransactionId, responseCode, resolvedStatus, cbsReversalTransactionId, responsePayload);
     }
 
     @Override

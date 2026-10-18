@@ -27,11 +27,15 @@ public class IsoResponseFactory {
             this.copyField(request, response, 41);
             this.copyField(request, response, 49);
 
+            if ("0400".equals(request.getMTI())) {
+                this.copyField(request, response, 90);
+            }
+
             response.set(39, responseCode);
 
             return response;
         } catch (ISOException e) {
-            log.warn("ISOException occurred while creating response: {}", e.getMessage());
+            log.error("Failed to create ISO response", e);
             throw new RuntimeException("Failed to create response", e);
         }
     }

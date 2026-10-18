@@ -1,15 +1,16 @@
 package io.github.hossensyedriadh.atm_pos_switch.transaction.internal;
 
 import io.github.hossensyedriadh.atm_pos_switch.iso8583.util.ProcessingCodes;
+import io.github.hossensyedriadh.atm_pos_switch.iso8583.util.ResponseCodes;
+import io.github.hossensyedriadh.atm_pos_switch.transaction.api.enumerator.ReversalRegistrationOutcome;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.enumerator.TransactionStatus;
-import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.OriginalDataElements;
-import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.SwitchTransactionSummary;
-import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.TransactionCompletionResult;
+import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.*;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -46,26 +47,103 @@ class SwitchTransactionRepository {
         return id;
     }
 
-    public Optional<Long> insertReversalReceived(String terminalId, String stan, String retrievalReference,
-                                                 String processingCode, String requestMti, String transmissionDateTime, long originalTransactionId) {
+    @Transactional
+    public ReversalRegistrationResult insertReversalReceived(String terminalId, String stan, String retrievalReference, String processingCode, String requestMti, String transmissionDateTime, long originalTransactionId) {
         List<Long> ids = this.jdbcTemplate.query("""
                         INSERT INTO switch.switch_transactions (
-                            terminal_id, stan, retrieval_reference,
-                            processing_code, request_mti,
-                            transmission_date_time, reversal_of_transaction_id,
+                            terminal_id,
+                            stan,
+                            retrieval_reference,
+                            processing_code,
+                            request_mti,
+                            transmission_date_time,
+                            reversal_of_transaction_id,
                             status
                         )
                         VALUES (?, ?, ?, ?, ?, ?, ?, 'RECEIVED')
-                        ON CONFLICT (reversal_of_transaction_id)
-                            WHERE reversal_of_transaction_id IS NOT NULL
-                        DO NOTHING
+                        ON CONFLICT DO NOTHING
                         RETURNING id
                         """,
                 (rs, _) -> rs.getLong("id"),
                 terminalId, stan, retrievalReference, processingCode, requestMti, transmissionDateTime, originalTransactionId
         );
 
-        return ids.stream().findFirst();
+        if (!ids.isEmpty()) {
+            return new ReversalRegistrationResult(ids.getFirst(), ReversalRegistrationOutcome.REGISTERED);
+        }
+
+        List<Long> requestIds = this.jdbcTemplate.query("""
+                        SELECT id, reversal_of_transaction_id
+                        FROM switch.switch_transactions
+                        WHERE terminal_id = ?
+                          AND stan = ?
+                          AND transmission_date_time = ?
+                        """,
+                (rs, _) -> {
+                    long existingOriginalId = rs.getLong("reversal_of_transaction_id");
+
+                    if (rs.wasNull()) {
+                        return null;
+                    }
+
+                    return existingOriginalId == originalTransactionId ? rs.getLong("id") : -rs.getLong("id");
+                }, terminalId, stan, transmissionDateTime
+        );
+
+        if (!requestIds.isEmpty()) {
+            Long existingId = requestIds.getFirst();
+
+            if (existingId > 0) {
+                return new ReversalRegistrationResult(existingId, ReversalRegistrationOutcome.DUPLICATE_REQUEST);
+            }
+
+            return new ReversalRegistrationResult(null, ReversalRegistrationOutcome.REQUEST_IDENTITY_CONFLICT);
+        }
+
+        List<Long> reversalIds = this.jdbcTemplate.query("""
+                        SELECT id
+                        FROM switch.switch_transactions
+                        WHERE reversal_of_transaction_id = ?
+                        """,
+                (rs, _) -> rs.getLong("id"),
+                originalTransactionId
+        );
+
+        if (!reversalIds.isEmpty()) {
+            return new ReversalRegistrationResult(reversalIds.getFirst(), ReversalRegistrationOutcome.ORIGINAL_ALREADY_REVERSED);
+        }
+
+        throw new IllegalStateException("Reversal registration conflicted with an unexpected database constraint");
+    }
+
+    public Optional<DuplicateTransactionCandidate> findDuplicateTransaction(String terminalId, String stan, String transmissionDateTime) {
+        String sql = """
+                SELECT id,
+                       retrieval_reference,
+                       processing_code,
+                       request_mti,
+                       transaction_amount,
+                       currency_code
+                FROM switch.switch_transactions
+                WHERE terminal_id = ?
+                  AND stan = ?
+                  AND transmission_date_time = ?
+                """;
+
+        return this.jdbcTemplate.query(sql, resultSet -> {
+            if (!resultSet.next()) {
+                return Optional.empty();
+            }
+
+            return Optional.of(new DuplicateTransactionCandidate(
+                    resultSet.getLong("id"),
+                    resultSet.getString("retrieval_reference"),
+                    resultSet.getString("processing_code"),
+                    resultSet.getString("request_mti"),
+                    resultSet.getBigDecimal("transaction_amount"),
+                    resultSet.getString("currency_code")
+            ));
+        }, terminalId, stan, transmissionDateTime);
     }
 
     public Optional<Long> findIdByDuplicateKey(String terminalId, String stan, String transmissionDateTime) {
@@ -85,9 +163,12 @@ class SwitchTransactionRepository {
 
     public int markAsProcessing(long id) {
         return this.jdbcTemplate.update("""
-                UPDATE switch.switch_transactions t
-                SET status = 'PROCESSING', processing_started_at = CURRENT_TIMESTAMP
-                WHERE t.id = ? AND t.status = 'RECEIVED'""", id);
+                UPDATE switch.switch_transactions
+                SET status = 'PROCESSING',
+                    processing_started_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                  AND status = 'RECEIVED'
+                """, id);
     }
 
     public int markStuckProcessingAsUnknown(Duration timeout) {
@@ -303,12 +384,134 @@ class SwitchTransactionRepository {
                         """, responseCode, resolvedStatus.name(), cbsTransactionId, responsePayload, id);
     }
 
-    public int resolveUnknownReversal(long reversalTransactionId, String responseCode, TransactionStatus resolvedStatus, Long cbsReversalTransactionId, byte[] responsePayload) {
+    @Transactional
+    public int resolveUnknownReversalAndUpdateOriginal(long reversalTransactionId, long originalCbsTransactionId, String responseCode, Long cbsReversalTransactionId, byte[] responsePayload) {
+        if (!ResponseCodes.APPROVED.equals(responseCode) || cbsReversalTransactionId == null) {
+            throw new IllegalArgumentException("A reconciled successful reversal requires response code 00 and a CBS reversal ID");
+        }
+
+        List<Long> originalIds = jdbcTemplate.query("""
+                        SELECT original.id
+                        FROM switch.switch_transactions reversal
+                        JOIN switch.switch_transactions original
+                          ON original.id = reversal.reversal_of_transaction_id
+                        WHERE reversal.id = ?
+                          AND reversal.status = 'UNKNOWN'
+                          AND reversal.request_mti = '0400'
+                          AND original.cbs_txn_id = ?
+                          AND (
+                                original.cbs_reversal_txn_id IS NULL
+                                OR original.cbs_reversal_txn_id = ?
+                              )
+                        FOR UPDATE OF reversal, original
+                        """,
+                (rs, _) -> rs.getLong("id"),
+                reversalTransactionId, originalCbsTransactionId, cbsReversalTransactionId);
+
+        if (originalIds.isEmpty()) {
+            return 0;
+        }
+
+        int originalUpdated = jdbcTemplate.update("""
+                        UPDATE switch.switch_transactions
+                        SET cbs_reversal_txn_id = ?
+                        WHERE id = ?
+                          AND cbs_txn_id = ?
+                          AND (
+                                cbs_reversal_txn_id IS NULL
+                                OR cbs_reversal_txn_id = ?
+                              )
+                        """,
+                cbsReversalTransactionId, originalIds.getFirst(), originalCbsTransactionId, cbsReversalTransactionId);
+
+        if (originalUpdated != 1) {
+            throw new IllegalStateException("Could not update original transaction reversal reference");
+        }
+
+        int reversalUpdated = jdbcTemplate.update("""
+                        UPDATE switch.switch_transactions
+                        SET response_code = ?,
+                            status = 'APPROVED',
+                            cbs_txn_id = ?,
+                            response_payload = ?,
+                            completed_at = CURRENT_TIMESTAMP
+                        WHERE id = ?
+                          AND status = 'UNKNOWN'
+                          AND request_mti = '0400'
+                          AND reversal_of_transaction_id = ?
+                        """,
+                responseCode, cbsReversalTransactionId, responsePayload, reversalTransactionId, originalIds.getFirst());
+
+        if (reversalUpdated != 1) {
+            throw new IllegalStateException("Could not resolve unknown reversal transaction");
+        }
+
+        return 1;
+    }
+
+    @Transactional
+    public int completeReversalAtomically(long reversalTransactionId, long originalTransactionId, Long originalCbsTransactionId, String responseCode, TransactionStatus resolvedStatus, Long cbsReversalTransactionId, byte[] responsePayload) {
         if (resolvedStatus != TransactionStatus.APPROVED && resolvedStatus != TransactionStatus.DECLINED) {
             throw new IllegalArgumentException("Resolved status must be APPROVED or DECLINED");
         }
 
-        return this.jdbcTemplate.update("""
+        if (resolvedStatus == TransactionStatus.APPROVED && (cbsReversalTransactionId == null || originalCbsTransactionId == null)) {
+            throw new IllegalArgumentException("Successful reversal requires both CBS transaction IDs");
+        }
+
+        if (resolvedStatus == TransactionStatus.APPROVED && !ResponseCodes.APPROVED.equals(responseCode)) {
+            throw new IllegalArgumentException("APPROVED status requires response code 00");
+        }
+
+        if (resolvedStatus == TransactionStatus.DECLINED && (responseCode == null || !responseCode.matches("\\d{2}")
+                || ResponseCodes.APPROVED.equals(responseCode))) {
+            throw new IllegalArgumentException("DECLINED status requires a non-approval response code");
+        }
+
+        List<Long> originalIds = this.jdbcTemplate.query("""
+                        SELECT original.id
+                        FROM switch.switch_transactions original
+                        JOIN switch.switch_transactions reversal
+                          ON reversal.reversal_of_transaction_id = original.id
+                        WHERE reversal.id = ?
+                          AND reversal.status = 'PROCESSING'
+                          AND reversal.request_mti = '0400'
+                          AND original.id = ?
+                        FOR UPDATE OF original, reversal
+                        """,
+                (rs, _) -> rs.getLong("reversal_of_transaction_id"),
+                reversalTransactionId,
+                originalTransactionId
+        );
+
+        if (originalIds.isEmpty()) {
+            return 0;
+        }
+
+        if (cbsReversalTransactionId != null) {
+            if (originalCbsTransactionId == null) {
+                throw new IllegalArgumentException("Original CBS transaction ID must not be null");
+            }
+
+            int originalUpdated = this.jdbcTemplate.update("""
+                            UPDATE switch.switch_transactions
+                            SET cbs_reversal_txn_id = ?
+                            WHERE id = ?
+                              AND cbs_txn_id = ?
+                              AND (
+                                  cbs_reversal_txn_id IS NULL
+                                  OR cbs_reversal_txn_id = ?
+                              )
+                            """,
+                    cbsReversalTransactionId, originalTransactionId, originalCbsTransactionId, cbsReversalTransactionId
+            );
+
+            if (originalUpdated != 1) {
+                throw new IllegalStateException("Could not update original transaction with CBS reversal ID");
+            }
+        }
+
+        int reversalUpdated = this.jdbcTemplate.update("""
                         UPDATE switch.switch_transactions
                         SET response_code = ?,
                             status = ?,
@@ -316,13 +519,18 @@ class SwitchTransactionRepository {
                             response_payload = ?,
                             completed_at = CURRENT_TIMESTAMP
                         WHERE id = ?
-                          AND status = 'UNKNOWN'
+                          AND status = 'PROCESSING'
                           AND request_mti = '0400'
-                          AND reversal_of_transaction_id IS NOT NULL
+                          AND reversal_of_transaction_id = ?
                         """,
-                responseCode, resolvedStatus.name(), cbsReversalTransactionId,
-                responsePayload, reversalTransactionId
+                responseCode, resolvedStatus.name(), cbsReversalTransactionId, responsePayload, reversalTransactionId, originalTransactionId
         );
+
+        if (reversalUpdated != 1) {
+            throw new IllegalStateException("Could not finalize reversal transaction");
+        }
+
+        return 1;
     }
 
     public int updateCbsAccountAndCurrencyIds(long transactionId, Long accountId, Long currencyId) {

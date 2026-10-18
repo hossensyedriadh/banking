@@ -1,6 +1,7 @@
 package io.github.hossensyedriadh.atm_pos_switch.corebanking.internal;
 
 import io.github.hossensyedriadh.atm_pos_switch.corebanking.api.enumerator.TransactionStatus;
+import io.github.hossensyedriadh.atm_pos_switch.corebanking.api.enumerator.TransactionType;
 import io.github.hossensyedriadh.atm_pos_switch.corebanking.api.model.*;
 import io.github.hossensyedriadh.atm_pos_switch.corebanking.api.service.CoreBankingService;
 import io.github.hossensyedriadh.atm_pos_switch.exception.CoreBankingCommunicationException;
@@ -141,6 +142,19 @@ class CoreBankingServiceImpl implements CoreBankingService {
             if (reversalResponse.getId() == null || !Objects.equals(reversalResponse.getReversalOfTransactionId(), originalTransaction.cbsTxnId())) {
                 log.error("CBS returned an incomplete or inconsistent reversal response");
                 throw new CoreBankingCommunicationException("CBS returned an incomplete or inconsistent reversal response");
+            }
+
+            if (reversalResponse.getTransactionType() != TransactionType.REVERSAL) {
+                log.error("CBS returned an unexpected transaction type {} for reversal", reversalResponse.getTransactionType());
+                throw new CoreBankingCommunicationException("CBS returned an unexpected transaction type for reversal");
+            }
+
+            String returnedIdempotencyKey = reversalResponse.getIdempotencyKey();
+
+            if (returnedIdempotencyKey != null && !returnedIdempotencyKey.isBlank()
+                    && !reversalReference.equals(returnedIdempotencyKey)) {
+                log.error("CBS returned a mismatched reversal idempotency key");
+                throw new CoreBankingCommunicationException("CBS returned a mismatched reversal idempotency key");
             }
 
             if (reversalResponse.getStatus() != TransactionStatus.COMPLETED) {
