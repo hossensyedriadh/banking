@@ -60,7 +60,9 @@ switch:
     port: "${SWITCH_TCP_PORT}"
     read-timeout: ${SWITCH_TCP_READ_TIMEOUT:30000}
     idle-timeout: ${SWITCH_TCP_IDLE_TIMEOUT:300000}
-  reconciliation:
-    fixed-delay: ${RECONCILIATION_FIXED_DELAY:30000}
+  unknown-transactions-reconciliation:
+    fixed-delay: ${UNKNOWN_TXN_RECONCILIATION_FIXED_DELAY:30000}
+  stuck-transactions-recovery:
+    fixed-delay: ${STUCK_TXN_RECOVERY_FIXED_DELAY:60000}
 cbs:
   base-url: "${CBS_BASE_URL}"

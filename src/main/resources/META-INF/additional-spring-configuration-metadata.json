@@ -21,9 +21,14 @@
       "description": "TCP Idle timeout in milliseconds."
     },
     {
-      "name": "switch.reconciliation.fixed-delay",
+      "name": "switch.unknown-transactions-reconciliation.fixed-delay",
       "type": "java.lang.Integer",
       "description": "Switch's unknown transactions reconciliation fixed delay in milliseconds."
+    },
+    {
+      "name": "switch.stuck-transactions-recovery.fixed-delay",
+      "type": "java.lang.Integer",
+      "description": "Switch's stuck transactions recovery fixed delay in milliseconds."
     },
     {
       "name": "cbs.base-url",

@@ -10,7 +10,10 @@ import io.github.hossensyedriadh.atm_pos_switch.iso8583.util.ResponseCodes;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.enumerator.TransactionStatus;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.SwitchTransactionSummary;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.service.SwitchTransactionService;
+import io.github.hossensyedriadh.atm_pos_switch.util.DistributedLockKeys;
 import lombok.extern.log4j.Log4j2;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -19,6 +22,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 @Log4j2
 @Service
@@ -28,18 +32,40 @@ public class UnknownTransactionReconciliationService {
     private final SwitchTransactionService switchTransactionService;
     private final CoreBankingService coreBankingService;
     private final IsoResponseReconstructor isoResponseReconstructor;
+    private final RedissonClient redissonClient;
 
     @Autowired
-    public UnknownTransactionReconciliationService(SwitchTransactionService switchTransactionService, CoreBankingService coreBankingService, IsoResponseReconstructor isoResponseReconstructor) {
+    public UnknownTransactionReconciliationService(SwitchTransactionService switchTransactionService, CoreBankingService coreBankingService,
+                                                   IsoResponseReconstructor isoResponseReconstructor, RedissonClient redissonClient) {
         this.switchTransactionService = switchTransactionService;
         this.coreBankingService = coreBankingService;
         this.isoResponseReconstructor = isoResponseReconstructor;
+        this.redissonClient = redissonClient;
     }
 
-    @Scheduled(fixedDelayString = "${switch.reconciliation.fixed-delay:30000}")
-    public void reconcileUnknownTransactions() {
-        this.reconcileUnknownWithdrawals();
-        this.reconcileUnknownReversals();
+    @Scheduled(fixedDelayString = "${switch.unknown-transactions-reconciliation.fixed-delay}")
+    public void reconcileUnknownTransactions() throws InterruptedException {
+        RLock lock = this.redissonClient.getLock(DistributedLockKeys.RECONCILE_UNKNOWN_TRANSACTIONS.getKey());
+
+        boolean acquired = lock.tryLock(0, 30, TimeUnit.MINUTES);
+
+        if (!acquired) {
+            log.warn("Another instance is already handling  unknown transactions reconciliation process lock: {}", DistributedLockKeys.RECONCILE_UNKNOWN_TRANSACTIONS.getKey());
+            return;
+        }
+
+        log.info("Unknown transactions reconciliation process lock acquired: {}", DistributedLockKeys.RECONCILE_UNKNOWN_TRANSACTIONS.getKey());
+
+        try {
+            this.reconcileUnknownWithdrawals();
+            this.reconcileUnknownReversals();
+        } finally {
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+
+                log.info("Unknown transactions reconciliation process lock released: {}", DistributedLockKeys.RECONCILE_UNKNOWN_TRANSACTIONS.getKey());
+            }
+        }
     }
 
     private void reconcileUnknownWithdrawals() {
