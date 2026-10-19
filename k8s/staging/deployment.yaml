@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: switch
+  namespace: banking-switch-staging
+  labels:
+    app: switch
+spec:
+  selector:
+    matchLabels:
+      app: switch
+  template:
+    metadata:
+      labels:
+        app: switch
+      name: switch
+    spec:
+      imagePullSecrets:
+        - name: nexus-oss-docker
+      containers:
+        - name: switch
+          image: __IMAGE__
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: switch
+            - secretRef:
+                name: switch
+          volumeMounts:
+            - mountPath: /log/switch
+              name: app-logs
+            - mountPath: /heapdumps
+              name: heapdump
+          env:
+            - name: LOG_PATH
+              value: /log/switch
+          resources:
+            requests:
+              cpu: 150m
+              memory: 1Gi
+            limits:
+              cpu: 1
+              memory: 2Gi
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 3
+      volumes:
+        - name: app-logs
+          hostPath:
+            path: /var/log/banking/switch/logs
+            type: DirectoryOrCreate
+        - name: heapdump
+          hostPath:
+            path: /var/log/banking/switch/heapdumps
+            type: DirectoryOrCreate
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      hostAliases:
+        - ip: "192.168.59.10"
+          hostnames:
+            - "postgres.cerberus.internal"
+            - "redis.cerberus.internal"
+      restartPolicy: Always

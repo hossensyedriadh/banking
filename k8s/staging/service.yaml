@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: switch
+  namespace: banking-switch-staging
+spec:
+  selector:
+    app: switch
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30100
+  type: NodePort
