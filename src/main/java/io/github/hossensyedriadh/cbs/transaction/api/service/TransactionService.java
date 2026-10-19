@@ -4,6 +4,7 @@ import io.github.hossensyedriadh.cbs.transaction.api.command.*;
 import io.github.hossensyedriadh.cbs.transaction.api.model.AccountTransactionView;
 import io.github.hossensyedriadh.cbs.transaction.api.model.TransactionView;
 import jakarta.validation.Valid;
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -12,6 +13,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TransactionService {
+    Page<TransactionView> getTransactionsInDateRange(OffsetDateTime startDate, OffsetDateTime endDate, @Nullable Long accountId, Pageable pageable);
+
     Page<AccountTransactionView> getAccountTransactions(Long accountId, Pageable pageable);
 
     List<TransactionView> getTransactions(Long accountId, OffsetDateTime from, OffsetDateTime to);

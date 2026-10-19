@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.time.OffsetDateTime;
 import java.util.Optional;
 
 @RestController
@@ -43,13 +44,29 @@ public class TransactionController {
         binder.registerCustomEditor(String.class, stringTrimmerEditor);
     }
 
+    @Operation(summary = "Get transactions in date range", description = "Retrieve a paginated list of transactions within a specified date range",
+            parameters = {
+                    @Parameter(name = "from", description = "Start date of the date range", required = true, example = "2023-01-01T00:00:00Z"),
+                    @Parameter(name = "to", description = "End date of the date range", required = true, example = "2023-01-31T23:59:59Z"),
+                    @Parameter(name = "accountId", description = "Account ID to filter transactions by", example = "1234567890")
+            },
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = TransactionView.class)))
+            })
+    @GetMapping(params = {"from", "to"})
+    public ResponseEntity<Page<TransactionView>> getTransactionsInDateRange(@RequestParam("from") OffsetDateTime startDate, @RequestParam("to") OffsetDateTime endDate,
+                                                                            @RequestParam(value = "accountId", required = false) Long accountId, Pageable pageable) {
+        Page<TransactionView> transactions = this.transactionService.getTransactionsInDateRange(startDate, endDate, accountId, pageable);
+
+        return ResponseEntity.ok(transactions);
+    }
+
     @Operation(summary = "Get account transactions", description = "Retrieve a paginated list of transactions for a specific account",
             parameters = {
                     @Parameter(name = "id", description = "Account ID", required = true, example = "1234567890")
             },
             responses = {
-                    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = AccountTransactionView.class))),
-                    @ApiResponse(responseCode = "404", description = "Account not found", content = @Content)
+                    @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = AccountTransactionView.class)))
             })
     @GetMapping("/account/{id}")
     public ResponseEntity<Page<AccountTransactionView>> getAccountTransaction(@PathVariable("id") Long accountId, Pageable pageable) {

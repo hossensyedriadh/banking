@@ -14,6 +14,10 @@ import java.util.Optional;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
+    Page<Transaction> findAllByAccountIdAndCreatedAtBetween(Long accountId, OffsetDateTime from, OffsetDateTime to, Pageable pageable);
+
+    Page<Transaction> findAllByCreatedAtBetween(OffsetDateTime from, OffsetDateTime to, Pageable pageable);
+
     Page<Transaction> findAllByAccountId(Long accountId, Pageable pageable);
 
     @Query("""

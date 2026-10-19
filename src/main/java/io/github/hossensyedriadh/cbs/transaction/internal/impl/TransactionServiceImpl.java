@@ -31,6 +31,7 @@ import io.github.hossensyedriadh.cbs.transaction.internal.util.TransactionRefere
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -81,6 +82,16 @@ public class TransactionServiceImpl implements TransactionService {
         this.outboxEventService = outboxEventService;
         this.applicationEventPublisher = applicationEventPublisher;
         this.httpServletRequest = httpServletRequest;
+    }
+
+    @Override
+    public Page<TransactionView> getTransactionsInDateRange(OffsetDateTime startDate, OffsetDateTime endDate, @Nullable Long accountId, Pageable pageable) {
+        if (accountId != null) {
+            return this.transactionRepository.findAllByAccountIdAndCreatedAtBetween(accountId, startDate, endDate, pageable)
+                    .map(this.transactionMapper::toView);
+        }
+
+        return this.transactionRepository.findAllByCreatedAtBetween(startDate, endDate, pageable).map(this.transactionMapper::toView);
     }
 
     @Override
