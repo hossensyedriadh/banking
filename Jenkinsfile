@@ -7,7 +7,7 @@ pipeline {
         GITHUB_API_URL = "https://api.github.com/repos/hossensyedriadh/${GITHUB_REPO}/deployments"
         DEPLOYMENT_ID = ''
         ENVIRONMENT = 'staging'
-        K8S_NAMESPACE = 'banking-switch-staging'
+        K8S_NAMESPACE = 'banking-channel-services-staging'
         NEXUS_REGISTRY = "192.168.59.10:7081"
     }
 
