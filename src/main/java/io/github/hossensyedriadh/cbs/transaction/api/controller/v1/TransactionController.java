@@ -4,6 +4,8 @@ import io.github.hossensyedriadh.cbs.transaction.api.command.CreateDepositComman
 import io.github.hossensyedriadh.cbs.transaction.api.command.CreateTransferCommand;
 import io.github.hossensyedriadh.cbs.transaction.api.command.CreateWithdrawalCommand;
 import io.github.hossensyedriadh.cbs.transaction.api.command.ReverseTransactionCommand;
+import io.github.hossensyedriadh.cbs.transaction.api.enumerator.TransactionStatus;
+import io.github.hossensyedriadh.cbs.transaction.api.enumerator.TransactionType;
 import io.github.hossensyedriadh.cbs.transaction.api.model.AccountTransactionView;
 import io.github.hossensyedriadh.cbs.transaction.api.model.TransactionView;
 import io.github.hossensyedriadh.cbs.transaction.api.service.TransactionService;
@@ -48,15 +50,19 @@ public class TransactionController {
             parameters = {
                     @Parameter(name = "from", description = "Start date of the date range", required = true, example = "2023-01-01T00:00:00Z"),
                     @Parameter(name = "to", description = "End date of the date range", required = true, example = "2023-01-31T23:59:59Z"),
-                    @Parameter(name = "accountId", description = "Account ID to filter transactions by", example = "1234567890")
+                    @Parameter(name = "accountId", description = "Account ID to filter transactions by", example = "1234567890"),
+                    @Parameter(name = "type", description = "Transaction type to filter transactions by", example = "DEPOSIT"),
+                    @Parameter(name = "status", description = "Transaction status to filter transactions by", example = "COMPLETED"),
             },
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = TransactionView.class)))
             })
     @GetMapping(params = {"from", "to"})
     public ResponseEntity<Page<TransactionView>> getTransactionsInDateRange(@RequestParam("from") OffsetDateTime startDate, @RequestParam("to") OffsetDateTime endDate,
-                                                                            @RequestParam(value = "accountId", required = false) Long accountId, Pageable pageable) {
-        Page<TransactionView> transactions = this.transactionService.getTransactionsInDateRange(startDate, endDate, accountId, pageable);
+                                                                            @RequestParam(value = "accountId", required = false) Long accountId, @RequestParam(value = "type", required = false)
+                                                                            TransactionType type, @RequestParam(value = "status", required = false) TransactionStatus status,
+                                                                            Pageable pageable) {
+        Page<TransactionView> transactions = this.transactionService.getTransactionsInDateRange(startDate, endDate, type, status, accountId, pageable);
 
         return ResponseEntity.ok(transactions);
     }

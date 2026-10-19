@@ -1,6 +1,8 @@
 package io.github.hossensyedriadh.cbs.transaction.api.service;
 
 import io.github.hossensyedriadh.cbs.transaction.api.command.*;
+import io.github.hossensyedriadh.cbs.transaction.api.enumerator.TransactionStatus;
+import io.github.hossensyedriadh.cbs.transaction.api.enumerator.TransactionType;
 import io.github.hossensyedriadh.cbs.transaction.api.model.AccountTransactionView;
 import io.github.hossensyedriadh.cbs.transaction.api.model.TransactionView;
 import jakarta.validation.Valid;
@@ -13,7 +15,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TransactionService {
-    Page<TransactionView> getTransactionsInDateRange(OffsetDateTime startDate, OffsetDateTime endDate, @Nullable Long accountId, Pageable pageable);
+    Page<TransactionView> getTransactionsInDateRange(OffsetDateTime startDate, OffsetDateTime endDate, @Nullable TransactionType type,
+                                                     @Nullable TransactionStatus status, @Nullable Long accountId, Pageable pageable);
 
     Page<AccountTransactionView> getAccountTransactions(Long accountId, Pageable pageable);
 

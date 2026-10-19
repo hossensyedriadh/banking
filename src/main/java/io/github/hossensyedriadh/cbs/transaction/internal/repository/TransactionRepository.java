@@ -1,5 +1,7 @@
 package io.github.hossensyedriadh.cbs.transaction.internal.repository;
 
+import io.github.hossensyedriadh.cbs.transaction.api.enumerator.TransactionStatus;
+import io.github.hossensyedriadh.cbs.transaction.api.enumerator.TransactionType;
 import io.github.hossensyedriadh.cbs.transaction.internal.domain.Transaction;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,9 +16,8 @@ import java.util.Optional;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
-    Page<Transaction> findAllByAccountIdAndCreatedAtBetween(Long accountId, OffsetDateTime from, OffsetDateTime to, Pageable pageable);
-
-    Page<Transaction> findAllByCreatedAtBetween(OffsetDateTime from, OffsetDateTime to, Pageable pageable);
+    Page<Transaction> findAllByCreatedAtBetweenAndAccountIdAndStatusAndTransactionType(OffsetDateTime createdAtAfter, OffsetDateTime createdAtBefore, Long accountId,
+                                                                                       TransactionStatus status, TransactionType transactionType, Pageable pageable);
 
     Page<Transaction> findAllByAccountId(Long accountId, Pageable pageable);
 
