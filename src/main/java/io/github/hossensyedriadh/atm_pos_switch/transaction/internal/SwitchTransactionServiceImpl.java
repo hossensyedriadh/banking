@@ -233,6 +233,11 @@ class SwitchTransactionServiceImpl implements SwitchTransactionService {
         return this.switchTransactionRepository.hasReversal(originalTransactionId);
     }
 
+    @Override
+    public List<SwitchTransactionSummary> findUnknownTransactionsForReconciliation(int batchSize) {
+        return this.switchTransactionRepository.findUnknownTransactionsForReconciliation(batchSize);
+    }
+
     private boolean violatesDuplicateTransactionIndex(Throwable exception) {
         for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
 

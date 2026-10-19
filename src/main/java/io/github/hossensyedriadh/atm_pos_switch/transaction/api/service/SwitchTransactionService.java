@@ -56,4 +56,6 @@ public interface SwitchTransactionService {
     Optional<SwitchTransactionSummary> findOriginalTransaction(String terminalId, OriginalDataElements originalData);
 
     boolean hasReversal(long originalTransactionId);
+
+    List<SwitchTransactionSummary> findUnknownTransactionsForReconciliation(int batchSize);
 }

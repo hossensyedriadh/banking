@@ -2,6 +2,7 @@ package io.github.hossensyedriadh.atm_pos_switch.transaction.scheduler;
 
 import io.github.hossensyedriadh.atm_pos_switch.corebanking.api.enumerator.TransactionType;
 import io.github.hossensyedriadh.atm_pos_switch.corebanking.api.model.CoreBankingTransactionResponse;
+import io.github.hossensyedriadh.atm_pos_switch.corebanking.api.model.CoreBankingTransactionsSearch;
 import io.github.hossensyedriadh.atm_pos_switch.corebanking.api.service.CoreBankingService;
 import io.github.hossensyedriadh.atm_pos_switch.exception.CoreBankingCommunicationException;
 import io.github.hossensyedriadh.atm_pos_switch.iso8583.response.IsoResponseReconstructor;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -72,6 +74,13 @@ public class UnknownTransactionReconciliationService {
         String idempotencyKey = Long.toString(transaction.id());
 
         Optional<CoreBankingTransactionResponse> result = this.coreBankingService.findTransactionByIdempotencyKey(idempotencyKey);
+
+        if (result.isEmpty()) {
+            OffsetDateTime from = transaction.receivedAt().minusMinutes(30);
+            OffsetDateTime to = transaction.receivedAt().plusMinutes(30);
+
+            result = this.findInCbsListing(idempotencyKey, from, to);
+        }
 
         if (result.isEmpty()) {
             log.debug("No CBS transaction found for switch withdrawal {}. Will retry later.", transaction.id());
@@ -182,6 +191,13 @@ public class UnknownTransactionReconciliationService {
         Optional<CoreBankingTransactionResponse> result = this.coreBankingService.findTransactionByIdempotencyKey(Long.toString(reversal.id()));
 
         if (result.isEmpty()) {
+            OffsetDateTime from = reversal.receivedAt().minusMinutes(30);
+            OffsetDateTime to = reversal.receivedAt().plusMinutes(30);
+
+            result = this.findInCbsListing(expectedIdempotencyKey, from, to);
+        }
+
+        if (result.isEmpty()) {
             log.debug("No CBS reversal found for switch reversal {}. Will retry later.", reversal.id());
             return;
         }
@@ -262,6 +278,13 @@ public class UnknownTransactionReconciliationService {
         }
 
         return true;
+    }
+
+    private Optional<CoreBankingTransactionResponse> findInCbsListing(String expectedIdempotencyKey, OffsetDateTime from, OffsetDateTime to) {
+        CoreBankingTransactionsSearch search = new CoreBankingTransactionsSearch(from, to, null, null, null, 0, 100);
+
+        return this.coreBankingService.findAllTransactions(search).stream().filter(transaction ->
+                expectedIdempotencyKey.equals(transaction.getIdempotencyKey())).findFirst();
     }
 }
 

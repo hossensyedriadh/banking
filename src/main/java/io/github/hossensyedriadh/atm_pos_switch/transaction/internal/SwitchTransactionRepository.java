@@ -585,6 +585,26 @@ class SwitchTransactionRepository {
         return Boolean.TRUE.equals(exists);
     }
 
+    public List<SwitchTransactionSummary> findUnknownTransactionsForReconciliation(int limit) {
+        if (limit < 1) {
+            throw new IllegalArgumentException("Limit must be greater than zero");
+        }
+
+        String sql = """
+                SELECT id, terminal_id, stan, retrieval_reference,
+                       processing_code, transaction_amount, currency_code,
+                       request_mti, response_code, status,
+                       cbs_txn_id, cbs_reversal_txn_id, received_at,
+                       processing_started_at, completed_at
+                FROM switch.switch_transactions
+                WHERE status = 'UNKNOWN'
+                ORDER BY received_at ASC, id ASC
+                LIMIT ?
+                """;
+
+        return this.jdbcTemplate.query(sql, this.transactionSummaryMapper, limit);
+    }
+
     private final RowMapper<SwitchTransactionSummary> transactionSummaryMapper =
             (rs, _) -> new SwitchTransactionSummary(
                     rs.getLong("id"),

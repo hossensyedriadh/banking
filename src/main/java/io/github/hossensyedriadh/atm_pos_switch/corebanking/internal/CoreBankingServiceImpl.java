@@ -18,7 +18,9 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -158,7 +160,7 @@ class CoreBankingServiceImpl implements CoreBankingService {
             }
 
             if (reversalResponse.getStatus() != TransactionStatus.COMPLETED) {
-                log.error("CBS did not confirm reversal completion; status=" + reversalResponse.getStatus());
+                log.error("CBS did not confirm reversal completion; status={}", reversalResponse.getStatus());
                 throw new CoreBankingCommunicationException("CBS did not confirm reversal completion; status=" + reversalResponse.getStatus());
             }
 
@@ -169,6 +171,38 @@ class CoreBankingServiceImpl implements CoreBankingService {
         } catch (RestClientException e) {
             log.error("Communication failure during CBS reversal. Switch transaction ID: {}", originalTransaction.id(), e);
             throw new CoreBankingCommunicationException("CBS reversal outcome could not be confirmed", e);
+        }
+    }
+
+    @Override
+    public CoreBankingTransactionPage findTransactions(CoreBankingTransactionsSearch search) {
+        URI uri = UriComponentsBuilder.fromUriString(this.cbsBaseUrl + "/transactions/v1")
+                .queryParam("from", search.from().toString())
+                .queryParam("to", search.to().toString())
+                .queryParam("page", search.page())
+                .queryParam("size", search.size())
+                .queryParamIfPresent("type", Optional.ofNullable(search.type()))
+                .queryParamIfPresent("status", Optional.ofNullable(search.status()))
+                .queryParamIfPresent("accountId", Optional.ofNullable(search.accountId()))
+                .build().encode()
+                .toUri();
+
+        try {
+            CoreBankingTransactionPage response = this.restClient.get().uri(uri).retrieve()
+                    .body(CoreBankingTransactionPage.class);
+
+            if (response == null || response.content() == null || response.content().isEmpty()) {
+                log.error("CBS returned an empty transaction listing response");
+                throw new CoreBankingCommunicationException("CBS returned an empty transaction listing response");
+            }
+
+            return response;
+        } catch (RestClientResponseException e) {
+            log.error("CBS returned HTTP error during transaction listing; status={}", e.getStatusCode(), e);
+            throw new CoreBankingCommunicationException("Could not retrieve CBS transactions", e);
+        } catch (RestClientException e) {
+            log.error("CBS communication failure during transaction listing", e);
+            throw new CoreBankingCommunicationException("Could not retrieve CBS transactions", e);
         }
     }
 }
