@@ -52,6 +52,8 @@ public class EndOfDayServiceImpl implements EndOfDayService {
             throw new IllegalStateException("Another instance is already running EOD");
         }
 
+        log.info("Acquired EOD lock: {}", DistributedLockKeys.EOD_RUN.getKey());
+
         try {
             LocalDate businessDate = this.businessDateService.getCurrentBusinessDate();
 
@@ -102,6 +104,8 @@ public class EndOfDayServiceImpl implements EndOfDayService {
         } finally {
             if (lock.isHeldByCurrentThread()) {
                 lock.unlock();
+
+                log.info("Released EOD lock: {}", DistributedLockKeys.EOD_RUN.getKey());
             }
         }
     }

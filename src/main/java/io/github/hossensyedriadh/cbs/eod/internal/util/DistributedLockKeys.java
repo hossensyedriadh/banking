@@ -6,7 +6,7 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public enum DistributedLockKeys {
-    EOD_RUN ("EOD_RUN");
+    EOD_RUN ("cbs:EOD_RUN");
 
     private final String key;
 }
