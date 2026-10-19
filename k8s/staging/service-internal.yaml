@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cbs
+  namespace: banking-cbs-staging
+spec:
+  type: ClusterIP
+  selector:
+    app: cbs
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
