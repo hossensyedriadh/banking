@@ -25,9 +25,9 @@ spec:
             - containerPort: 8080
           envFrom:
             - configMapRef:
-                name: switch
+                name: atm-pos-switch
             - secretRef:
-                name: switch
+                name: atm-pos-switch
           volumeMounts:
             - mountPath: /log/switch
               name: app-logs
