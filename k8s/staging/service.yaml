@@ -7,7 +7,13 @@ spec:
   selector:
     app: switch
   ports:
-    - port: 8080
+    - name: http
+      port: 8080
       targetPort: 8080
       nodePort: 30100
+    - name: iso8583-tcp
+      protocol: TCP
+      port: 15000
+      targetPort: 15000
+      nodePort: 31000
   type: NodePort
