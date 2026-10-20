@@ -135,15 +135,23 @@ public class ReversalHandler {
         } catch (CoreBankingCommunicationException e) {
             log.error("CBS reversal outcome is uncertain. reversalTransactionId={}, originalTransactionId={}", transactionId, originalTransaction.id(), e);
 
-            this.switchTransactionService.markFailed(transactionId, TransactionStatus.UNKNOWN);
+            this.markFailedSafely(transactionId, TransactionStatus.UNKNOWN, e);
 
             return this.isoResponseFactory.createResponse(request, ResponseCodes.SYSTEM_ERROR);
         } catch (RuntimeException e) {
             log.error("Unexpected reversal processing error. reversalTransactionId={}, originalTransactionId={}", transactionId, originalTransaction.id(), e);
 
-            this.switchTransactionService.markFailed(transactionId, TransactionStatus.UNKNOWN);
+            this.markFailedSafely(transactionId, TransactionStatus.UNKNOWN, e);
 
             return this.isoResponseFactory.createResponse(request, ResponseCodes.SYSTEM_ERROR);
+        }
+    }
+
+    private void markFailedSafely(long transactionId, TransactionStatus status, RuntimeException originalException) {
+        try {
+            this.switchTransactionService.markFailed(transactionId, status);
+        } catch (RuntimeException statusException) {
+            originalException.addSuppressed(statusException);
         }
     }
 }
