@@ -87,4 +87,5 @@ spec:
             - "postgres.cerberus.internal"
             - "redis.cerberus.internal"
             - "kafka.cerberus.internal"
+            - "schema-registry.cerberus.internal"
       restartPolicy: Always
