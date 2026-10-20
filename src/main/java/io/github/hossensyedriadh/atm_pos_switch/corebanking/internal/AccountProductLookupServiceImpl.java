@@ -28,7 +28,7 @@ class AccountProductLookupServiceImpl implements AccountProductLookupService {
     @Override
     public CoreBankingAccountProductResponse lookupAccountProduct(Long id) {
         try {
-            CoreBankingAccountProductResponse response = this.restClient.get().uri("/account-products/v1/" + id)
+            CoreBankingAccountProductResponse response = this.restClient.get().uri(this.cbsBaseUrl + "/account-products/v1/" + id)
                     .retrieve().body(CoreBankingAccountProductResponse.class);
 
             if (response == null) {
