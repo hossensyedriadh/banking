@@ -76,6 +76,7 @@ flowchart TD
     TX["Transaction Service"]
     ROUTER["Transaction Router"]
     BALANCE["Balance Inquiry Handler"]
+    WITHDRAW["Withdrawal Transaction Handler"]
     REVERSAL["Reversal Handler"]
     CBS["Core Banking Service Adapter"]
     CORE["Core Banking System"]
@@ -90,10 +91,12 @@ flowchart TD
     TX <--> DB
     TX --> ROUTER
     ROUTER --> BALANCE
+    ROUTER --> WITHDRAW
     ROUTER --> REVERSAL
     REVERSAL --> CBS
     CBS <-->|HTTP / REST| CORE
     BALANCE --> RESPONSE["ISO 8583 Response"]
+    WITHDRAW --> RESPONSE["ISO 8583 Response"]
     CBS --> REVERSAL
     REVERSAL --> RESPONSE
     RESPONSE --> TCP
