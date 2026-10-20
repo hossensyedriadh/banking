@@ -373,16 +373,12 @@ The project is being developed in stages.
 - [x] Duplicate request registration and response-payload storage
 - [x] Balance-inquiry handler
 - [x] Reversal request validation and original-transaction lookup
-- [ ] Complete CBS reversal integration over HTTP
-- [ ] Persist the final reversal response and status after the CBS result
-- [ ] Implement ATM cash withdrawal through the CBS
+- [x] Complete CBS reversal integration over HTTP
+- [x] Persist the final reversal response and status after the CBS result
+- [x] Implement ATM cash withdrawal through the CBS
 - [ ] Improve handling of timeouts and ambiguous outcomes
 - [ ] Extend transaction routing and supported processing codes
 - [ ] Add network-management messages such as "0800" / "0810"
-- [ ] Build a standalone ATM simulator
-- [ ] Add an API gateway
-- [ ] Build an IAM server
-- [ ] Build bank administration and customer-facing interfaces
 
 The checklist reflects the intended roadmap; it is not a claim that all planned functionality is already available.
 
