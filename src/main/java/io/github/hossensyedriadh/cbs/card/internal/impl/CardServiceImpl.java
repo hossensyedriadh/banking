@@ -168,6 +168,10 @@ public class CardServiceImpl implements CardService {
 
         log.info("Card [Network: {}] with id: {} has been issued", cardProduct.getCardNetwork().toString(), issued.getId());
 
+        //fixme: DANGEROUS LOG
+        //todo: remove after testing
+        log.info("Issued PAN: {}", generatedPan);
+
         this.createStatusHistory(issued.getId(), CardStatus.INACTIVE, "Newly issued");
 
         ChargeFeeCommand chargingCommand = new ChargeFeeCommand();
