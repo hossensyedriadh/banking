@@ -94,10 +94,14 @@ flowchart TD
     ROUTER --> WITHDRAW
     ROUTER --> REVERSAL
     REVERSAL --> CBS
+    BALANCE --> CBS
+    WITHDRAW --> CBS
     CBS <-->|HTTP / REST| CORE
     BALANCE --> RESPONSE["ISO 8583 Response"]
     WITHDRAW --> RESPONSE["ISO 8583 Response"]
     CBS --> REVERSAL
+    CBS --> BALANCE
+    CBS --> WITHDRAW
     REVERSAL --> RESPONSE
     RESPONSE --> TCP
 ```
