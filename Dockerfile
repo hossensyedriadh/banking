@@ -50,7 +50,8 @@ USER cbs
 
 EXPOSE 8080
 
-ENV JAVA_OPTS="-XX:MaxRAMPercentage=80 \
+ENV JAVA_OPTS="-Dorg.apache.avro.SERIALIZABLE_PACKAGES=io.github.hossensyedriadh.cbs \
+               -XX:MaxRAMPercentage=80 \
                -XX:InitialRAMPercentage=50 \
                -XX:MaxMetaspaceSize=256m \
                -XX:+UseG1GC \
