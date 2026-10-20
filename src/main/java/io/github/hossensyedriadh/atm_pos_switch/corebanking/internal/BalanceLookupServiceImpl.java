@@ -38,8 +38,8 @@ class BalanceLookupServiceImpl implements BalanceLookupService {
 
             return response;
         } catch (RestClientResponseException e) {
-            log.error("Failed to communicate with CBS for balance lookup", e);
-            throw new CoreBankingException("Could no complete CBS balance lookup", e);
+            log.error("CBS returned an error response for balance lookup", e);
+            throw new CoreBankingException("CBS returned an error response for balance lookup", e);
         } catch (RestClientException e) {
             log.error("Failed to communicate with CBS for balance lookup", e);
             throw new CoreBankingCommunicationException("Could no complete CBS balance lookup", e);
