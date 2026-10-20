@@ -296,7 +296,7 @@ class SwitchTransactionRepository {
                                transaction_amount, currency_code,
                                request_mti, response_code, status,
                                cbs_txn_id, cbs_reversal_txn_id,
-                               received_at, processing_started_at, completed_at
+                               received_at, processing_started_at, completed_at, response_payload
                         FROM switch.switch_transactions
                         WHERE terminal_id = ?
                           AND stan = ?
