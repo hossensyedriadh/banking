@@ -2,7 +2,6 @@ package io.github.hossensyedriadh.cbs.card.api.controller.v1;
 
 import io.github.hossensyedriadh.cbs.card.api.command.*;
 import io.github.hossensyedriadh.cbs.card.api.model.CardView;
-import io.github.hossensyedriadh.cbs.card.api.service.CardPinService;
 import io.github.hossensyedriadh.cbs.card.api.service.CardService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -28,12 +27,10 @@ import java.util.Optional;
 @Tag(name = "Card API", description = "API endpoints for managing cards")
 public class CardController {
     private final CardService cardService;
-    private final CardPinService cardPinService;
 
     @Autowired
-    public CardController(CardService cardService, CardPinService cardPinService) {
+    public CardController(CardService cardService) {
         this.cardService = cardService;
-        this.cardPinService = cardPinService;
     }
 
     @InitBinder
@@ -147,40 +144,6 @@ public class CardController {
         CardView cardView = this.cardService.activateCard(command);
 
         return ResponseEntity.ok(cardView);
-    }
-
-    @Operation(summary = "Change card PIN", description = "Change the PIN of a card",
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "PIN change command",
-                    required = true,
-                    content = @Content(schema = @Schema(implementation = ChangeCardPinCommand.class))
-            ),
-            responses = {
-                    @ApiResponse(responseCode = "204", description = "Card PIN changed successfully", content = @Content),
-                    @ApiResponse(responseCode = "404", description = "Card not found", content = @Content)
-            }
-    )
-    @PostMapping(value = "/change-pin", consumes = {MediaType.APPLICATION_JSON_VALUE})
-    public ResponseEntity<Void> changePin(@RequestBody ChangeCardPinCommand command) {
-        this.cardPinService.changePin(command);
-
-        return ResponseEntity.noContent().build();
-    }
-
-    @Operation(summary = "Unblock card PIN", description = "Unblock the PIN of a card",
-            parameters = {
-                    @Parameter(name = "cardId", description = "Card ID", required = true)
-            },
-            responses = {
-                    @ApiResponse(responseCode = "204", description = "Card PIN unblocked successfully", content = @Content),
-                    @ApiResponse(responseCode = "404", description = "Card not found", content = @Content)
-            }
-    )
-    @PostMapping("/unblock-pin/{cardId}")
-    public ResponseEntity<Void> unblockPin(@PathVariable("cardId") Long cardId) {
-        this.cardPinService.unblockPin(cardId);
-
-        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "Temporary block card", description = "Temporarily block a card",

@@ -50,12 +50,12 @@ public class CardPinServiceImpl implements CardPinService {
 
         if (!isValidCardPin) {
             log.warn("Card PIN not valid for card: {}", card.getId());
-            throw new IllegalArgumentException("Card PIN not valid");
+            throw new ApiResourceException("Card PIN not valid", HttpStatus.BAD_REQUEST);
         }
 
         if (this.cardPinRepository.existsByCardId(card.getId())) {
             log.warn("Card Pin for Card with id {} already set", card.getId());
-            throw new IllegalStateException("PIN has already been set for card");
+            throw new ApiResourceException("PIN has already been set for card", HttpStatus.CONFLICT);
         }
 
         CardPin cardPin = new CardPin();
@@ -77,24 +77,24 @@ public class CardPinServiceImpl implements CardPinService {
         CardPin cardPin = this.cardPinRepository.findByCardIdForUpdate(card.getId())
                 .orElseThrow(() -> {
                     log.warn("PIN has not been set for Card with id {}", card.getId());
-                    return new IllegalStateException("PIN has not been set for Card");
+                    return new ApiResourceException("PIN has not been set for Card", HttpStatus.BAD_REQUEST);
                 });
 
         if (cardPin.getBlocked() == Boolean.TRUE) {
             log.warn("Card PIN with id: {} is blocked", cardPin.getId());
-            throw new IllegalStateException("Card PIN is blocked");
+            throw new ApiResourceException("Card PIN is blocked", HttpStatus.FORBIDDEN);
         }
 
         if (!CardPinVerifier.verify(command.getCurrentPin(), cardPin.getPinVerificationData())) {
             log.warn("Current PIN is incorrect for Card: {}", card.getId());
-            throw new IllegalStateException("Current PIN is incorrect for Card");
+            throw new ApiResourceException("Current PIN is incorrect for Card", HttpStatus.BAD_REQUEST);
         }
 
         boolean isValid = CardPinUtil.isValidCardPin(command.getNewPin());
 
         if (!isValid) {
             log.warn("Card PIN not valid for card: {}", card.getId());
-            throw new IllegalArgumentException("Card PIN not valid");
+            throw new ApiResourceException("Card PIN not valid", HttpStatus.BAD_REQUEST);
         }
 
         cardPin.setPinVerificationData(CardPinVerifier.createVerificationData(command.getNewPin()));
@@ -114,15 +114,14 @@ public class CardPinServiceImpl implements CardPinService {
 
         this.validateCardForPinOperation(card);
 
-        CardPin cardPin = this.cardPinRepository.findByCardIdForUpdate(card.getId())
-                .orElseThrow(() -> {
-                    log.warn("PIN has not been set for Card with id {}", card.getId());
-                    return new IllegalStateException("PIN has not been set for Card");
-                });
+        CardPin cardPin = this.cardPinRepository.findByCardIdForUpdate(card.getId()).orElseThrow(() -> {
+            log.warn("PIN has not been set for Card with id {}", card.getId());
+            return new ApiResourceException("PIN has not been set for Card", HttpStatus.BAD_REQUEST);
+        });
 
         if (cardPin.getBlocked() == Boolean.TRUE) {
             log.warn("Card PIN with id: {} is blocked", cardPin.getId());
-            throw new IllegalStateException("Card PIN is blocked");
+            throw new ApiResourceException("Card PIN is blocked", HttpStatus.FORBIDDEN);
         }
 
         boolean valid = CardPinVerifier.verify(command.getPin(), cardPin.getPinVerificationData());
@@ -164,7 +163,7 @@ public class CardPinServiceImpl implements CardPinService {
         CardPin cardPin = this.cardPinRepository.findByCardIdForUpdate(cardId)
                 .orElseThrow(() -> {
                     log.warn("PIN has not been set for Card with id {}", cardId);
-                    return new IllegalStateException("PIN has not been set for card");
+                    return new ApiResourceException("PIN has not been set for card", HttpStatus.BAD_REQUEST);
                 });
 
         cardPin.setBlocked(Boolean.FALSE);
