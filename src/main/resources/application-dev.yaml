@@ -109,6 +109,9 @@ card:
   security:
     crypto:
       pan-hmac-secret: "${PAN_HASH_HMAC_SECRET_KEY}"
+      pin-simulator:
+        tdes-key-base64: "${CARD_PIN_SIMULATOR_TDES_KEY_BASE64}"
+        verification-key-base64: "${CARD_PIN_SIMULATOR_VERIFICATION_KEY_BASE64}"
 kafka:
   bootstrap-servers: "${KAFKA_BOOTSTRAP_SERVERS}"
   sasl:

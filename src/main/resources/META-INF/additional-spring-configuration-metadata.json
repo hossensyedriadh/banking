@@ -4,6 +4,14 @@
       "name": "card.security.crypto.pan-hmac-secret",
       "type": "java.lang.String",
       "description": "HMAC secret key for card PAN hashing."
+    },{
+      "name": "card.security.crypto.pin-simulator.verification-key-base64",
+      "type": "java.lang.String",
+      "description": "Secret key for card pin verification."
+    },{
+      "name": "card.security.crypto.pin-simulator.tdes-key-base64",
+      "type": "java.lang.String",
+      "description": "24 byte Secret key for Triple DES used in card pin block verification."
     },
     {
       "name": "kafka.bootstrap-servers",

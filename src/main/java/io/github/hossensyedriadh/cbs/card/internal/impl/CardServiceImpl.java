@@ -116,7 +116,7 @@ public class CardServiceImpl implements CardService {
             throw new ApiResourceException("Card expiry does not match", HttpStatus.BAD_REQUEST, this.httpServletRequest);
         }
 
-        this.cardPinService.setPin(new SetCardPinCommand(card.getId(), command.getCardPin()));
+        this.cardPinService.setPin(new SetCardPinCommand(command.getCardNumber(), command.getCardPin()));
 
         card.setStatus(CardStatus.ACTIVE);
         Card activated = this.cardRepository.save(card);

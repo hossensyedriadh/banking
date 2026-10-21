@@ -1,8 +1,6 @@
 package io.github.hossensyedriadh.cbs.card.api.command;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,9 +18,8 @@ public class SetCardPinCommand implements Serializable {
     @Serial
     private static final long serialVersionUID = -744940414374640667L;
 
-    @NotNull
-    @JsonProperty("card_id")
-    private Long cardId;
+    @NotBlank
+    private String pan;
 
     @NotBlank
     @Size(min = 4, max = 4)

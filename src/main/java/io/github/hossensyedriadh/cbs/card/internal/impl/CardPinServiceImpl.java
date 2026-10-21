@@ -1,14 +1,19 @@
 package io.github.hossensyedriadh.cbs.card.internal.impl;
 
 import io.github.hossensyedriadh.cbs.card.api.command.ChangeCardPinCommand;
+import io.github.hossensyedriadh.cbs.card.api.command.PinBlockVerificationCommand;
 import io.github.hossensyedriadh.cbs.card.api.command.SetCardPinCommand;
 import io.github.hossensyedriadh.cbs.card.api.command.VerifyCardPinCommand;
 import io.github.hossensyedriadh.cbs.card.api.enumerator.CardPinVerificationResult;
 import io.github.hossensyedriadh.cbs.card.api.enumerator.CardStatus;
+import io.github.hossensyedriadh.cbs.card.api.enumerator.PinScheme;
 import io.github.hossensyedriadh.cbs.card.api.event.CardPinChangedEvent;
 import io.github.hossensyedriadh.cbs.card.api.event.CardPinSetEvent;
 import io.github.hossensyedriadh.cbs.card.api.event.CardPinUnblockedEvent;
 import io.github.hossensyedriadh.cbs.card.api.service.CardPinService;
+import io.github.hossensyedriadh.cbs.card.api.service.PinBlockVerifier;
+import io.github.hossensyedriadh.cbs.card.api.service.PinVerificationDataService;
+import io.github.hossensyedriadh.cbs.card.internal.cryptography.CardNumberHasher;
 import io.github.hossensyedriadh.cbs.card.internal.domain.Card;
 import io.github.hossensyedriadh.cbs.card.internal.domain.CardPin;
 import io.github.hossensyedriadh.cbs.card.internal.repository.CardPinRepository;
@@ -29,20 +34,27 @@ import org.springframework.transaction.annotation.Transactional;
 public class CardPinServiceImpl implements CardPinService {
     private final CardPinRepository cardPinRepository;
     private final CardRepository cardRepository;
+    private final CardNumberHasher cardNumberHasher;
+    private final PinBlockVerifier pinBlockVerifier;
+    private final PinVerificationDataService pinVerificationDataService;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     @Autowired
-    public CardPinServiceImpl(CardPinRepository cardPinRepository, CardRepository cardRepository,
+    public CardPinServiceImpl(CardPinRepository cardPinRepository, CardRepository cardRepository, CardNumberHasher cardNumberHasher,
+                              PinBlockVerifier pinBlockVerifier, PinVerificationDataService pinVerificationDataService,
                               ApplicationEventPublisher applicationEventPublisher) {
         this.cardPinRepository = cardPinRepository;
         this.cardRepository = cardRepository;
+        this.cardNumberHasher = cardNumberHasher;
+        this.pinBlockVerifier = pinBlockVerifier;
+        this.pinVerificationDataService = pinVerificationDataService;
         this.applicationEventPublisher = applicationEventPublisher;
     }
 
     @Transactional
     @Override
     public void setPin(@Valid SetCardPinCommand command) {
-        Card card = this.getCard(command.getCardId());
+        Card card = this.getCard(command.getPan());
 
         this.validateCardForPinOperation(card);
 
@@ -58,9 +70,13 @@ public class CardPinServiceImpl implements CardPinService {
             throw new ApiResourceException("PIN has already been set for card", HttpStatus.CONFLICT);
         }
 
+        String verificationData = this.pinVerificationDataService.createVerificationData(command.getPan(), command.getPin());
+
         CardPin cardPin = new CardPin();
         cardPin.setCardId(card.getId());
-        cardPin.setPinVerificationData(CardPinVerifier.createVerificationData(command.getPin()));
+        cardPin.setPinVerificationData(verificationData);
+        cardPin.setPinScheme(PinScheme.ISO0.getScheme());
+        cardPin.setPinLength(command.getPin().length());
 
         this.cardPinRepository.save(cardPin);
 
@@ -72,7 +88,7 @@ public class CardPinServiceImpl implements CardPinService {
     @Transactional
     @Override
     public void changePin(@Valid ChangeCardPinCommand command) {
-        Card card = this.getCard(command.getCardId());
+        Card card = this.getCard(command.getPan());
 
         CardPin cardPin = this.cardPinRepository.findByCardIdForUpdate(card.getId())
                 .orElseThrow(() -> {
@@ -97,7 +113,10 @@ public class CardPinServiceImpl implements CardPinService {
             throw new ApiResourceException("Card PIN not valid", HttpStatus.BAD_REQUEST);
         }
 
-        cardPin.setPinVerificationData(CardPinVerifier.createVerificationData(command.getNewPin()));
+        String verificationData = this.pinVerificationDataService.createVerificationData(command.getPan(), command.getNewPin());
+
+        cardPin.setPinVerificationData(verificationData);
+        cardPin.setPinLength(command.getNewPin().length());
         cardPin.setFailedAttempts(0);
 
         this.cardPinRepository.save(cardPin);
@@ -110,7 +129,7 @@ public class CardPinServiceImpl implements CardPinService {
     @Transactional
     @Override
     public CardPinVerificationResult verifyPin(@Valid VerifyCardPinCommand command) {
-        Card card = this.getCard(command.getCardId());
+        Card card = this.getCard(command.getPan());
 
         this.validateCardForPinOperation(card);
 
@@ -124,7 +143,8 @@ public class CardPinServiceImpl implements CardPinService {
             throw new ApiResourceException("Card PIN is blocked", HttpStatus.FORBIDDEN);
         }
 
-        boolean valid = CardPinVerifier.verify(command.getPin(), cardPin.getPinVerificationData());
+        boolean valid = this.pinBlockVerifier.verify(new PinBlockVerificationCommand(command.getPan(), command.getEncryptedPinBlock(),
+                cardPin.getPinVerificationData(), cardPin.getPinLength()));
 
         if (valid) {
             cardPin.setFailedAttempts(0);
@@ -179,6 +199,15 @@ public class CardPinServiceImpl implements CardPinService {
     private Card getCard(Long cardId) {
         return this.cardRepository.findById(cardId).orElseThrow(() -> {
             log.warn("Card not found with id {}", cardId);
+            return new ApiResourceException("Card not found", HttpStatus.NOT_FOUND);
+        });
+    }
+
+    private Card getCard(String pan) {
+        String panHash = this.cardNumberHasher.hash(pan);
+
+        return this.cardRepository.findCardByPanHash(panHash).orElseThrow(() -> {
+            log.warn("Card not found with PAN {}", pan);
             return new ApiResourceException("Card not found", HttpStatus.NOT_FOUND);
         });
     }

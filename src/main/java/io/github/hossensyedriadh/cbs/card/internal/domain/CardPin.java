@@ -33,6 +33,12 @@ public class CardPin {
     @Column(name = "pin_verification_data", nullable = false, length = 128)
     private String pinVerificationData;
 
+    @Column(name = "pin_scheme", nullable = false, length = 20)
+    private String pinScheme;
+
+    @Column(name = "pin_length", nullable = false)
+    private Integer pinLength;
+
     @ColumnDefault("0")
     @Column(name = "failed_attempts", nullable = false)
     private Integer failedAttempts;

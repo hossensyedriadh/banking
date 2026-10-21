@@ -20,6 +20,14 @@ java {
 repositories {
     mavenCentral()
     maven("https://packages.confluent.io/maven/")
+    maven {
+        url = uri("http://nexus.cerberus.internal:7081/repository/crypto-commons/")
+        isAllowInsecureProtocol = true
+        credentials {
+            username = providers.gradleProperty("nexusBuildUser").orNull
+            password = providers.gradleProperty("nexusBuildPassword").orNull
+        }
+    }
 }
 
 configurations.configureEach {
@@ -47,6 +55,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("com.mchange:c3p0:0.14.0")
+    implementation("io.github.hossensyedriadh:crypto-commons:1.0.0-SNAPSHOT")
     implementation("org.apache.commons:commons-pool2:2.13.1")
     implementation("org.springframework.boot:spring-boot-starter-log4j2")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1")
