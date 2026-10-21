@@ -21,7 +21,7 @@ repositories {
     mavenCentral()
     maven("https://packages.confluent.io/maven/")
     maven {
-        url = uri("http://nexus.cerberus.internal:7081/repository/crypto-commons/")
+        url = uri("http://nexus.cerberus.internal:7081/repository/banking-internal/")
         isAllowInsecureProtocol = true
         credentials {
             username = providers.gradleProperty("nexusBuildUser").orNull
