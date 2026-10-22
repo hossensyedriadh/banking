@@ -1,0 +1,16 @@
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+server:
+  tomcat:
+    connection-timeout: 30s
+    keep-alive-timeout: 1m
+  shutdown: immediate
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
