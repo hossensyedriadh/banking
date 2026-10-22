@@ -8,7 +8,9 @@ pipeline {
         DEPLOYMENT_ID = ''
         ENVIRONMENT = 'staging'
         K8S_NAMESPACE = 'banking-cbs-staging'
-        NEXUS_REGISTRY = "192.168.59.10:7081"
+        NEXUS_REGISTRY = "nexus.cerberus.internal:7081"
+        NEXUS_REGISTRY_IP = "192.168.59.10"
+        NEXUS_REGISTRY_DNS = "nexus.cerberus.internal"
     }
 
     stages {
@@ -105,8 +107,8 @@ pipeline {
 
         stage('Build Docker Image') {
             environment {
-                ORG_GRADLE_PROJECT_nexusBuildUser = credentials('nexus-docker-user')
-                ORG_GRADLE_PROJECT_nexusBuildPassword = credentials('nexus-docker-pwd')
+                ORG_GRADLE_PROJECT_nexusBuildUser = credentials('nexus-oss-build-user')
+                ORG_GRADLE_PROJECT_nexusBuildPassword = credentials('nexus-oss-build-pwd')
             }
 
             steps {
@@ -118,6 +120,7 @@ pipeline {
                         pwd
                         ls -la
                         docker build \
+                            --add-host="${env.NEXUS_REGISTRY_DNS}:${env.NEXUS_REGISTRY_IP}" \
                             --build-arg ORG_GRADLE_PROJECT_nexusBuildUser \
                             --build-arg ORG_GRADLE_PROJECT_nexusBuildPassword \
                             -t ${imageName} .
