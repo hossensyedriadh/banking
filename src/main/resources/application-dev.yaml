@@ -1,11 +1,8 @@
 spring:
+  main:
+    web-application-type: NONE
   lifecycle:
     timeout-per-shutdown-phase: 20s
-server:
-  tomcat:
-    connection-timeout: 30s
-    keep-alive-timeout: 1m
-  shutdown: immediate
 management:
   endpoints:
     web:
@@ -14,3 +11,12 @@ management:
   endpoint:
     health:
       show-details: always
+
+#custom properties
+atm:
+  terminal-id: "${ATM_TERMINAL_ID}"
+  switch-config:
+    host: "${ATM_SWITCH_TCP_HOST}"
+    port: "${ATM_SWITCH_TCP_PORT}"
+    connect-timeout: "${ATM_SWITCH_CONNECT_TIMEOUT:30000}"
+    read-timeout: "${ATM_SWITCH_READ_TIMEOUT:30000}"
