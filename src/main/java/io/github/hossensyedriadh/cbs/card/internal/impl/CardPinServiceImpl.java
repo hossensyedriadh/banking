@@ -158,7 +158,7 @@ public class CardPinServiceImpl implements CardPinService {
 
         this.cardPinRepository.save(cardPin);
 
-        if (failedAttempts >= cardPin.getFailedAttempts()) {
+        if (failedAttempts >= cardPin.getMaxFailedAttempts()) {
             cardPin.setBlocked(Boolean.TRUE);
 
             log.warn("Card PIN with id: {} is blocked after {} failed attempts", cardPin.getId(), failedAttempts);
