@@ -72,6 +72,16 @@ public class IsoMessageHandler {
                 return this.isoResponseFactory.createResponse(request, "03");
             }
 
+            if ("0100".equals(mti)) {
+                ISOMsg response = this.transactionRouter.route(request);
+
+                if (response == null) {
+                    return this.isoResponseFactory.createResponse(request, ResponseCodes.INVALID_TRANSACTION);
+                }
+
+                return response;
+            }
+
             String amountField = request.getString(4);
             String currencyCode = request.getString(49);
 

@@ -13,6 +13,7 @@ public class IsoResponseFactory {
             ISOMsg response = new ISOMsg();
 
             String responseMti = switch (request.getMTI()) {
+                case "0100" -> "0110";
                 case "0200" -> "0210";
                 case "0400" -> "0410";
                 default -> throw new IllegalArgumentException("Unsupported request MTI: " + request.getMTI());
