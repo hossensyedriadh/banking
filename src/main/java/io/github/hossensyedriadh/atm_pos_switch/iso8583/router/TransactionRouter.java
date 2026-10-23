@@ -31,7 +31,7 @@ public class TransactionRouter {
             return this.reversalHandler.handle(request);
         }
 
-        if (!"0200".equals(mti)) {
+        if (!"0100".equals(mti) && !"0200".equals(mti)) {
             return null;
         }
 

@@ -49,7 +49,7 @@ public class PinVerificationHandler implements TransactionHandler {
             return this.isoResponseFactory.createResponse(request, validationResult);
         }
 
-        CoreBankingCardPinVerificationRequest verificationRequest = new CoreBankingCardPinVerificationRequest(aggregateResult.cardId(),
+        CoreBankingCardPinVerificationRequest verificationRequest = new CoreBankingCardPinVerificationRequest(pan,
                 request.getBytes(52));
 
         CardPinVerificationResult verificationResult = this.cardPinVerificationService.verify(verificationRequest);
