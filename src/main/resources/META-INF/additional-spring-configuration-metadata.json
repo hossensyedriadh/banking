@@ -24,6 +24,11 @@
       "name": "atm.switch-config.read-timeout",
       "type": "java.lang.Integer",
       "description": "Read timeout (milliseconds) ATM Switch TCP server."
+    },
+    {
+      "name": "atm.security.pin-block.encryption-secret-key",
+      "type": "java.lang.String",
+      "description": "TDES encryption secret key for encryption of PIN block."
     }
   ]
 }

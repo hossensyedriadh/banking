@@ -20,3 +20,6 @@ atm:
     port: "${ATM_SWITCH_TCP_PORT}"
     connect-timeout: "${ATM_SWITCH_CONNECT_TIMEOUT:30000}"
     read-timeout: "${ATM_SWITCH_READ_TIMEOUT:30000}"
+  security:
+    pin-block:
+      encryption-secret-key: "${ATM_SECURITY_PIN_BLOCK_ENCRYPTION_SECRET_KEY}"

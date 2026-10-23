@@ -17,6 +17,14 @@ java {
 }
 
 repositories {
+    maven {
+        url = uri("http://nexus.cerberus.internal:7081/repository/banking-internal/")
+        isAllowInsecureProtocol = true
+        credentials {
+            username = providers.gradleProperty("nexusBuildUser").orNull
+            password = providers.gradleProperty("nexusBuildPassword").orNull
+        }
+    }
     mavenCentral()
 }
 
@@ -26,14 +34,13 @@ configurations.configureEach {
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
-    implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springframework.boot:spring-boot-starter-log4j2")
     compileOnly("org.projectlombok:lombok")
     implementation("org.jpos:jpos:3.0.2")
+    implementation("io.github.hossensyedriadh:crypto-commons:1.0.0-SNAPSHOT")
     annotationProcessor("org.projectlombok:lombok")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-validation-test")
     testCompileOnly("org.projectlombok:lombok")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testAnnotationProcessor("org.projectlombok:lombok")
