@@ -1,5 +1,6 @@
 package io.github.hossensyedriadh.cbs.card.api.command;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -18,5 +19,6 @@ public class VerifyCardPinCommand implements Serializable {
     private String pan;
 
     @NotNull
+    @JsonProperty("encrypted_pin_block")
     private byte[] encryptedPinBlock;
 }
