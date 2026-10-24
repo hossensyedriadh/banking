@@ -37,6 +37,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-log4j2")
     compileOnly("org.projectlombok:lombok")
     implementation("org.jpos:jpos:3.0.2")
+    implementation("org.jline:jline:3.30.0")
     implementation("io.github.hossensyedriadh:crypto-commons:1.0.0-SNAPSHOT")
     annotationProcessor("org.projectlombok:lombok")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")

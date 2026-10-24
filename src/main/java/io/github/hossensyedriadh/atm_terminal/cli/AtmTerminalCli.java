@@ -6,13 +6,8 @@ import io.github.hossensyedriadh.atm_terminal.service.AtmAuthenticationService;
 import io.github.hossensyedriadh.atm_terminal.service.BalanceInquiryService;
 import lombok.extern.log4j.Log4j2;
 import org.jspecify.annotations.NonNull;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
-
-import java.io.Console;
-import java.util.Arrays;
-import java.util.Scanner;
 
 @Log4j2
 @Component
@@ -20,7 +15,6 @@ public class AtmTerminalCli implements CommandLineRunner {
     private final AtmAuthenticationService atmAuthenticationService;
     private final BalanceInquiryService balanceInquiryService;
 
-    @Autowired
     public AtmTerminalCli(AtmAuthenticationService atmAuthenticationService, BalanceInquiryService balanceInquiryService) {
         this.atmAuthenticationService = atmAuthenticationService;
         this.balanceInquiryService = balanceInquiryService;
@@ -28,55 +22,55 @@ public class AtmTerminalCli implements CommandLineRunner {
 
     @Override
     public void run(String @NonNull ... args) {
-        Console console = System.console();
+        try (ConsoleInput input = new ConsoleInput()) {
+            boolean terminalRunning = true;
 
-        if (console == null) {
-            System.err.println("Run the application from an interactive console");
-            return;
+            while (terminalRunning) {
+                input.clearScreen();
+
+                terminalRunning = runCardSession(input);
+            }
+        } catch (Exception e) {
+            log.error("ATM terminal input failed", e);
+            System.err.println("Unable to start interactive ATM terminal");
         }
+    }
 
-        Scanner scanner = new Scanner(System.in);
+    private boolean runCardSession(ConsoleInput input) {
+        System.out.println("Welcome to ATM Terminal");
+        System.out.println();
 
-        console.printf("Welcome to ATM Terminal\n");
-        console.printf("Enter PAN: ");
-        String pan = scanner.nextLine().trim();
-
-        char[] pinChars = console.readPassword("Enter PIN: ");
-
-        if (pinChars == null) {
-            return;
-        }
-
-        String pin = new String(pinChars);
-
-        Arrays.fill(pinChars, '\0');
+        String pan = input.readPan();
+        String pin = input.readPin();
 
         try {
             AuthenticationResult result = this.atmAuthenticationService.authenticate(pan, pin);
 
             switch (result) {
-                case SUCCESS -> this.displayMenu(scanner, console, pan);
-                case INVALID_PIN -> console.printf("Incorrect PIN\n");
-                case PIN_BLOCKED -> console.printf("PIN Blocked\n");
-                case SYSTEM_ERROR -> console.printf("Unable to authenticate card\n");
+                case SUCCESS -> this.displayMenu(input, pan);
+                case INVALID_PIN -> System.out.println("Incorrect PIN");
+                case PIN_BLOCKED -> System.out.println("PIN blocked");
+                case SYSTEM_ERROR -> System.out.println("Unable to authenticate card");
             }
         } catch (Exception e) {
-            console.printf("Unable to connect to ATM Switch\n");
-            log.error("Unable to connect to ATM Switch", e);
+            System.out.println("Unable to connect to ATM Switch");
+            log.error("ATM authentication failed");
         }
+
+        input.readLine("Press Enter to continue...");
+        return true;
     }
 
-    private void displayMenu(Scanner scanner, Console console, String pan) {
+    private void displayMenu(ConsoleInput input, String pan) {
         while (true) {
-            console.printf("\n");
-            console.printf("=== ATM Menu ===\n");
-            console.printf("1. Balance Inquiry\n");
-            console.printf("2. Withdraw\n");
-            console.printf("3. Exit\n");
-            console.printf("\n");
-            console.printf("Select: ");
+            System.out.println();
+            System.out.println("=== ATM Menu ===");
+            System.out.println("1. Balance Inquiry");
+            System.out.println("2. Withdraw");
+            System.out.println("3. Exit");
+            System.out.println();
 
-            String selection = scanner.nextLine().trim();
+            String selection = input.readLine("Select: ");
 
             switch (selection) {
                 case "1" -> {
@@ -84,26 +78,23 @@ public class AtmTerminalCli implements CommandLineRunner {
                         BalanceInquiryResult result = this.balanceInquiryService.inquire(pan);
 
                         if (result.successful()) {
-                            console.printf("Balance inquiry successful\n");
-                            console.printf("Available balance: %s %s\n", result.currency(), result.availableBalance());
+                            System.out.println("Balance inquiry successful");
+                            System.out.printf("Available balance: %s %s%n", result.currency(), result.availableBalance());
                         } else {
-                            if (result.message() != null) {
-                                console.printf("Balance inquiry failed. Reason: %s\n", result.message());
-                            } else {
-                                console.printf("Balance inquiry declined\n");
-                            }
+                            System.out.println(result.message() != null ? "Balance inquiry failed. Reason: " + result.message()
+                                    : "Balance inquiry declined");
                         }
                     } catch (Exception e) {
-                        console.printf("Balance inquiry failed\n");
-                        log.error("Balance inquiry failed", e);
+                        System.out.println("Balance inquiry failed");
+                        log.error("Balance inquiry failed");
                     }
                 }
-                case "2" -> console.printf("Withdrawal in development\n");
+                case "2" -> System.out.println("Withdrawal in development");
                 case "3" -> {
-                    console.printf("Card session ended\n");
+                    System.out.println("Card session ended");
                     return;
                 }
-                default -> console.printf("Invalid selection\n");
+                default -> System.out.println("Invalid selection");
             }
         }
     }
