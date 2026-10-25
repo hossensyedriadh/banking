@@ -2,22 +2,29 @@ package io.github.hossensyedriadh.atm_terminal.cli;
 
 import io.github.hossensyedriadh.atm_terminal.enumerator.AuthenticationResult;
 import io.github.hossensyedriadh.atm_terminal.model.BalanceInquiryResult;
+import io.github.hossensyedriadh.atm_terminal.model.WithdrawalResult;
 import io.github.hossensyedriadh.atm_terminal.service.AtmAuthenticationService;
 import io.github.hossensyedriadh.atm_terminal.service.BalanceInquiryService;
+import io.github.hossensyedriadh.atm_terminal.service.WithdrawalService;
 import lombok.extern.log4j.Log4j2;
 import org.jspecify.annotations.NonNull;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
 
 @Log4j2
 @Component
 public class AtmTerminalCli implements CommandLineRunner {
     private final AtmAuthenticationService atmAuthenticationService;
     private final BalanceInquiryService balanceInquiryService;
+    private final WithdrawalService withdrawalService;
 
-    public AtmTerminalCli(AtmAuthenticationService atmAuthenticationService, BalanceInquiryService balanceInquiryService) {
+    public AtmTerminalCli(AtmAuthenticationService atmAuthenticationService, BalanceInquiryService balanceInquiryService,
+                          WithdrawalService withdrawalService) {
         this.atmAuthenticationService = atmAuthenticationService;
         this.balanceInquiryService = balanceInquiryService;
+        this.withdrawalService = withdrawalService;
     }
 
     @Override
@@ -50,10 +57,10 @@ public class AtmTerminalCli implements CommandLineRunner {
                 case SUCCESS -> this.displayMenu(input, pan);
                 case INVALID_PIN -> System.out.println("Incorrect PIN");
                 case PIN_BLOCKED -> System.out.println("PIN blocked");
-                case SYSTEM_ERROR -> System.out.println("Unable to authenticate card");
+                case SYSTEM_ERROR -> System.err.println("Unable to authenticate card");
             }
         } catch (Exception e) {
-            System.out.println("Unable to connect to ATM Switch");
+            System.err.println("Unable to connect to ATM Switch");
             log.error("ATM authentication failed");
         }
 
@@ -78,23 +85,55 @@ public class AtmTerminalCli implements CommandLineRunner {
                         BalanceInquiryResult result = this.balanceInquiryService.inquire(pan);
 
                         if (result.successful()) {
+                            System.out.println();
                             System.out.println("Balance inquiry successful");
                             System.out.printf("Available balance: %s %s%n", result.currency(), result.availableBalance());
                         } else {
-                            System.out.println(result.message() != null ? "Balance inquiry failed. Reason: " + result.message()
+                            System.err.println(result.message() != null ? "Balance inquiry failed. Reason: " + result.message()
                                     : "Balance inquiry declined");
                         }
+                        System.out.println();
                     } catch (Exception e) {
-                        System.out.println("Balance inquiry failed");
+                        System.err.println("Balance inquiry failed");
                         log.error("Balance inquiry failed");
                     }
                 }
-                case "2" -> System.out.println("Withdrawal in development");
+                case "2" -> {
+                    try {
+                        String amountInput = input.readAmount("Enter withdrawal amount (BDT): ").trim();
+
+                        BigDecimal amount = new BigDecimal(amountInput);
+
+                        if (amount.signum() <= 0) {
+                            log.error("Withdrawal amount must be greater than zero");
+                            throw new IllegalArgumentException("Withdrawal amount must be greater than zero");
+                        }
+
+                        if (amount.remainder(new BigDecimal(500)).compareTo(BigDecimal.ZERO) != 0) {
+                            throw new IllegalArgumentException("Withdrawal amount must be in multiples of 500");
+                        }
+
+                        WithdrawalResult result = this.withdrawalService.withdraw(pan, amount);
+
+                        if (result.successful()) {
+                            System.out.println();
+                            System.out.println("Withdrawal successful");
+                            System.out.println("Amount: " + result.currency() + " " + result.amount());
+                            System.out.println(result.message());
+                        } else {
+                            System.err.println(result.message() != null ? "Withdrawal failed. Reason: " + result.message() : "Withdrawal declined");
+                        }
+                        System.out.println();
+                    } catch (Exception e) {
+                        log.error("Withdrawal failed");
+                        System.err.println("Unable to confirm the withdrawal. Please check the transaction status.");
+                    }
+                }
                 case "3" -> {
                     System.out.println("Card session ended");
                     return;
                 }
-                default -> System.out.println("Invalid selection");
+                default -> System.err.println("Invalid selection");
             }
         }
     }

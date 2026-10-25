@@ -6,6 +6,11 @@
       "description": "Unique identifier of the ATM terminal."
     },
     {
+      "name": "atm.timezone",
+      "type": "java.lang.String",
+      "description": "IANA timezone ID for ATM terminal."
+    },
+    {
       "name": "atm.switch-config.host",
       "type": "java.lang.String",
       "description": "Hostname of the ATM Switch TCP server."

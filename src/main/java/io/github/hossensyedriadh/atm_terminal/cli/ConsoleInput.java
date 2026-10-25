@@ -59,6 +59,10 @@ public final class ConsoleInput implements AutoCloseable {
         return this.reader.readLine(prompt);
     }
 
+    public String readAmount(String prompt) {
+        return this.readDigits(prompt, 3, 12, null);
+    }
+
     private String readDigits(String prompt, int minLength, int maxLength, Character mask) {
         while (true) {
             String value = this.reader.readLine(prompt, mask);

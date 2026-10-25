@@ -15,6 +15,7 @@ management:
 #custom properties
 atm:
   terminal-id: "${ATM_TERMINAL_ID}"
+  timezone: "${ATM_TIMEZONE_IANA}"
   switch-config:
     host: "${ATM_SWITCH_TCP_HOST}"
     port: "${ATM_SWITCH_TCP_PORT}"
