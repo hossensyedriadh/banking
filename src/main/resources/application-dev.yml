@@ -64,5 +64,9 @@ switch:
     fixed-delay: ${UNKNOWN_TXN_RECONCILIATION_FIXED_DELAY:30000}
   stuck-transactions-recovery:
     fixed-delay: ${STUCK_TXN_RECOVERY_FIXED_DELAY:60000}
+atm-terminal:
+  session:
+    idle-timeout: "${ATM_SESSION_IDLE_TIMEOUT:2m}"
+    max-age: "${ATM_SESSION_MAX_AGE:10m}"
 cbs:
   base-url: "${CBS_BASE_URL}"
