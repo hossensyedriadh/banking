@@ -30,9 +30,6 @@ spec:
             - secretRef:
                 name: banking-api-gateway
           volumeMounts:
-            - mountPath: /app/ssl
-              name: kafka-ssl-volume
-              readOnly: true
             - mountPath: /log/apigw
               name: app-logs
             - mountPath: /heapdumps
@@ -74,11 +71,4 @@ spec:
         runAsUser: 1000
         runAsGroup: 1000
         fsGroup: 1000
-      hostAliases:
-        - ip: "192.168.59.10"
-          hostnames:
-            - "postgres.cerberus.internal"
-            - "redis.cerberus.internal"
-            - "kafka.cerberus.internal"
-            - "schema-registry.cerberus.internal"
       restartPolicy: Always
