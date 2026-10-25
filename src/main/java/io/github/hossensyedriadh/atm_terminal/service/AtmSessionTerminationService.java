@@ -10,8 +10,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
 @Log4j2
@@ -23,6 +23,7 @@ public class AtmSessionTerminationService {
 
     private final IsoTcpClient isoTcpClient;
     private final SecureRandom secureRandom = new SecureRandom();
+    private final DateTimeFormatter transmissionDateTimeFormat;
 
     @Value("${atm.terminal-id}")
     private String terminalId;
@@ -33,6 +34,7 @@ public class AtmSessionTerminationService {
     @Autowired
     public AtmSessionTerminationService(IsoTcpClient isoTcpClient) {
         this.isoTcpClient = isoTcpClient;
+        this.transmissionDateTimeFormat = DateTimeFormatter.ofPattern("MMddHHmmss").withZone(this.timezone);
     }
 
     public boolean terminate(String pan, String sessionToken) {
@@ -41,7 +43,7 @@ public class AtmSessionTerminationService {
             request.set(2, pan);
             request.set(3, ProcessingCodes.SESSION_TERMINATION);
             request.set(4, "000000000000");
-            request.set(7, LocalDateTime.now(this.timezone).format(DateTimeFormatter.ofPattern("MMddHHmmss")));
+            request.set(7, ZonedDateTime.now(this.timezone).format(this.transmissionDateTimeFormat));
             request.set(11, this.generateNumericString(6));
             request.set(37, this.generateNumericString(12));
             request.set(41, this.terminalId);
