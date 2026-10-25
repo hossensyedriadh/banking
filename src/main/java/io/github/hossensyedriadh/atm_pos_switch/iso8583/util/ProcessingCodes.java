@@ -7,8 +7,9 @@ public final class ProcessingCodes {
     public static final String CASH_WITHDRAWAL = "010000";
     public static final String BALANCE_INQUIRY = "310000";
     public static final String PIN_VERIFICATION = "710000";
+    public static final String SESSION_TERMINATION = "990001";
 
     public static boolean requiresSession(String processingCode) {
-        return processingCode.equals(BALANCE_INQUIRY) || processingCode.equals(CASH_WITHDRAWAL);
+        return BALANCE_INQUIRY.equals(processingCode) || CASH_WITHDRAWAL.equals(processingCode);
     }
 }

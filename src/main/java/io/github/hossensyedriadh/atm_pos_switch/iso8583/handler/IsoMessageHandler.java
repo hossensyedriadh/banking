@@ -79,6 +79,21 @@ public class IsoMessageHandler {
 
             String processingCode = request.getString(3);
 
+            if ("0200".equals(mti) && ProcessingCodes.SESSION_TERMINATION.equals(processingCode)) {
+                String sessionToken = request.getString(62);
+                String pan = request.getString(2);
+
+                if (!this.atmSessionService.terminate(sessionToken, pan, terminalId)) {
+                    log.warn("ATM session termination rejected: terminalId={}", terminalId);
+
+                    return this.isoResponseFactory.createResponse(request, ResponseCodes.INVALID_SESSION);
+                }
+
+                log.info("ATM session terminated: terminalId={}", terminalId);
+
+                return this.isoResponseFactory.createResponse(request, ResponseCodes.APPROVED);
+            }
+
             if ("0200".equals(mti) && ProcessingCodes.requiresSession(processingCode)) {
                 String sessionToken = request.getString(62);
                 String pan = request.getString(2);
@@ -113,7 +128,7 @@ public class IsoMessageHandler {
             sanitizedRequest.unset(52);
             sanitizedRequest.unset(62);
 
-            byte[] requestPayload = this.isoMessageParser.pack(request);
+            byte[] requestPayload = this.isoMessageParser.pack(sanitizedRequest);
 
             SwitchTransactionRegistrationResult registrationResult = this.switchTransactionService.registerRequest(terminalId,
                     request.getString(11), request.getString(37), request.getString(3), mti,

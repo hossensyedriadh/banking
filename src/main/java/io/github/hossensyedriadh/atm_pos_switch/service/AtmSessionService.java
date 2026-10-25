@@ -77,6 +77,33 @@ public class AtmSessionService {
         }
     }
 
+    public boolean terminate(String token, String pan, String terminalId) {
+        if (token == null || pan == null || terminalId == null) {
+            return false;
+        }
+
+        AtmSession session = this.sessionMap.get(token);
+
+        if (session == null) {
+            return false;
+        }
+
+        synchronized (session) {
+            Instant now = Instant.now();
+
+            if (session.isExpired(now, this.maxAge, this.idleTimeout)) {
+                this.sessionMap.remove(token, session);
+                return false;
+            }
+
+            if (!session.getPan().equals(pan) || !session.getTerminalId().equals(terminalId)) {
+                return false;
+            }
+
+            return this.sessionMap.remove(token, session);
+        }
+    }
+
     @Getter
     public static final class AtmSession {
         private final String pan;
