@@ -157,8 +157,7 @@ pipeline {
                             echo "Deploying image: ${imageName}"
 
                             sed "s|__IMAGE__|${imageName}|g" k8s/staging/deployment.yaml | microk8s kubectl apply -n ${K8S_NAMESPACE} -f -
-                            microk8s kubectl apply -n ${K8S_NAMESPACE} -f k8s/staging/service-internal.yaml
-                            microk8s kubectl apply -n ${K8S_NAMESPACE} -f k8s/staging/service-external.yaml
+                            microk8s kubectl apply -n ${K8S_NAMESPACE} -f k8s/staging/service.yaml
 
                             echo "Waiting for rollout to complete..."
 
