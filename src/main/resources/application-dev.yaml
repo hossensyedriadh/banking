@@ -5,9 +5,9 @@ spring:
         webflux:
           routes:
             - id: cbs-api
-              uri: "${CBS_BASE_URL}"
+              uri: "${CBS_BASE_URL:http://cbs.banking-cbs-staging.svc.cluster.local:8080}"
               predicates:
-                - Path=/cbs/**
+                - Path=/core-banking/**
               filters:
                 - StripPrefix=1
 management:

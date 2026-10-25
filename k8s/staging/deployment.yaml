@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: banking-api-gateway
+  namespace: banking-api-gateway-staging
+  labels:
+    app: banking-api-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: banking-api-gateway
+  template:
+    metadata:
+      name: banking-api-gateway
+      labels:
+        app: banking-api-gateway
+    spec:
+      imagePullSecrets:
+        - name: nexus-oss-docker
+      containers:
+        - name: banking-api-gateway
+          image: __IMAGE__
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: banking-api-gateway
+            - secretRef:
+                name: banking-api-gateway
+          volumeMounts:
+            - mountPath: /app/ssl
+              name: kafka-ssl-volume
+              readOnly: true
+            - mountPath: /log/apigw
+              name: app-logs
+            - mountPath: /heapdumps
+              name: heapdump
+          env:
+            - name: LOG_PATH
+              value: /log/apigw
+          resources:
+            requests:
+              cpu: 150m
+              memory: 1Gi
+            limits:
+              cpu: 1
+              memory: 3Gi
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 5
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 90
+            periodSeconds: 30
+            failureThreshold: 5
+      volumes:
+        - name: app-logs
+          hostPath:
+            path: /var/log/banking/apigw/logs
+            type: DirectoryOrCreate
+        - name: heapdump
+          hostPath:
+            path: /var/log/banking/apigw/heapdumps
+            type: DirectoryOrCreate
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      hostAliases:
+        - ip: "192.168.59.10"
+          hostnames:
+            - "postgres.cerberus.internal"
+            - "redis.cerberus.internal"
+            - "kafka.cerberus.internal"
+            - "schema-registry.cerberus.internal"
+      restartPolicy: Always
