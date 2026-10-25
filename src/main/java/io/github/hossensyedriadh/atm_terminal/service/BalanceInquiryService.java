@@ -10,39 +10,48 @@ import io.github.hossensyedriadh.atm_terminal.util.ResponseCodes;
 import lombok.extern.log4j.Log4j2;
 import org.jpos.iso.ISOMsg;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Log4j2
 @Service
 public class BalanceInquiryService {
-    private static final DateTimeFormatter TRANSMISSION_DATE_TIME = DateTimeFormatter.ofPattern("MMddHHmmss")
-            .withZone(ZoneId.of("Asia/Dhaka"));
-
+    private final DateTimeFormatter TRANSMISSION_DATE_TIME;
     private final IsoTcpClient isoTcpClient;
     private final AtmTerminalProperties atmTerminalProperties;
+
+    @Value("${atm.timezone}")
+    private ZoneId timezone;
 
     @Autowired
     public BalanceInquiryService(IsoTcpClient isoTcpClient, AtmTerminalProperties atmTerminalProperties) {
         this.isoTcpClient = isoTcpClient;
         this.atmTerminalProperties = atmTerminalProperties;
+        this.TRANSMISSION_DATE_TIME = DateTimeFormatter.ofPattern("MMddHHmmss").withZone(this.timezone);
     }
 
-    public BalanceInquiryResult inquire(String pan) throws Exception {
+    public BalanceInquiryResult inquire(String pan, String sessionToken) throws Exception {
+        if (sessionToken == null || sessionToken.isBlank()) {
+            throw new IllegalArgumentException("An active ATM session is required");
+        }
+
         ISOMsg request = new ISOMsg("0200");
         request.set(2, pan);
         request.set(3, ProcessingCodes.BALANCE_INQUIRY);
         request.set(4, "000000000000");
-        request.set(7, TRANSMISSION_DATE_TIME.format(Instant.now()));
+        request.set(7, this.TRANSMISSION_DATE_TIME.format(Instant.now()));
         request.set(11, "%06d".formatted(ThreadLocalRandom.current().nextInt(1_000_000)));
         request.set(37, "%012d".formatted(ThreadLocalRandom.current().nextLong(1_000_000_000_000L)));
-        request.set(41, atmTerminalProperties.terminalId());
+        request.set(41, this.atmTerminalProperties.terminalId());
         request.set(49, "050"); // BDT currency code
+        request.set(62, sessionToken);
 
         ISOMsg response = isoTcpClient.send(request);
 

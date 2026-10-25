@@ -1,6 +1,6 @@
 package io.github.hossensyedriadh.atm_terminal.enumerator;
 
-public enum AuthenticationResult {
+public enum AuthenticationStatus {
     SUCCESS,
     INVALID_PIN,
     PIN_BLOCKED,

@@ -23,11 +23,11 @@ import java.util.Locale;
 @Service
 public class WithdrawalService {
     private static final String CURRENCY_BDT = "050";
-    private static final DateTimeFormatter TRANSMISSION_DATE_TIME = DateTimeFormatter.ofPattern("MMddHHmmss");
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final IsoTcpClient isoTcpClient;
     private final AtmTerminalProperties atmTerminalProperties;
+    private final DateTimeFormatter TRANSMISSION_DATE_TIME;
 
     @Value("${atm.timezone}")
     private ZoneId timezone;
@@ -36,9 +36,14 @@ public class WithdrawalService {
     public WithdrawalService(IsoTcpClient isoTcpClient, AtmTerminalProperties atmTerminalProperties) {
         this.isoTcpClient = isoTcpClient;
         this.atmTerminalProperties = atmTerminalProperties;
+        this.TRANSMISSION_DATE_TIME = DateTimeFormatter.ofPattern("MMddHHmmss").withZone(this.timezone);
     }
 
-    public WithdrawalResult withdraw(String pan, BigDecimal amount) throws Exception {
+    public WithdrawalResult withdraw(String pan, BigDecimal amount, String sessionToken) throws Exception {
+        if (sessionToken == null || sessionToken.isBlank()) {
+            throw new IllegalArgumentException("An active ATM session is required");
+        }
+
         this.validateAmount(amount);
 
         long amountMinorUnits = amount.setScale(2, RoundingMode.UNNECESSARY)
@@ -49,11 +54,12 @@ public class WithdrawalService {
         request.set(2, pan);
         request.set(3, ProcessingCodes.CASH_WITHDRAWAL);
         request.set(4, String.format(Locale.ROOT, "%012d", amountMinorUnits));
-        request.set(7, ZonedDateTime.now(this.timezone).format(TRANSMISSION_DATE_TIME));
+        request.set(7, ZonedDateTime.now(this.timezone).format(this.TRANSMISSION_DATE_TIME));
         request.set(11, String.format(Locale.ROOT, "%06d", RANDOM.nextInt(1_000_000)));
         request.set(37, this.generateRetrievalReferenceNumber());
         request.set(41, this.atmTerminalProperties.terminalId());
         request.set(49, CURRENCY_BDT);
+        request.set(62, sessionToken);
 
         ISOMsg response = this.isoTcpClient.send(request);
 

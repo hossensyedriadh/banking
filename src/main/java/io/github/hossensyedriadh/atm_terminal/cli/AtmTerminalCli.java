@@ -1,6 +1,6 @@
 package io.github.hossensyedriadh.atm_terminal.cli;
 
-import io.github.hossensyedriadh.atm_terminal.enumerator.AuthenticationResult;
+import io.github.hossensyedriadh.atm_terminal.model.AuthenticationResult;
 import io.github.hossensyedriadh.atm_terminal.model.BalanceInquiryResult;
 import io.github.hossensyedriadh.atm_terminal.model.WithdrawalResult;
 import io.github.hossensyedriadh.atm_terminal.service.AtmAuthenticationService;
@@ -53,22 +53,22 @@ public class AtmTerminalCli implements CommandLineRunner {
         try {
             AuthenticationResult result = this.atmAuthenticationService.authenticate(pan, pin);
 
-            switch (result) {
-                case SUCCESS -> this.displayMenu(input, pan);
+            switch (result.status()) {
+                case SUCCESS -> this.displayMenu(input, pan, result.sessionToken());
                 case INVALID_PIN -> System.out.println("Incorrect PIN");
                 case PIN_BLOCKED -> System.out.println("PIN blocked");
                 case SYSTEM_ERROR -> System.err.println("Unable to authenticate card");
             }
         } catch (Exception e) {
             System.err.println("Unable to connect to ATM Switch");
-            log.error("ATM authentication failed");
+            log.error("ATM authentication failed", e);
         }
 
         input.readLine("Press Enter to continue...");
         return true;
     }
 
-    private void displayMenu(ConsoleInput input, String pan) {
+    private void displayMenu(ConsoleInput input, String pan, String sessionToken) {
         while (true) {
             System.out.println();
             System.out.println("=== ATM Menu ===");
@@ -82,7 +82,7 @@ public class AtmTerminalCli implements CommandLineRunner {
             switch (selection) {
                 case "1" -> {
                     try {
-                        BalanceInquiryResult result = this.balanceInquiryService.inquire(pan);
+                        BalanceInquiryResult result = this.balanceInquiryService.inquire(pan, sessionToken);
 
                         if (result.successful()) {
                             System.out.println();
@@ -113,7 +113,7 @@ public class AtmTerminalCli implements CommandLineRunner {
                             throw new IllegalArgumentException("Withdrawal amount must be in multiples of 500");
                         }
 
-                        WithdrawalResult result = this.withdrawalService.withdraw(pan, amount);
+                        WithdrawalResult result = this.withdrawalService.withdraw(pan, amount, sessionToken);
 
                         if (result.successful()) {
                             System.out.println();
