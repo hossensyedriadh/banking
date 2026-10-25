@@ -13,19 +13,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Log4j2
 @Service
 public class BalanceInquiryService {
-    private final DateTimeFormatter TRANSMISSION_DATE_TIME;
     private final IsoTcpClient isoTcpClient;
     private final AtmTerminalProperties atmTerminalProperties;
+    private static final DateTimeFormatter TRANSMISSION_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("MMddHHmmss");
 
     @Value("${atm.timezone}")
     private ZoneId timezone;
@@ -34,7 +33,6 @@ public class BalanceInquiryService {
     public BalanceInquiryService(IsoTcpClient isoTcpClient, AtmTerminalProperties atmTerminalProperties) {
         this.isoTcpClient = isoTcpClient;
         this.atmTerminalProperties = atmTerminalProperties;
-        this.TRANSMISSION_DATE_TIME = DateTimeFormatter.ofPattern("MMddHHmmss").withZone(this.timezone);
     }
 
     public BalanceInquiryResult inquire(String pan, String sessionToken) throws Exception {
@@ -46,7 +44,7 @@ public class BalanceInquiryService {
         request.set(2, pan);
         request.set(3, ProcessingCodes.BALANCE_INQUIRY);
         request.set(4, "000000000000");
-        request.set(7, this.TRANSMISSION_DATE_TIME.format(Instant.now()));
+        request.set(7, LocalDateTime.now(this.timezone).format(TRANSMISSION_DATE_TIME_FORMATTER));
         request.set(11, "%06d".formatted(ThreadLocalRandom.current().nextInt(1_000_000)));
         request.set(37, "%012d".formatted(ThreadLocalRandom.current().nextLong(1_000_000_000_000L)));
         request.set(41, this.atmTerminalProperties.terminalId());

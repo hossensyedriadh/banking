@@ -4,6 +4,7 @@ import io.github.hossensyedriadh.atm_terminal.model.AuthenticationResult;
 import io.github.hossensyedriadh.atm_terminal.model.BalanceInquiryResult;
 import io.github.hossensyedriadh.atm_terminal.model.WithdrawalResult;
 import io.github.hossensyedriadh.atm_terminal.service.AtmAuthenticationService;
+import io.github.hossensyedriadh.atm_terminal.service.AtmSessionTerminationService;
 import io.github.hossensyedriadh.atm_terminal.service.BalanceInquiryService;
 import io.github.hossensyedriadh.atm_terminal.service.WithdrawalService;
 import lombok.extern.log4j.Log4j2;
@@ -19,12 +20,14 @@ public class AtmTerminalCli implements CommandLineRunner {
     private final AtmAuthenticationService atmAuthenticationService;
     private final BalanceInquiryService balanceInquiryService;
     private final WithdrawalService withdrawalService;
+    private final AtmSessionTerminationService atmSessionTerminationService;
 
     public AtmTerminalCli(AtmAuthenticationService atmAuthenticationService, BalanceInquiryService balanceInquiryService,
-                          WithdrawalService withdrawalService) {
+                          WithdrawalService withdrawalService, AtmSessionTerminationService atmSessionTerminationService) {
         this.atmAuthenticationService = atmAuthenticationService;
         this.balanceInquiryService = balanceInquiryService;
         this.withdrawalService = withdrawalService;
+        this.atmSessionTerminationService = atmSessionTerminationService;
     }
 
     @Override
@@ -95,7 +98,7 @@ public class AtmTerminalCli implements CommandLineRunner {
                         System.out.println();
                     } catch (Exception e) {
                         System.err.println("Balance inquiry failed");
-                        log.error("Balance inquiry failed");
+                        log.error("Balance inquiry failed", e);
                     }
                 }
                 case "2" -> {
@@ -125,12 +128,23 @@ public class AtmTerminalCli implements CommandLineRunner {
                         }
                         System.out.println();
                     } catch (Exception e) {
-                        log.error("Withdrawal failed");
+                        log.error("Withdrawal failed", e);
                         System.err.println("Unable to confirm the withdrawal. Please check the transaction status.");
                     }
                 }
                 case "3" -> {
-                    System.out.println("Card session ended");
+                    try {
+                        boolean terminated = this.atmSessionTerminationService.terminate(pan, sessionToken);
+
+                        if (terminated) {
+                            System.out.println("ATM session terminated");
+                        } else {
+                            System.err.println("Could not confirm session termination. The session may expire automatically");
+                        }
+                    } finally {
+                        System.out.println("Car session ended");
+                    }
+
                     return;
                 }
                 default -> System.err.println("Invalid selection");

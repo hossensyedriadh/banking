@@ -26,8 +26,6 @@ public class AtmAuthenticationService {
         ISOMsg request = this.pinVerificationRequestFactory.create(pan, pin);
         ISOMsg response = this.isoTcpClient.send(request);
 
-        log.info("Received ISO response MTI: {}", response.getMTI());
-
         if (!"0110".equals(response.getMTI()) || !response.hasField(39)) {
             return AuthenticationResult.failure(AuthenticationStatus.SYSTEM_ERROR);
         }
@@ -45,7 +43,7 @@ public class AtmAuthenticationService {
                 if (sessionToken == null || sessionToken.isBlank()) {
                     yield AuthenticationResult.failure(AuthenticationStatus.SYSTEM_ERROR);
                 }
-                
+
                 yield AuthenticationResult.success(sessionToken);
             }
             case ResponseCodes.INVALID_PIN -> AuthenticationResult.failure(AuthenticationStatus.INVALID_PIN);
