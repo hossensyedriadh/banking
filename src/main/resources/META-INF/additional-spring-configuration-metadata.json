@@ -34,6 +34,16 @@
       "name": "cbs.base-url",
       "type": "java.lang.String",
       "description": "Base URL of CBS application."
+    },
+    {
+      "name": "atm-terminal.session.idle-timeout",
+      "type": "java.time.Duration",
+      "description": "Idle timeout duration for an ATM terminal session."
+    },
+    {
+      "name": "atm-terminal.session.max-age",
+      "type": "java.time.Duration",
+      "description": "Max age duration for an ATM terminal session."
     }
   ]
 }

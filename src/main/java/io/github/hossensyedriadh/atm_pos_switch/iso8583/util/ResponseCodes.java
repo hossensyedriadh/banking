@@ -17,6 +17,7 @@ public final class ResponseCodes {
     public static final String DEBIT_BLOCK = "57";
     public static final String CREDIT_BLOCK = "57";
     public static final String INVALID_CURRENCY = "57";
+    public static final String INVALID_SESSION = "58";
     public static final String FULL_FREEZE = "62";
     public static final String RESTRICTED_CARD = "62";
     public static final String PIN_BLOCKED = "75";

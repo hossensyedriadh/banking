@@ -27,6 +27,8 @@
               class="org.jpos.iso.IFA_BINARY"/>
     <isofield id="54" length="20" name="Additional Amounts"
               class="org.jpos.iso.IF_CHAR"/>
+    <isofield id="62" length="999" name="ATM Session Token"
+              class="org.jpos.iso.IFA_LLLCHAR"/>
     <isofield id="90" length="42" name="Original Data Elements"
               class="org.jpos.iso.IFA_NUMERIC"/>
 </isopackager>

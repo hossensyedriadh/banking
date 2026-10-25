@@ -3,8 +3,10 @@ package io.github.hossensyedriadh.atm_pos_switch.iso8583.handler;
 import io.github.hossensyedriadh.atm_pos_switch.iso8583.parser.IsoMessageParser;
 import io.github.hossensyedriadh.atm_pos_switch.iso8583.response.IsoResponseFactory;
 import io.github.hossensyedriadh.atm_pos_switch.iso8583.router.TransactionRouter;
+import io.github.hossensyedriadh.atm_pos_switch.iso8583.util.ProcessingCodes;
 import io.github.hossensyedriadh.atm_pos_switch.iso8583.util.ResponseCodes;
 import io.github.hossensyedriadh.atm_pos_switch.iso8583.validator.IsoRequestValidator;
+import io.github.hossensyedriadh.atm_pos_switch.service.AtmSessionService;
 import io.github.hossensyedriadh.atm_pos_switch.terminal.api.service.SwitchTerminalService;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.enumerator.TransactionStatus;
 import io.github.hossensyedriadh.atm_pos_switch.transaction.api.model.SwitchTransactionRegistrationResult;
@@ -27,17 +29,20 @@ public class IsoMessageHandler {
     private final TransactionRouter transactionRouter;
     private final SwitchTerminalService switchTerminalService;
     private final SwitchTransactionService switchTransactionService;
+    private final AtmSessionService atmSessionService;
 
     @Autowired
     public IsoMessageHandler(IsoResponseFactory isoResponseFactory, IsoRequestValidator isoRequestValidator,
                              IsoMessageParser isoMessageParser, TransactionRouter transactionRouter,
-                             SwitchTerminalService switchTerminalService, SwitchTransactionService switchTransactionService) {
+                             SwitchTerminalService switchTerminalService, SwitchTransactionService switchTransactionService,
+                             AtmSessionService atmSessionService) {
         this.isoResponseFactory = isoResponseFactory;
         this.isoRequestValidator = isoRequestValidator;
         this.isoMessageParser = isoMessageParser;
         this.transactionRouter = transactionRouter;
         this.switchTerminalService = switchTerminalService;
         this.switchTransactionService = switchTransactionService;
+        this.atmSessionService = atmSessionService;
     }
 
     public ISOMsg handle(ISOMsg request) {
@@ -72,6 +77,18 @@ public class IsoMessageHandler {
                 return this.isoResponseFactory.createResponse(request, "03");
             }
 
+            String processingCode = request.getString(3);
+
+            if ("0200".equals(mti) && ProcessingCodes.requiresSession(processingCode)) {
+                String sessionToken = request.getString(62);
+                String pan = request.getString(2);
+
+                if (!this.atmSessionService.validateAndTouch(sessionToken, pan, terminalId)) {
+                    log.warn("Transaction rejected: missing or invalid ATM session; terminalId={}, processingCode={}", terminalId, processingCode);
+                    return this.isoResponseFactory.createResponse(request, ResponseCodes.INVALID_SESSION);
+                }
+            }
+
             if ("0100".equals(mti)) {
                 ISOMsg response = this.transactionRouter.route(request);
 
@@ -91,6 +108,11 @@ public class IsoMessageHandler {
             }
 
             BigDecimal transactionAmount = new BigDecimal(amountField).movePointLeft(2);
+
+            ISOMsg sanitizedRequest = (ISOMsg) request.clone();
+            sanitizedRequest.unset(52);
+            sanitizedRequest.unset(62);
+
             byte[] requestPayload = this.isoMessageParser.pack(request);
 
             SwitchTransactionRegistrationResult registrationResult = this.switchTransactionService.registerRequest(terminalId,
