@@ -46,4 +46,5 @@ info:
 springdoc:
   swagger-ui:
     supported-submit-methods: [ ]
-    path: "/ui-docs.html"
+    config-url: /api/docs/cbs/v3/api-docs/swagger-config
+    url: /api/docs/cbs/v3/api-docs
