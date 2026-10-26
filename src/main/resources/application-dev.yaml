@@ -6,16 +6,16 @@ spring:
       server:
         webflux:
           httpclient:
-            connect-timeout: 5000
-            response-timeout: 45s
+            connect-timeout: ${HTTP_CONNECT_TIMEOUT:5000}
+            response-timeout: "${HTTP_RESPONSE_TIMEOUT:60s}"
             pool:
-              type: FIXED
-              max-connections: 50
-              acquire-timeout: 5000
-              max-idle-time: 30s
-              max-life-time: 5m
-              eviction-interval: 30s
-              metrics: true
+              type: "${HTTP_POOL_TYPE:FIXED}"
+              max-connections: ${HTTP_POOL_MAX_CONNECTIONS:50}
+              acquire-timeout: ${HTTP_POOL_ACQUIRE_TIMEOUT:5000}
+              max-idle-time: "${HTTP_POOL_MAX_IDLE_TIME:30s}"
+              max-life-time: "${HTTP_POOL_MAX_LIFE_TIME:5m}"
+              eviction-interval: "${HTTP_POOL_EVICTION_INTERVAL:30s}"
+              metrics: "${HTTP_POOL_METRICS_ENABLED:true}"
           httpserver:
             wiretap: false
   netty:
