@@ -13,7 +13,10 @@ public class CoreBankingDocsRoutesConfiguration {
     public RouteLocator cbsDocsRoutes(RouteLocatorBuilder builder, @Value("${banking.cbs.base-url}") String cbsBaseUrl) {
         return builder.routes()
                 .route("cbs-openapi-docs", route -> route
-                        .path("/api/docs/cbs/v3/api-docs/**")
+                        .path(
+                                "/api/docs/cbs/v3/api-docs",
+                                "/api/docs/cbs/v3/api-docs/**"
+                        )
                         .filters(filters -> filters.rewritePath(
                                 "/api/docs/cbs/(?<segment>.*)",
                                 "/api/${segment}"
@@ -34,6 +37,14 @@ public class CoreBankingDocsRoutesConfiguration {
                                 "/api/docs/cbs",
                                 "/api/swagger-ui.html"
                         ))
+                        .uri(cbsBaseUrl)
+                )
+                .route("cbs-swagger-ui-redirect", route -> route
+                        .path("/api/swagger-ui/**")
+                        .uri(cbsBaseUrl)
+                )
+                .route("cbs-openapi-redirect", route -> route
+                        .path("/api/v3/api-docs", "/api/v3/api-docs/**")
                         .uri(cbsBaseUrl)
                 )
                 .build();
