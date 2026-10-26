@@ -3,6 +3,19 @@ spring:
     gateway:
       server:
         webflux:
+          httpclient:
+            connect-timeout: 5000
+            response-timeout: 45s
+            pool:
+              type: FIXED
+              max-connections: 50
+              acquire-timeout: 5000
+              max-idle-time: 30s
+              max-life-time: 5m
+              eviction-interval: 30s
+              metrics: true
+          httpserver:
+            wiretap: false
           routes:
             - id: cbs-api
               uri: "${CBS_BASE_URL:http://cbs.banking-cbs-staging.svc.cluster.local:8080}"
@@ -10,6 +23,8 @@ spring:
                 - Path=/core-banking/**
               filters:
                 - StripPrefix=1
+  netty:
+    leak-detection: ADVANCED
 management:
   endpoints:
     web:
