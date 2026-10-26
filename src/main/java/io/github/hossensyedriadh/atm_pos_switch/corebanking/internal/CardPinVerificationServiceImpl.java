@@ -21,8 +21,8 @@ import org.springframework.web.client.RestClientResponseException;
 class CardPinVerificationServiceImpl implements CardPinVerificationService {
     private final RestClient restClient;
 
-    @Value("${cbs.base-url}")
-    private String cbsBaseUrl;
+    @Value("${core-banking.atm-gateway.base-url}")
+    private String coreBankingAtmGatewayBaseUrl;
 
     @Autowired
     public CardPinVerificationServiceImpl(@Qualifier("cbsRestClient") RestClient restClient) {
@@ -32,7 +32,7 @@ class CardPinVerificationServiceImpl implements CardPinVerificationService {
     @Override
     public CardPinVerificationResult verify(CoreBankingCardPinVerificationRequest request) {
         try {
-            CardPinVerificationResult result = this.restClient.post().uri(this.cbsBaseUrl + "/card-pins/v1/verification")
+            CardPinVerificationResult result = this.restClient.post().uri(this.coreBankingAtmGatewayBaseUrl + "/card-pins/pin-verification")
                     .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                     .body(request).retrieve().body(CardPinVerificationResult.class);
 

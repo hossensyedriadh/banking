@@ -31,9 +31,9 @@
       "description": "Switch's stuck transactions recovery fixed delay in milliseconds."
     },
     {
-      "name": "cbs.base-url",
+      "name": "core-banking.atm-gateway.base-url",
       "type": "java.lang.String",
-      "description": "Base URL of CBS application."
+      "description": "Base URL of Core Banking ATM gateway."
     },
     {
       "name": "atm-terminal.session.idle-timeout",

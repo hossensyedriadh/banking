@@ -20,8 +20,8 @@ import org.springframework.web.client.RestClientResponseException;
 class CardAccountLookupServiceImpl implements CardAccountLookupService {
     private final RestClient restClient;
 
-    @Value("${cbs.base-url}")
-    private String cbsBaseUrl;
+    @Value("${core-banking.atm-gateway.base-url}")
+    private String coreBankingAtmGatewayBaseUrl;
 
     @Autowired
     public CardAccountLookupServiceImpl(@Qualifier("cbsRestClient") RestClient restClient) {
@@ -31,7 +31,7 @@ class CardAccountLookupServiceImpl implements CardAccountLookupService {
     @Override
     public CoreBankingCardAccountAggregateResult lookupCardAccount(String pan) {
         try {
-            CoreBankingCardResponse cardResponse = this.restClient.get().uri(this.cbsBaseUrl + "/cards/v1/pan/" + pan)
+            CoreBankingCardResponse cardResponse = this.restClient.get().uri(this.coreBankingAtmGatewayBaseUrl + "/cards/" + pan)
                     .retrieve().body(CoreBankingCardResponse.class);
 
             if (cardResponse == null) {
@@ -39,7 +39,7 @@ class CardAccountLookupServiceImpl implements CardAccountLookupService {
                 throw new CoreBankingException("CBS returned an empty response for card lookup");
             }
 
-            CoreBankingAccountResponse accountResponse = this.restClient.get().uri(this.cbsBaseUrl + "/accounts/v1/" + cardResponse.getAccountId())
+            CoreBankingAccountResponse accountResponse = this.restClient.get().uri(this.coreBankingAtmGatewayBaseUrl + "/accounts/" + cardResponse.getAccountId())
                     .retrieve().body(CoreBankingAccountResponse.class);
 
             if (accountResponse == null) {

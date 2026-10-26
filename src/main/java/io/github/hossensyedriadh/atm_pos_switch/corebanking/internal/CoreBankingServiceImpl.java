@@ -30,8 +30,8 @@ class CoreBankingServiceImpl implements CoreBankingService {
     private final RestClient restClient;
     private final CoreBankingResponseCodeMapper coreBankingResponseCodeMapper;
 
-    @Value("${cbs.base-url}")
-    private String cbsBaseUrl;
+    @Value("${core-banking.atm-gateway.base-url}")
+    private String coreBankingAtmGatewayBaseUrl;
 
     @Autowired
     public CoreBankingServiceImpl(@Qualifier("cbsRestClient") RestClient restClient, CoreBankingResponseCodeMapper coreBankingResponseCodeMapper) {
@@ -50,7 +50,7 @@ class CoreBankingServiceImpl implements CoreBankingService {
                 transaction.stan(), transaction.retrievalReference()));
 
         try {
-            CoreBankingTransactionResponse response = this.restClient.post().uri(this.cbsBaseUrl + "/transactions/v1/withdrawals")
+            CoreBankingTransactionResponse response = this.restClient.post().uri(this.coreBankingAtmGatewayBaseUrl + "/transactions/withdrawals")
                     .contentType(MediaType.APPLICATION_JSON).body(withdrawalRequest).retrieve()
                     .body(CoreBankingTransactionResponse.class);
 
@@ -98,7 +98,7 @@ class CoreBankingServiceImpl implements CoreBankingService {
     @Override
     public Optional<CoreBankingTransactionResponse> findTransactionByIdempotencyKey(String idempotencyKey) {
         try {
-            CoreBankingTransactionResponse response = this.restClient.get().uri(this.cbsBaseUrl + "/transactions/v1/idempotency/{key}", idempotencyKey)
+            CoreBankingTransactionResponse response = this.restClient.get().uri(this.coreBankingAtmGatewayBaseUrl + "/transactions/idempotency/{key}", idempotencyKey)
                     .retrieve().body(CoreBankingTransactionResponse.class);
 
             if (response == null) {
@@ -132,7 +132,7 @@ class CoreBankingServiceImpl implements CoreBankingService {
                 originalTransaction.id(), originalTransaction.terminalId(), originalTransaction.stan(), originalTransaction.retrievalReference()));
 
         try {
-            CoreBankingTransactionResponse reversalResponse = this.restClient.post().uri(this.cbsBaseUrl + "/transactions/v1/reversals")
+            CoreBankingTransactionResponse reversalResponse = this.restClient.post().uri(this.coreBankingAtmGatewayBaseUrl + "/transactions/reversals")
                     .contentType(MediaType.APPLICATION_JSON).body(reversalRequest).retrieve()
                     .body(CoreBankingTransactionResponse.class);
 
@@ -176,7 +176,7 @@ class CoreBankingServiceImpl implements CoreBankingService {
 
     @Override
     public CoreBankingTransactionPage findTransactions(CoreBankingTransactionsSearch search) {
-        URI uri = UriComponentsBuilder.fromUriString(this.cbsBaseUrl + "/transactions/v1")
+        URI uri = UriComponentsBuilder.fromUriString(this.coreBankingAtmGatewayBaseUrl + "/transactions")
                 .queryParam("from", search.from().toString())
                 .queryParam("to", search.to().toString())
                 .queryParam("page", search.page())

@@ -18,8 +18,8 @@ import org.springframework.web.client.RestClientResponseException;
 class CurrencyLookupServiceImpl implements CurrencyLookupService {
     private final RestClient restClient;
 
-    @Value("${cbs.base-url}")
-    private String cbsBaseUrl;
+    @Value("${core-banking.atm-gateway.base-url}")
+    private String coreBankingAtmGatewayBaseUrl;
 
     @Autowired
     public CurrencyLookupServiceImpl(@Qualifier("cbsRestClient") RestClient restClient) {
@@ -29,7 +29,7 @@ class CurrencyLookupServiceImpl implements CurrencyLookupService {
     @Override
     public CoreBankingCurrencyResponse lookupCurrency(Long currencyId) {
         try {
-            CoreBankingCurrencyResponse response = this.restClient.get().uri(this.cbsBaseUrl + "/currencies/v1/" + currencyId)
+            CoreBankingCurrencyResponse response = this.restClient.get().uri(this.coreBankingAtmGatewayBaseUrl + "/currencies/" + currencyId)
                     .retrieve().body(CoreBankingCurrencyResponse.class);
 
             if (response == null) {

@@ -68,5 +68,6 @@ atm-terminal:
   session:
     idle-timeout: "${ATM_SESSION_IDLE_TIMEOUT:2m}"
     max-age: "${ATM_SESSION_MAX_AGE:10m}"
-cbs:
-  base-url: "${CBS_BASE_URL}"
+core-banking:
+  atm-gateway:
+    base-url: "${CORE_BANKING_ATM_GATEWAY_BASE_URL}"

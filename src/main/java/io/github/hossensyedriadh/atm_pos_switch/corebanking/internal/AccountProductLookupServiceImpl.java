@@ -17,8 +17,8 @@ import org.springframework.web.client.RestClientResponseException;
 class AccountProductLookupServiceImpl implements AccountProductLookupService {
     private final RestClient restClient;
 
-    @Value("${cbs.base-url}")
-    private String cbsBaseUrl;
+    @Value("${core-banking.atm-gateway.base-url}")
+    private String coreBankingAtmGatewayBaseUrl;
 
     @Autowired
     public AccountProductLookupServiceImpl(RestClient restClient) {
@@ -28,7 +28,7 @@ class AccountProductLookupServiceImpl implements AccountProductLookupService {
     @Override
     public CoreBankingAccountProductResponse lookupAccountProduct(Long id) {
         try {
-            CoreBankingAccountProductResponse response = this.restClient.get().uri(this.cbsBaseUrl + "/account-products/v1/" + id)
+            CoreBankingAccountProductResponse response = this.restClient.get().uri(this.coreBankingAtmGatewayBaseUrl + "/account-products/" + id)
                     .retrieve().body(CoreBankingAccountProductResponse.class);
 
             if (response == null) {

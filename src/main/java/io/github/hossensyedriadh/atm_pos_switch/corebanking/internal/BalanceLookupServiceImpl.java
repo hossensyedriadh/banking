@@ -17,8 +17,8 @@ import org.springframework.web.client.RestClientResponseException;
 class BalanceLookupServiceImpl implements BalanceLookupService {
     private final RestClient restClient;
 
-    @Value("${cbs.base-url}")
-    private String cbsBaseUrl;
+    @Value("${core-banking.atm-gateway.base-url}")
+    private String coreBankingAtmGatewayBaseUrl;
 
     @Autowired
     public BalanceLookupServiceImpl(RestClient restClient) {
@@ -28,7 +28,7 @@ class BalanceLookupServiceImpl implements BalanceLookupService {
     @Override
     public CoreBankingAccountBalanceResponse lookupBalance(Long accountId) {
         try {
-            CoreBankingAccountBalanceResponse response = this.restClient.get().uri(this.cbsBaseUrl + "/accounts/v1/balance/" + accountId)
+            CoreBankingAccountBalanceResponse response = this.restClient.get().uri(this.coreBankingAtmGatewayBaseUrl + "/accounts/" + accountId + "/balance")
                     .retrieve().body(CoreBankingAccountBalanceResponse.class);
 
             if (response == null) {
