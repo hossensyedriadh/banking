@@ -37,7 +37,7 @@ public class AtmSwitchRoutesConfiguration {
                 .route("atm-card-info-by-pan", r -> r.path(AtmEndpoints.CARD_INFO_BY_PAN)
                         .and().method(HttpMethod.GET).filters(f -> f.rewritePath(
                                 AtmEndpoints.CARD_INFO_BY_PAN_REWRITE,
-                                CbsEndpoints.ACCOUNT_INFO_REWRITE))
+                                CbsEndpoints.CARD_INFO_BY_PAN_REWRITE))
                         .uri(cbsBaseUrl))
                 .route("atm-card-pin-verification", r -> r.path(AtmEndpoints.CARD_PIN_VERIFICATION)
                         .and().method(HttpMethod.POST).filters(f -> f.rewritePath(
