@@ -1,5 +1,7 @@
 spring:
   cloud:
+    discovery:
+      enabled: false
     gateway:
       server:
         webflux:
@@ -16,13 +18,6 @@ spring:
               metrics: true
           httpserver:
             wiretap: false
-          routes:
-            - id: cbs-api
-              uri: "${CBS_BASE_URL:http://cbs.banking-cbs-staging.svc.cluster.local:8080}"
-              predicates:
-                - Path=/core-banking/**
-              filters:
-                - StripPrefix=1
   netty:
     leak-detection: ADVANCED
 management:
@@ -33,3 +28,8 @@ management:
   endpoint:
     health:
       show-details: always
+
+#custom properties
+banking:
+  cbs:
+    base-url: "${CBS_BASE_URL:http://cbs.banking-cbs-staging.svc.cluster.local:8080}"

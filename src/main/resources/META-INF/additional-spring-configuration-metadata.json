@@ -1,0 +1,9 @@
+{
+  "properties": [
+    {
+      "name": "banking.cbs.base-url",
+      "type": "java.lang.String",
+      "description": "Base URL of CBS application."
+    }
+  ]
+}
