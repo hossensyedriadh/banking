@@ -64,3 +64,21 @@ springdoc:
     enabled: true
   swagger-ui:
     enabled: true
+logging:
+  level:
+    org.springframework.security: trace
+    org.springframework.security.oauth2.server.authorization: trace
+#custom properties
+authorization-server:
+  issuer: "${AUTHORIZATION_SERVER_ISSUER}"
+banking:
+  iam:
+    signing:
+      keystore: "${IAM_SIGNING_KEYSTORE}"
+      store-password: "${IAM_SIGNING_STORE_PASSWORD}"
+      key-password: "${IAM_SIGNING_KEY_PASSWORD}"
+      alias: "${IAM_SIGNING_KEY_ALIAS}"
+      key-id: "${IAM_SIGNING_KEY_ID}"
+    clients:
+      atm-pos-switch:
+        secret: "${ATM_POS_SWITCH_CLIENT_SECRET}"

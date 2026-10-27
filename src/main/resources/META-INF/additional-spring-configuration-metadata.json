@@ -1,0 +1,34 @@
+{
+  "properties": [
+    {
+      "name": "authorization-server.issuer",
+      "type": "java.lang.String",
+      "description": "Fully qualified URL of the Authorization issuer."
+    },
+    {
+      "name": "banking.iam.signing.keystore",
+      "type": "java.lang.String",
+      "description": "Keystore for signing."
+    },
+    {
+      "name": "banking.iam.signing.store-password",
+      "type": "java.lang.String",
+      "description": "Keystore password for signing."
+    },
+    {
+      "name": "banking.iam.signing.key-password",
+      "type": "java.lang.String",
+      "description": "Key password for signing."
+    },
+    {
+      "name": "banking.iam.signing.alias",
+      "type": "java.lang.String",
+      "description": "Key alias for signing."
+    },
+    {
+      "name": "banking.iam.signing.key-id",
+      "type": "java.lang.String",
+      "description": "Key ID for signing."
+    }
+  ]
+}
