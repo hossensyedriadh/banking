@@ -29,11 +29,16 @@ spec:
             - secretRef:
                 name: banking-iam-server
           volumeMounts:
+            - mountPath: /app/keystore
+              name: iam-signing-keystore
+              readOnly: true
             - mountPath: /log/baning-iam-server
               name: app-logs
             - mountPath: /heapdumps
               name: heapdump
           env:
+            - name: IAM_SIGNING_KEYSTORE
+              value: /app/keystore/IAM_SIGNING_KEYSTORE
             - name: LOG_PATH
               value: /log/baning-iam-server
           resources:
@@ -58,6 +63,9 @@ spec:
             periodSeconds: 15
             failureThreshold: 3
       volumes:
+        - name: iam-signing-keystore
+          secret:
+            secretName: banking-iam-server
         - name: app-logs
           hostPath:
             path: /var/log/banking/iam-server/logs
