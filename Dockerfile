@@ -21,7 +21,7 @@ COPY cerberus-root-ca.crt /usr/local/share/ca-certificates/
 
 RUN update-ca-certificates
 
-RUN keytool -importcert -nopromot \
+RUN keytool -importcert -noprompt \
     -trustcacerts \
     -alias cerberus-root-ca \
     -file /usr/local/share/ca-certificates/cerberus-root-ca.crt \
