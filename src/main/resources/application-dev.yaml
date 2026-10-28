@@ -66,8 +66,8 @@ springdoc:
     enabled: true
 logging:
   level:
-    org.springframework.security: trace
-    org.springframework.security.oauth2.server.authorization: trace
+    org.springframework.security: info
+    org.springframework.security.oauth2.server.authorization: info
 #custom properties
 authorization-server:
   issuer: "${AUTHORIZATION_SERVER_ISSUER}"
