@@ -37,6 +37,7 @@ public class SecurityConfiguration {
                         ).hasAuthority(OAuth2Scopes.ATM_WITHDRAW_CREATE)
                         .pathMatchers(HttpMethod.POST, AtmEndpoints.TRANSACTION_REVERSAL
                         ).hasAuthority(OAuth2Scopes.ATM_REVERSAL_CREATE)
+                        .pathMatchers(AtmEndpoints.BASE + "/**").denyAll()
                         .anyExchange().authenticated()
                 ).oauth2ResourceServer(oauth2 -> oauth2.jwt(_ -> {
                 })).build();
