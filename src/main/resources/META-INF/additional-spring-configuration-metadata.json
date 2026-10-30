@@ -44,6 +44,26 @@
       "name": "atm-terminal.session.max-age",
       "type": "java.time.Duration",
       "description": "Max age duration for an ATM terminal session."
+    },
+    {
+      "name": "iam.token-uri",
+      "type": "java.lang.String",
+      "description": "Max age duration for an ATM terminal session."
+    },
+    {
+      "name": "iam.client-id",
+      "type": "java.lang.String",
+      "description": "Max age duration for an ATM terminal session."
+    },
+    {
+      "name": "iam.client-secret",
+      "type": "java.lang.String",
+      "description": "Max age duration for an ATM terminal session."
+    },
+    {
+      "name": "iam.scopes",
+      "type": "java.util.List<java.lang.String>",
+      "description": "Max age duration for an ATM terminal session."
     }
   ]
 }

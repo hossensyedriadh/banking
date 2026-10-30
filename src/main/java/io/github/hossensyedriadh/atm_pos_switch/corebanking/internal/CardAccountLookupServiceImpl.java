@@ -35,27 +35,27 @@ class CardAccountLookupServiceImpl implements CardAccountLookupService {
                     .retrieve().body(CoreBankingCardResponse.class);
 
             if (cardResponse == null) {
-                log.error("CBS returned an empty response for card lookup");
-                throw new CoreBankingException("CBS returned an empty response for card lookup");
+                log.error("CBS/Gateway returned an empty response for card lookup");
+                throw new CoreBankingException("CBS/Gateway returned an empty response for card lookup");
             }
 
             CoreBankingAccountResponse accountResponse = this.restClient.get().uri(this.coreBankingAtmGatewayBaseUrl + "/accounts/" + cardResponse.getAccountId())
                     .retrieve().body(CoreBankingAccountResponse.class);
 
             if (accountResponse == null) {
-                log.error("CBS returned an empty response for account lookup");
-                throw new CoreBankingException("CBS returned an empty response for account lookup");
+                log.error("CBS/Gateway returned an empty response for account lookup");
+                throw new CoreBankingException("CBS/Gateway returned an empty response for account lookup");
             }
 
             return new CoreBankingCardAccountAggregateResult(cardResponse.getId(), cardResponse.getCardProductId(), cardResponse.getLastFour(), cardResponse.getStatus(),
                     cardResponse.getExpiryDate(), cardResponse.getAccountId(), accountResponse.getAccountNumber(), accountResponse.getProductId(), accountResponse.getBranchId(), accountResponse.getCurrencyId(),
                     accountResponse.getStatus());
         } catch (RestClientResponseException e) {
-            log.error("CBS returned an error response for card-account lookup", e);
-            throw new CoreBankingException("CBS returned an error response for card lookup", e);
+            log.error("CBS/Gateway returned HTTP {} for card-account lookup", e.getStatusCode().value(), e);
+            throw new CoreBankingException("CBS/Gateway returned an error response for card lookup", e);
         } catch (RestClientException e) {
-            log.error("Failed to communicate with CBS for card-account lookup", e);
-            throw new CoreBankingCommunicationException("Could not complete CBS card lookup", e);
+            log.error("Failed to communicate with CBS/Gateway for card-account lookup", e);
+            throw new CoreBankingCommunicationException("Could not complete CBS/Gateway card lookup", e);
         }
     }
 }

@@ -6,6 +6,7 @@ import io.github.hossensyedriadh.atm_pos_switch.exception.CoreBankingCommunicati
 import io.github.hossensyedriadh.atm_pos_switch.exception.CoreBankingException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -21,7 +22,7 @@ class AccountProductLookupServiceImpl implements AccountProductLookupService {
     private String coreBankingAtmGatewayBaseUrl;
 
     @Autowired
-    public AccountProductLookupServiceImpl(RestClient restClient) {
+    public AccountProductLookupServiceImpl(@Qualifier("cbsRestClient") RestClient restClient) {
         this.restClient = restClient;
     }
 

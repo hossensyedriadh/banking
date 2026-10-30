@@ -71,3 +71,8 @@ atm-terminal:
 core-banking:
   atm-gateway:
     base-url: "${CORE_BANKING_ATM_GATEWAY_BASE_URL}"
+iam:
+  token-uri: ${TOKEN_ISSUER_URL}
+  client-id: ${IAM_CLIENT_ID}
+  client-secret: ${IAM_CLIENT_SECRET}
+  scopes: "atm.balance.read atm.account-info.read atm.card-info.read atm.card-pin.verify atm.currency-info.read atm.account-product-info.read atm.withdraw.create atm.reversal.create atm.transactions-search.read atm.transaction.read"

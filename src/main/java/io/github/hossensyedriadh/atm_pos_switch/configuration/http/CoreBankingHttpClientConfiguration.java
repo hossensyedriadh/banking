@@ -1,5 +1,6 @@
 package io.github.hossensyedriadh.atm_pos_switch.configuration.http;
 
+import io.github.hossensyedriadh.atm_pos_switch.interceptor.IamAuthenticationInterceptor;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -8,6 +9,8 @@ import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuil
 import org.apache.hc.client5.http.io.HttpClientConnectionManager;
 import org.apache.hc.core5.util.TimeValue;
 import org.apache.hc.core5.util.Timeout;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -17,6 +20,13 @@ import org.springframework.web.client.RestClient;
 
 @Configuration
 public class CoreBankingHttpClientConfiguration {
+    private final IamAuthenticationInterceptor iamAuthenticationInterceptor;
+
+    @Autowired
+    public CoreBankingHttpClientConfiguration(IamAuthenticationInterceptor iamAuthenticationInterceptor) {
+        this.iamAuthenticationInterceptor = iamAuthenticationInterceptor;
+    }
+
     @Bean(name = "cbsHttpClient", destroyMethod = "close")
     public CloseableHttpClient cbsHttpClient() {
         HttpClientConnectionManager connectionManager = PoolingHttpClientConnectionManagerBuilder.create()
@@ -37,11 +47,12 @@ public class CoreBankingHttpClientConfiguration {
     }
 
     @Bean("cbsRestClient")
-    public RestClient cbsRestClient(CloseableHttpClient httpClient) {
+    public RestClient cbsRestClient(@Qualifier("cbsHttpClient") CloseableHttpClient httpClient) {
         HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
 
         return RestClient.builder().requestFactory(requestFactory)
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+                .requestInterceptor(this.iamAuthenticationInterceptor)
                 .build();
     }
 }
