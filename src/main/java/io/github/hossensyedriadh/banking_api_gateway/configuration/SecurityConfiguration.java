@@ -16,7 +16,7 @@ public class SecurityConfiguration {
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http.csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchange -> exchange.pathMatchers("/error", "/actuator/health/**",
-                                "actuator/info").permitAll()
+                                "/actuator/info").permitAll()
                         .pathMatchers(HttpMethod.GET, AtmEndpoints.BASE + "/accounts/*/balance"
                         ).hasAuthority(OAuth2Scopes.ATM_BALANCE_READ)
                         .pathMatchers(HttpMethod.GET, AtmEndpoints.BASE + "/accounts/*"
