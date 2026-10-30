@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -63,6 +64,7 @@ public class CurrencyController {
                     @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = CurrencyView.class))),
                     @ApiResponse(responseCode = "404", description = "Currency not found", content = @Content)
             })
+    @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).CURRENCY_READ)")
     @GetMapping("/{id}")
     public ResponseEntity<CurrencyView> getCurrencyById(@PathVariable("id") Long id) {
         Optional<CurrencyView> currencyView = this.currencyService.getCurrency(id);
@@ -78,6 +80,7 @@ public class CurrencyController {
                     @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = CurrencyView.class))),
                     @ApiResponse(responseCode = "404", description = "Currency not found", content = @Content)
             })
+    @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).CURRENCY_READ)")
     @GetMapping("/code/{code}")
     public ResponseEntity<CurrencyView> getCurrencyByCode(@PathVariable("code") String code) {
         Optional<CurrencyView> currencyView = this.currencyService.getCurrencyByCode(code);

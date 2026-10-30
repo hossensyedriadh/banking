@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -61,6 +62,7 @@ public class AccountProductController {
                     @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = AccountProductView.class))),
                     @ApiResponse(responseCode = "404", description = "Account product not found", content = @Content)
             })
+    @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).ACCOUNT_PRODUCT_READ)")
     @GetMapping("/{id}")
     public ResponseEntity<AccountProductView> getAccountProductById(@PathVariable("id") Long id) {
         Optional<AccountProductView> accountProductView = this.accountProductService.getProduct(id);
@@ -73,6 +75,7 @@ public class AccountProductController {
                     @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = AccountProductView.class))),
                     @ApiResponse(responseCode = "404", description = "Account product not found", content = @Content)
             })
+    @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).ACCOUNT_PRODUCT_READ)")
     @GetMapping("/code/{code}")
     public ResponseEntity<AccountProductView> getAccountProductByCode(@PathVariable("code") String code) {
         Optional<AccountProductView> accountProductView = this.accountProductService.getProductByCode(code);

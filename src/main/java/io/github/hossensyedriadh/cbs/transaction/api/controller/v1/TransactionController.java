@@ -21,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -57,6 +58,8 @@ public class TransactionController {
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = TransactionView.class)))
             })
+
+    @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).TRANSACTIONS_SEARCH_READ)")
     @GetMapping(params = {"from", "to"})
     public ResponseEntity<Page<TransactionView>> getTransactionsInDateRange(@RequestParam("from") OffsetDateTime startDate, @RequestParam("to") OffsetDateTime endDate,
                                                                             @RequestParam(value = "accountId", required = false) Long accountId, @RequestParam(value = "type", required = false)
@@ -89,6 +92,7 @@ public class TransactionController {
                     @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = TransactionView.class))),
                     @ApiResponse(responseCode = "404", description = "Transaction not found", content = @Content)
             })
+    @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).TRANSACTION_READ)")
     @GetMapping("/{id}")
     public ResponseEntity<TransactionView> getTransaction(@PathVariable("id") Long id) {
         Optional<TransactionView> transaction = this.transactionService.getTransaction(id);
@@ -104,6 +108,7 @@ public class TransactionController {
                     @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = TransactionView.class))),
                     @ApiResponse(responseCode = "404", description = "Transaction not found", content = @Content)
             })
+    @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).TRANSACTION_READ)")
     @GetMapping("/reference/{ref}")
     public ResponseEntity<TransactionView> getTransaction(@PathVariable("ref") String reference) {
         Optional<TransactionView> transaction = this.transactionService.getTransactionByReference(reference);
@@ -119,6 +124,7 @@ public class TransactionController {
                     @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = TransactionView.class))),
                     @ApiResponse(responseCode = "404", description = "Transaction not found", content = @Content)
             })
+    @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).TRANSACTION_READ)")
     @GetMapping("/idempotency/{key}")
     public ResponseEntity<TransactionView> getTransactionByIdempotencyKey(@PathVariable("key") String key) {
         Optional<TransactionView> transaction = this.transactionService.getTransactionByIdempotencyKey(key);
@@ -150,6 +156,7 @@ public class TransactionController {
             responses = {
                     @ApiResponse(responseCode = "201", description = "Created", content = @Content(schema = @Schema(implementation = TransactionView.class)))
             })
+    @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).WITHDRAW_CREATE)")
     @PostMapping(value = "/withdrawals", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<TransactionView> withdraw(@RequestBody CreateWithdrawalCommand command) {
         TransactionView withdrawal = this.transactionService.withdraw(command);
@@ -167,6 +174,7 @@ public class TransactionController {
             responses = {
                     @ApiResponse(responseCode = "201", description = "Created", content = @Content(schema = @Schema(implementation = TransactionView.class)))
             })
+    @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).REVERSAL_CREATE)")
     @PostMapping(value = "/reversals", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<TransactionView> reverse(@RequestBody ReverseTransactionCommand command) {
         TransactionView reversal = this.transactionService.reverse(command);

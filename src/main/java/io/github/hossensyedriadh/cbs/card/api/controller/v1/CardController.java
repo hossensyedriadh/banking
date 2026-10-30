@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -66,6 +67,7 @@ public class CardController {
                     @ApiResponse(responseCode = "200", description = "Card associated with the ID", content = @Content(schema = @Schema(implementation = CardView.class))),
                     @ApiResponse(responseCode = "204", description = "No Content", content = @Content)
             })
+    @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).CARD_READ)")
     @GetMapping("/{id}")
     public ResponseEntity<CardView> getCard(@PathVariable("id") Long id) {
         Optional<CardView> cardView = this.cardService.getCard(id);
@@ -81,6 +83,7 @@ public class CardController {
                     @ApiResponse(responseCode = "200", description = "Card associated with the PAN", content = @Content(schema = @Schema(implementation = CardView.class))),
                     @ApiResponse(responseCode = "204", description = "No Content", content = @Content)
             })
+    @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).CARD_READ)")
     @GetMapping("/pan/{pan}")
     public ResponseEntity<CardView> getCard(@PathVariable("pan") String pan) {
         Optional<CardView> cardView = this.cardService.getCard(pan);

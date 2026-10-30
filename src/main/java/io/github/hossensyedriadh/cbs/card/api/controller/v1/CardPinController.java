@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,6 +50,7 @@ public class CardPinController {
                     @ApiResponse(responseCode = "403", description = "Card PIN is blocked",
                             content = @Content(schema = @Schema(implementation = GlobalErrorResponse.class)))
             })
+    @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).CARD_PIN_VERIFY)")
     @PostMapping(value = "/verification", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<CardPinVerificationResult> verify(@RequestBody VerifyCardPinCommand command) {
         CardPinVerificationResult result = this.cardPinService.verifyPin(command);

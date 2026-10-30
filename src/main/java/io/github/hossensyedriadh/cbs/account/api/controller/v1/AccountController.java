@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -53,6 +54,7 @@ public class AccountController {
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, array = @ArraySchema(schema = @Schema(implementation = AccountView.class)))),
             @ApiResponse(responseCode = "204", description = "No Content", content = @Content)
     })
+    @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).ACCOUNT_READ)")
     @GetMapping("/customer/{customerId}")
     public ResponseEntity<List<AccountView>> getAccountsForCustomer(@PathVariable("customerId") Long customerId) {
         List<AccountView> accountViews = this.accountService.getAccountByCustomerId(customerId);
@@ -90,6 +92,7 @@ public class AccountController {
                     )
             }
     )
+    @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).ACCOUNT_READ)")
     @GetMapping("/{id}")
     public ResponseEntity<AccountView> getAccount(@PathVariable("id") Long id) {
         Optional<AccountView> accountView = this.accountService.getAccount(id);
@@ -123,6 +126,7 @@ public class AccountController {
                     )
             }
     )
+    @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).ACCOUNT_READ)")
     @GetMapping("/account-number/{number}")
     public ResponseEntity<AccountView> getAccount(@PathVariable("number") String accountNumber) {
         Optional<AccountView> accountView = this.accountService.getAccountByNumber(accountNumber);
@@ -156,6 +160,7 @@ public class AccountController {
                     )
             }
     )
+    @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).BALANCE_READ)")
     @GetMapping("/balance/{accountId}")
     public ResponseEntity<AccountBalanceView> getBalance(@PathVariable("accountId") Long accountId) {
         AccountBalanceView accountBalanceView = this.accountBalanceService.getBalance(accountId);
