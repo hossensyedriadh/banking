@@ -1,7 +1,7 @@
 package io.github.hossensyedriadh.banking_api_gateway.util;
 
-public final class OAuth2Scopes {
-    private OAuth2Scopes() {
+public final class AtmOAuth2Scopes {
+    private AtmOAuth2Scopes() {
     }
 
     public static final String ATM_BALANCE_READ = "SCOPE_atm.balance.read";

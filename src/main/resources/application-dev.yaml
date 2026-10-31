@@ -27,6 +27,7 @@ spring:
           issuer-uri: "${OAUTH2_ISSUER}"
           audiences:
             - "banking-api-gateway"
+            - "cbs"
 logging:
   level:
     org.springframework.security: info
