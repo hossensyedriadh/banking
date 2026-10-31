@@ -1,4 +1,4 @@
-package io.github.hossensyedriadh.banking_iam_server.configuration.security;
+package io.github.hossensyedriadh.banking_iam_server.configuration.authorization;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

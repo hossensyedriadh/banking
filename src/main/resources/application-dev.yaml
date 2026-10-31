@@ -82,3 +82,5 @@ banking:
     clients:
       atm-pos-switch:
         secret: "${ATM_POS_SWITCH_CLIENT_SECRET}"
+      banking-api-gateway:
+        secret: "${BANKING_API_GATEWAY_CLIENT_SECRET}"

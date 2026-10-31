@@ -1,0 +1,79 @@
+package io.github.hossensyedriadh.banking_iam_server.configuration.security;
+
+import io.github.hossensyedriadh.banking_iam_server.util.AtmOAuth2Scopes;
+import io.github.hossensyedriadh.banking_iam_server.util.CbsOAuth2Scopes;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
+
+import java.time.Duration;
+import java.util.UUID;
+
+@Configuration
+public class MachineClientConfiguration {
+    private final RegisteredClientRepository clientRepository;
+
+    @Autowired
+    public MachineClientConfiguration(RegisteredClientRepository clientRepository) {
+        this.clientRepository = clientRepository;
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    }
+
+    @Bean
+    public ApplicationRunner registerAtmPostSwitchClient(PasswordEncoder passwordEncoder, @Value("${banking.iam.clients.atm-pos-switch.secret}") String clientSecret) {
+        return _ -> {
+            if (this.clientRepository.findByClientId("atm-pos-switch") != null) {
+                return;
+            }
+
+            RegisteredClient switchClient = RegisteredClient.withId(UUID.randomUUID().toString())
+                    .clientId("atm-pos-switch").clientName("ATM/POS Switch")
+                    .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                    .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+                    .scopes(scopes -> scopes.addAll(AtmOAuth2Scopes.all()))
+                    .clientSecret(passwordEncoder.encode(clientSecret))
+                    .tokenSettings(TokenSettings.builder().accessTokenTimeToLive(Duration.ofMinutes(5))
+                            .build())
+                    .build();
+
+            this.clientRepository.save(switchClient);
+        };
+    }
+
+    @Bean
+    public ApplicationRunner registerGatewayClient(PasswordEncoder passwordEncoder, @Value("${banking.iam.clients.banking-api-gateway.secret}") String clientSecret) {
+        return _ -> {
+            if (this.clientRepository.findByClientId("banking-api-gateway") != null) {
+                return;
+            }
+
+            RegisteredClient gatewayClient = RegisteredClient.withId(UUID.randomUUID().toString())
+                    .clientId("banking-api-gateway").clientName("Banking API Gateway")
+                    .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                    .authorizationGrantTypes(types -> {
+                        types.add(AuthorizationGrantType.CLIENT_CREDENTIALS);
+                        types.add(AuthorizationGrantType.TOKEN_EXCHANGE);
+                    })
+                    .scopes(scopes -> scopes.addAll(CbsOAuth2Scopes.all()))
+                    .clientSecret(passwordEncoder.encode(clientSecret))
+                    .tokenSettings(TokenSettings.builder().accessTokenTimeToLive(Duration.ofMinutes(5))
+                            .build())
+                    .build();
+
+            this.clientRepository.save(gatewayClient);
+        };
+    }
+}
