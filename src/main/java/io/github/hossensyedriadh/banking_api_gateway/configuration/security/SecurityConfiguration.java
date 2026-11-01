@@ -1,4 +1,4 @@
-package io.github.hossensyedriadh.banking_api_gateway.configuration;
+package io.github.hossensyedriadh.banking_api_gateway.configuration.security;
 
 import io.github.hossensyedriadh.banking_api_gateway.endpoint.v1.AtmEndpoints;
 import io.github.hossensyedriadh.banking_api_gateway.util.AtmOAuth2Scopes;

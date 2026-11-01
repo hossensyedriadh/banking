@@ -1,4 +1,4 @@
-package io.github.hossensyedriadh.banking_api_gateway.configuration;
+package io.github.hossensyedriadh.banking_api_gateway.configuration.route;
 
 import io.github.hossensyedriadh.banking_api_gateway.endpoint.v1.CbsEndpoints;
 import io.github.hossensyedriadh.banking_api_gateway.endpoint.v1.InternetBankingEndpoints;

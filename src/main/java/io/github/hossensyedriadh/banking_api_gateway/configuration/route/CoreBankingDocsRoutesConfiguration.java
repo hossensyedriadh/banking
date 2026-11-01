@@ -1,4 +1,4 @@
-package io.github.hossensyedriadh.banking_api_gateway.configuration;
+package io.github.hossensyedriadh.banking_api_gateway.configuration.route;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.route.RouteLocator;

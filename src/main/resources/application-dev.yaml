@@ -27,7 +27,6 @@ spring:
           issuer-uri: "${OAUTH2_ISSUER}"
           audiences:
             - "banking-api-gateway"
-            - "cbs"
 logging:
   level:
     org.springframework.security: info
@@ -49,3 +48,9 @@ management:
 banking:
   cbs:
     base-url: "${CBS_BASE_URL:http://cbs.banking-cbs-staging.svc.cluster.local:8080}"
+  iam:
+    base-url: "${IAM_BASE_URL:http://banking-iam-server.banking-iam-staging.svc.cluster.local:8080}"
+    token-uri: "${IAM_TOKEN_URI:${banking.iam.base-url}/oauth2/token}"
+    client-id: "${IAM_CLIENT_ID}"
+    client-secret: "${IAM_CLIENT_SECRET}"
+    client-authentication-method: "client_secret_basic"
