@@ -45,8 +45,6 @@ public interface SwitchTransactionService {
 
     Optional<byte[]> findRequestPayload(long transactionId);
 
-    Optional<TransactionStatus> findTransactionStatus(long transactionId);
-
     Optional<SwitchTransactionSummary> findTransactionById(long transactionId);
 
     Optional<Long> findOriginalTransactionId(long reversalTransactionId);
@@ -54,8 +52,4 @@ public interface SwitchTransactionService {
     Optional<SwitchTransactionSummary> findTransaction(String terminalId, String stan, String transmissionDateTime);
 
     Optional<SwitchTransactionSummary> findOriginalTransaction(String terminalId, OriginalDataElements originalData);
-
-    boolean hasReversal(long originalTransactionId);
-
-    List<SwitchTransactionSummary> findUnknownTransactionsForReconciliation(int batchSize);
 }

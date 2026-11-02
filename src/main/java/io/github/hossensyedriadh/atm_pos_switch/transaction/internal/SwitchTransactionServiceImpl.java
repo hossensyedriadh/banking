@@ -204,11 +204,6 @@ class SwitchTransactionServiceImpl implements SwitchTransactionService {
     }
 
     @Override
-    public Optional<TransactionStatus> findTransactionStatus(long transactionId) {
-        return this.switchTransactionRepository.findStatusById(transactionId);
-    }
-
-    @Override
     public Optional<SwitchTransactionSummary> findTransactionById(long transactionId) {
         return this.switchTransactionRepository.findTransactionById(transactionId);
     }
@@ -226,16 +221,6 @@ class SwitchTransactionServiceImpl implements SwitchTransactionService {
     @Override
     public Optional<SwitchTransactionSummary> findOriginalTransaction(String terminalId, OriginalDataElements originalData) {
         return this.switchTransactionRepository.findOriginalTransaction(terminalId, originalData);
-    }
-
-    @Override
-    public boolean hasReversal(long originalTransactionId) {
-        return this.switchTransactionRepository.hasReversal(originalTransactionId);
-    }
-
-    @Override
-    public List<SwitchTransactionSummary> findUnknownTransactionsForReconciliation(int batchSize) {
-        return this.switchTransactionRepository.findUnknownTransactionsForReconciliation(batchSize);
     }
 
     private boolean violatesDuplicateTransactionIndex(Throwable exception) {
