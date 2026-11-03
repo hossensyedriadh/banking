@@ -1,6 +1,7 @@
 package io.github.hossensyedriadh.banking_iam_server.configuration.client;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
@@ -26,9 +27,8 @@ public class UserClientConfiguration {
         this.clientRepository = clientRepository;
     }
 
-
     @Bean
-    public ApplicationRunner registerInternetBankingClient(PasswordEncoder passwordEncoder,
+    public ApplicationRunner registerInternetBankingClient(@Qualifier("clientPwdEncoder") PasswordEncoder passwordEncoder,
                                                            @Value("${banking.iam.clients.internet-banking.secret}") String clientSecret,
                                                            @Value("${banking.iam.clients.internet-banking.redirect-uri}") String redirectUri) {
         return _ -> {

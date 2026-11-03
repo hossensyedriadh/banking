@@ -3,11 +3,11 @@ package io.github.hossensyedriadh.banking_iam_server.configuration.client;
 import io.github.hossensyedriadh.banking_iam_server.util.AtmOAuth2Scopes;
 import io.github.hossensyedriadh.banking_iam_server.util.CbsOAuth2Scopes;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -28,12 +28,7 @@ public class MachineClientConfiguration {
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
-    }
-
-    @Bean
-    public ApplicationRunner registerAtmPostSwitchClient(PasswordEncoder passwordEncoder, @Value("${banking.iam.clients.atm-pos-switch.secret}") String clientSecret) {
+    public ApplicationRunner registerAtmPostSwitchClient(@Qualifier("clientPwdEncoder") PasswordEncoder passwordEncoder, @Value("${banking.iam.clients.atm-pos-switch.secret}") String clientSecret) {
         return _ -> {
             if (this.clientRepository.findByClientId("atm-pos-switch") != null) {
                 return;
@@ -54,7 +49,7 @@ public class MachineClientConfiguration {
     }
 
     @Bean
-    public ApplicationRunner registerGatewayClient(PasswordEncoder passwordEncoder, @Value("${banking.iam.clients.banking-api-gateway.secret}") String clientSecret) {
+    public ApplicationRunner registerGatewayClient(@Qualifier("clientPwdEncoder") PasswordEncoder passwordEncoder, @Value("${banking.iam.clients.banking-api-gateway.secret}") String clientSecret) {
         return _ -> {
             if (this.clientRepository.findByClientId("banking-api-gateway") != null) {
                 return;

@@ -1,18 +1,28 @@
 package io.github.hossensyedriadh.banking_iam_server.configuration.security;
 
 import io.github.hossensyedriadh.banking_iam_server.authentication.tokenexchange.TokenExchangePolicyAuthenticationProvider;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 
+import java.util.HashMap;
+import java.util.Map;
+
+@Log4j2
 @Configuration
 @EnableWebSecurity
 public class SecurityConfiguration {
@@ -48,13 +58,26 @@ public class SecurityConfiguration {
 
     @Bean
     @Order(2)
-    public SecurityFilterChain applicationSecurityFilterChain(HttpSecurity http) {
+    public SecurityFilterChain applicationSecurityFilterChain(HttpSecurity http, @Qualifier("iamAuthenticationManager") AuthenticationManager authenticationManager) {
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-                .authorizeHttpRequests(auth -> auth.requestMatchers("/error", "/actuator/info", "/actuator/health/**",
-                                "/v1/authentication/**").permitAll()
-                        .anyRequest().authenticated())
+                .authenticationManager(authenticationManager)
+                .authorizeHttpRequests(auth -> auth.requestMatchers("/error", "/actuator/info", "/actuator/health/**")
+                        .permitAll().anyRequest().authenticated())
                 .formLogin(Customizer.withDefaults());
 
         return http.build();
+    }
+
+    @Bean("userPwdEncoder")
+    public PasswordEncoder userPasswordEncoder() {
+        return new BCryptPasswordEncoder(12);
+    }
+
+    @Bean("clientPwdEncoder")
+    public PasswordEncoder clientPasswordEncoder() {
+        Map<String, PasswordEncoder> encoders = new HashMap<>();
+        encoders.put("bcrypt", new BCryptPasswordEncoder(11));
+
+        return new DelegatingPasswordEncoder("bcrypt", encoders);
     }
 }
