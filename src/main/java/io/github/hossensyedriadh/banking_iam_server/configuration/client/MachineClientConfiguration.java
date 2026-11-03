@@ -1,4 +1,4 @@
-package io.github.hossensyedriadh.banking_iam_server.configuration.security;
+package io.github.hossensyedriadh.banking_iam_server.configuration.client;
 
 import io.github.hossensyedriadh.banking_iam_server.util.AtmOAuth2Scopes;
 import io.github.hossensyedriadh.banking_iam_server.util.CbsOAuth2Scopes;

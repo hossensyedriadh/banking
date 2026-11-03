@@ -8,7 +8,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class TokenExchangeScopeMappings {
+public final class TokenExchangeScopeMappings {
     private TokenExchangeScopeMappings() {
     }
 

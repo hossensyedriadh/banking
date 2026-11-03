@@ -84,3 +84,6 @@ banking:
         secret: "${ATM_POS_SWITCH_CLIENT_SECRET}"
       banking-api-gateway:
         secret: "${BANKING_API_GATEWAY_CLIENT_SECRET}"
+      internet-banking:
+        secret: "${INTERNET_BANKING_CLIENT_SECRET}"
+        redirect-uri: "${INTERNET_BANKING_CLIENT_REDIRECT_URI}"
