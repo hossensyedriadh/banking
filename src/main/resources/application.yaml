@@ -22,9 +22,6 @@ spring:
       include-stacktrace: never
       include-message: always
       include-path: always
-server:
-  servlet:
-    context-path: /api
 management:
   endpoint:
     health:
@@ -34,6 +31,10 @@ management:
   info:
     env:
       enabled: true
+logging:
+  level:
+    org.springframework.security.oauth2: info
+    org.springframework.web.client: info
 info:
   application:
     name: "${spring.application.name}"
