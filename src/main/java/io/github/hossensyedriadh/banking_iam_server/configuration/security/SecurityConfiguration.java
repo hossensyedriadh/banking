@@ -4,6 +4,7 @@ import io.github.hossensyedriadh.banking_iam_server.authentication.tokenexchange
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -28,6 +29,9 @@ import java.util.Map;
 public class SecurityConfiguration {
     private final TokenExchangePolicyAuthenticationProvider tokenExchangePolicyAuthenticationProvider;
     private final OAuth2TokenGenerator<?> oAuth2TokenGenerator;
+
+    @Value("${server.servlet.session.cookie.name}")
+    private String sessionCookieName;
 
     @Autowired
     public SecurityConfiguration(TokenExchangePolicyAuthenticationProvider tokenExchangePolicyAuthenticationProvider,
@@ -63,7 +67,9 @@ public class SecurityConfiguration {
                 .authenticationManager(authenticationManager)
                 .authorizeHttpRequests(auth -> auth.requestMatchers("/error", "/actuator/info", "/actuator/health/**")
                         .permitAll().anyRequest().authenticated())
-                .formLogin(Customizer.withDefaults());
+                .formLogin(Customizer.withDefaults()).logout(logoutConfigurer -> logoutConfigurer.logoutUrl("/logout")
+                        .invalidateHttpSession(true).clearAuthentication(true)
+                        .deleteCookies(this.sessionCookieName));
 
         return http.build();
     }
