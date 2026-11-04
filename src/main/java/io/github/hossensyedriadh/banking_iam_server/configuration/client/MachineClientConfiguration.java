@@ -30,17 +30,18 @@ public class MachineClientConfiguration {
     @Bean
     public ApplicationRunner registerAtmPostSwitchClient(@Qualifier("clientPwdEncoder") PasswordEncoder passwordEncoder, @Value("${banking.iam.clients.atm-pos-switch.secret}") String clientSecret) {
         return _ -> {
-            if (this.clientRepository.findByClientId("atm-pos-switch") != null) {
-                return;
-            }
+            RegisteredClient existingClient = this.clientRepository.findByClientId("atm-pos-switch");
 
-            RegisteredClient switchClient = RegisteredClient.withId(UUID.randomUUID().toString())
-                    .clientId("atm-pos-switch").clientName("ATM/POS Switch")
+            RegisteredClient.Builder builder = existingClient == null ? RegisteredClient.withId(UUID.randomUUID().toString()) : RegisteredClient.from(existingClient);
+
+            RegisteredClient switchClient = builder.clientId("atm-pos-switch")
+                    .clientName("ATM/POS Switch")
                     .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                     .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
                     .scopes(scopes -> scopes.addAll(AtmOAuth2Scopes.all()))
                     .clientSecret(passwordEncoder.encode(clientSecret))
-                    .tokenSettings(TokenSettings.builder().accessTokenTimeToLive(Duration.ofMinutes(5))
+                    .tokenSettings(TokenSettings.builder()
+                            .accessTokenTimeToLive(Duration.ofMinutes(5))
                             .build())
                     .build();
 
@@ -51,12 +52,12 @@ public class MachineClientConfiguration {
     @Bean
     public ApplicationRunner registerGatewayClient(@Qualifier("clientPwdEncoder") PasswordEncoder passwordEncoder, @Value("${banking.iam.clients.banking-api-gateway.secret}") String clientSecret) {
         return _ -> {
-            if (this.clientRepository.findByClientId("banking-api-gateway") != null) {
-                return;
-            }
+            RegisteredClient existingClient = this.clientRepository.findByClientId("banking-api-gateway");
 
-            RegisteredClient gatewayClient = RegisteredClient.withId(UUID.randomUUID().toString())
-                    .clientId("banking-api-gateway").clientName("Banking API Gateway")
+            RegisteredClient.Builder builder = existingClient == null ? RegisteredClient.withId(UUID.randomUUID().toString()) : RegisteredClient.from(existingClient);
+
+            RegisteredClient gatewayClient = builder.clientId("banking-api-gateway")
+                    .clientName("Banking API Gateway")
                     .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                     .authorizationGrantTypes(types -> {
                         types.add(AuthorizationGrantType.CLIENT_CREDENTIALS);
@@ -64,7 +65,8 @@ public class MachineClientConfiguration {
                     })
                     .scopes(scopes -> scopes.addAll(CbsOAuth2Scopes.all()))
                     .clientSecret(passwordEncoder.encode(clientSecret))
-                    .tokenSettings(TokenSettings.builder().accessTokenTimeToLive(Duration.ofMinutes(5))
+                    .tokenSettings(TokenSettings.builder()
+                            .accessTokenTimeToLive(Duration.ofMinutes(5))
                             .build())
                     .build();
 

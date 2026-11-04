@@ -47,6 +47,10 @@ spring:
       client-type: lettuce
       client-name: "banking-iam"
 server:
+  servlet:
+    session:
+      cookie:
+        name: "IAMSESSIONID"
   tomcat:
     connection-timeout: 15s
     keep-alive-timeout: 30s
@@ -87,3 +91,4 @@ banking:
       internet-banking:
         secret: "${INTERNET_BANKING_CLIENT_SECRET}"
         redirect-uri: "${INTERNET_BANKING_CLIENT_REDIRECT_URI}"
+        post-logout-redirect-uri: "${INTERNET_BANKING_CLIENT_POST_LOGOUT_REDIRECT_URI}"

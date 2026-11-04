@@ -1,5 +1,6 @@
 package io.github.hossensyedriadh.banking_iam_server.configuration.client;
 
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +19,7 @@ import org.springframework.security.oauth2.server.authorization.settings.TokenSe
 import java.time.Duration;
 import java.util.UUID;
 
+@Log4j2
 @Configuration
 public class UserClientConfiguration {
     private final RegisteredClientRepository clientRepository;
@@ -28,27 +30,32 @@ public class UserClientConfiguration {
     }
 
     @Bean
-    public ApplicationRunner registerInternetBankingClient(@Qualifier("clientPwdEncoder") PasswordEncoder passwordEncoder,
-                                                           @Value("${banking.iam.clients.internet-banking.secret}") String clientSecret,
-                                                           @Value("${banking.iam.clients.internet-banking.redirect-uri}") String redirectUri) {
-        return _ -> {
-            if (this.clientRepository.findByClientId("internet-banking") != null) {
-                return;
-            }
+    public ApplicationRunner registerInternetBankingClient(
+            @Qualifier("clientPwdEncoder") PasswordEncoder passwordEncoder,
+            @Value("${banking.iam.clients.internet-banking.secret}") String clientSecret,
+            @Value("${banking.iam.clients.internet-banking.redirect-uri}") String redirectUri,
+            @Value("${banking.iam.clients.internet-banking.post-logout-redirect-uri}") String postLogoutRedirectUri) {
 
-            RegisteredClient internetBankingClient = RegisteredClient.withId(UUID.randomUUID().toString())
-                    .clientId("internet-banking").clientName("Internet Banking")
+        return _ -> {
+            RegisteredClient existingClient = this.clientRepository.findByClientId("internet-banking");
+
+            RegisteredClient.Builder clientBuilder = existingClient == null ? RegisteredClient.withId(UUID.randomUUID().toString()) : RegisteredClient.from(existingClient);
+
+            RegisteredClient internetBankingClient = clientBuilder.clientId("internet-banking")
+                    .clientName("Internet Banking")
                     .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                     .authorizationGrantTypes(grantTypes -> {
                         grantTypes.add(AuthorizationGrantType.AUTHORIZATION_CODE);
                         grantTypes.add(AuthorizationGrantType.REFRESH_TOKEN);
-                    }).redirectUri(redirectUri)
+                    })
+                    .redirectUri(redirectUri)
                     .scopes(scopes -> {
                         scopes.add(OidcScopes.OPENID);
                         scopes.add(OidcScopes.PROFILE);
                         scopes.add(OidcScopes.EMAIL);
                         scopes.add(OidcScopes.PHONE);
-                    }).clientSecret(passwordEncoder.encode(clientSecret))
+                    })
+                    .clientSecret(passwordEncoder.encode(clientSecret))
                     .clientSettings(ClientSettings.builder().requireProofKey(true)
                             .requireAuthorizationConsent(true)
                             .build())
@@ -56,9 +63,16 @@ public class UserClientConfiguration {
                             .refreshTokenTimeToLive(Duration.ofDays(3))
                             .reuseRefreshTokens(false)
                             .build())
+                    .postLogoutRedirectUri(postLogoutRedirectUri)
                     .build();
 
-            this.clientRepository.save(internetBankingClient);
+            if (existingClient == null) {
+                log.info("Saving new OAuth2 client: {}", internetBankingClient.getClientId());
+                this.clientRepository.save(internetBankingClient);
+            } else {
+                log.info("Updating existing OAuth2 client: {}", internetBankingClient.getClientId());
+                this.clientRepository.save(internetBankingClient);
+            }
         };
     }
 }
