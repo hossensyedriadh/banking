@@ -42,6 +42,7 @@ dependencies {
     implementation("org.apache.httpcomponents.client5:httpclient5:5.6.4")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.21.0")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1")
+    implementation("com.googlecode.libphonenumber:libphonenumber:9.0.42")
     implementation("org.mapstruct:mapstruct:1.6.3")
     annotationProcessor("org.mapstruct:mapstruct-processor:1.6.3")
     annotationProcessor("org.projectlombok:lombok-mapstruct-binding:0.2.0")

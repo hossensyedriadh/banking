@@ -46,9 +46,11 @@ public class UserClientConfiguration {
                     .scopes(scopes -> {
                         scopes.add(OidcScopes.OPENID);
                         scopes.add(OidcScopes.PROFILE);
+                        scopes.add(OidcScopes.EMAIL);
+                        scopes.add(OidcScopes.PHONE);
                     }).clientSecret(passwordEncoder.encode(clientSecret))
                     .clientSettings(ClientSettings.builder().requireProofKey(true)
-                            .requireAuthorizationConsent(false)
+                            .requireAuthorizationConsent(true)
                             .build())
                     .tokenSettings(TokenSettings.builder().accessTokenTimeToLive(Duration.ofMinutes(5))
                             .refreshTokenTimeToLive(Duration.ofDays(3))

@@ -44,6 +44,10 @@ public class IamUser {
     private Set<IamAuthority> authorities = new HashSet<>();
 
     @Setter(AccessLevel.NONE)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private IamUserProfile profile;
+
+    @Setter(AccessLevel.NONE)
     @CreatedDate
     @Column(name = "created_at", updatable = false, nullable = false)
     private OffsetDateTime createdAt;
@@ -51,4 +55,12 @@ public class IamUser {
     @Setter(AccessLevel.NONE)
     @Column(name = "updated_at", insertable = false)
     private OffsetDateTime updatedAt;
+
+    public void setProfile(IamUserProfile profile) {
+        this.profile = profile;
+
+        if (profile != null) {
+            profile.setUser(this);
+        }
+    }
 }
