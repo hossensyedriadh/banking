@@ -20,7 +20,6 @@ import java.util.Optional;
 
 @Log4j2
 @Service
-@Transactional(readOnly = true)
 class CustomerIdentityServiceImpl implements CustomerIdentityService {
     private final CustomerIdentityRepository customerIdentityRepository;
     private final CustomerIdentityMapper customerIdentityMapper;
@@ -38,23 +37,27 @@ class CustomerIdentityServiceImpl implements CustomerIdentityService {
         Optional<CustomerIdentity> customerIdentityOptional = this.customerIdentityRepository.findByIamSubject(Objects.requireNonNull(oidcUser).getSubject());
 
         if (customerIdentityOptional.isEmpty()) {
+            log.warn("Customer identity not found for IAM subject {}", oidcUser.getSubject());
             throw new ResourceException("Customer identity not found", HttpStatus.BAD_REQUEST);
         }
 
         CustomerIdentity identity = customerIdentityOptional.get();
 
+        CustomerIdentityModel customerIdentityModel = new CustomerIdentityModel();
+        customerIdentityModel.setId(identity.getId());
+        customerIdentityModel.setIamSubject(oidcUser.getSubject());
+        customerIdentityModel.setCbsCustomerId(identity.getCbsCustomerId());
+        customerIdentityModel.setStatus(identity.getStatus());
+        customerIdentityModel.setCreatedAt(identity.getCreatedAt());
+        customerIdentityModel.setUpdatedAt(identity.getUpdatedAt());
+
         PrincipalIdentityModel model = new PrincipalIdentityModel();
-        model.setId(identity.getId());
-        model.setCbsCustomerId(identity.getCbsCustomerId());
-        model.setStatus(identity.getStatus());
-        model.setCreatedAt(identity.getCreatedAt());
-        model.setUpdatedAt(identity.getUpdatedAt());
-        model.setIamSubject(oidcUser.getSubject());
         model.setName(oidcUser.getName());
         model.setEmail(oidcUser.getEmail());
         model.setEmailVerified(oidcUser.getEmailVerified());
         model.setPhoneNumber(oidcUser.getPhoneNumber());
         model.setPhoneNumberVerified(oidcUser.getPhoneNumberVerified());
+        model.setCustomerIdentity(customerIdentityModel);
 
         return model;
     }
@@ -68,5 +71,73 @@ class CustomerIdentityServiceImpl implements CustomerIdentityService {
     public Optional<CustomerIdentityModel> getActiveByIamSubject(String iamSubject) {
         return this.customerIdentityRepository.findByIamSubjectAndStatus(iamSubject, CustomerIdentityStatus.ACTIVE)
                 .map(this.customerIdentityMapper::toModel);
+    }
+
+    @Override
+    public Optional<CustomerIdentity> getById(Long id) {
+        return this.customerIdentityRepository.findById(id);
+    }
+
+    @Transactional
+    @Override
+    public void block(Long id) {
+        Optional<CustomerIdentity> identityOptional = this.customerIdentityRepository.findByIdForUpdate(id);
+
+        identityOptional.ifPresentOrElse(identity -> {
+            if (identity.getStatus() == CustomerIdentityStatus.CLOSED || identity.getStatus() == CustomerIdentityStatus.BLOCKED) {
+                String status = identity.getStatus().toString().toLowerCase();
+                log.warn("Customer identity with ID {} is already {}. Cannot block.", id, status);
+                throw new ResourceException("Customer identity is already " + status, HttpStatus.CONFLICT);
+            }
+
+            identity.setStatus(CustomerIdentityStatus.BLOCKED);
+            this.customerIdentityRepository.save(identity);
+
+            log.info("Customer identity with ID {} has been blocked.", id);
+        }, () -> {
+            log.warn("Customer identity with ID {} does not exist.", id);
+        });
+    }
+
+    @Transactional
+    @Override
+    public void unblock(Long id) {
+        Optional<CustomerIdentity> identityOptional = this.customerIdentityRepository.findByIdForUpdate(id);
+
+        identityOptional.ifPresentOrElse(identity -> {
+            if (identity.getStatus() == CustomerIdentityStatus.CLOSED || identity.getStatus() == CustomerIdentityStatus.ACTIVE) {
+                String status = identity.getStatus().toString().toLowerCase();
+                log.warn("Customer identity with ID {} is already {}. Cannot unblock.", id, status);
+                throw new ResourceException("Customer identity is already " + status, HttpStatus.CONFLICT);
+            }
+
+            identity.setStatus(CustomerIdentityStatus.ACTIVE);
+            this.customerIdentityRepository.save(identity);
+
+            log.info("Customer identity with ID {} has been unblocked.", id);
+        }, () -> {
+            log.warn("Customer identity with ID {} does not exist.", id);
+        });
+    }
+
+    @Transactional
+    @Override
+    public void close(Long id) {
+        Optional<CustomerIdentity> identityOptional = this.customerIdentityRepository.findByIdForUpdate(id);
+
+        identityOptional.ifPresentOrElse(identity -> {
+            if (identity.getStatus() == CustomerIdentityStatus.CLOSED) {
+                String status = identity.getStatus().toString().toLowerCase();
+                log.warn("Customer identity with ID {} is already {}. Cannot close.", id, status);
+                throw new ResourceException("Customer identity is already " + status, HttpStatus.CONFLICT);
+            }
+
+            identity.setStatus(CustomerIdentityStatus.CLOSED);
+            this.customerIdentityRepository.save(identity);
+
+            log.info("Customer identity with ID {} has been closed.", id);
+        }, () -> {
+            log.warn("Customer identity with ID {} does not exist.", id);
+        });
     }
 }
