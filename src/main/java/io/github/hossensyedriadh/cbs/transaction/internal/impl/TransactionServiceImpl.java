@@ -464,7 +464,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     private AccountView getActiveAccount(Long accountId) {
-        AccountView account = this.accountService.getAccount(accountId).orElseThrow(() -> {
+        AccountView account = this.accountService.getAccountForUpdate(accountId).orElseThrow(() -> {
             log.warn("Account not found with ID: {}", accountId);
             return new ApiResourceException("Account not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
         });
