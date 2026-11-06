@@ -172,6 +172,14 @@ public class TransactionServiceImpl implements TransactionService {
 
         AccountView account = this.getActiveAccount(command.getAccountId());
 
+        existingTransaction = this.getCompletedOrPendingTransaction(command.getIdempotencyKey());
+
+        if (existingTransaction.isPresent()) {
+            log.info("Duplicate withdrawal request detected for idempotency key: {}", command.getIdempotencyKey());
+
+            return existingTransaction.get();
+        }
+
         this.validateCurrency(command.getCurrencyId(), account.getCurrencyId());
 
         BigDecimal availableBalance = this.getAvailableBalance(account.getId());
@@ -236,6 +244,14 @@ public class TransactionServiceImpl implements TransactionService {
         AccountView destinationAccount = this.getActiveAccount(command.getDestinationAccountId());
         this.validateCurrency(command.getCurrencyId(), destinationAccount.getCurrencyId());
 
+        existingTransaction = this.getCompletedOrPendingTransaction(command.getIdempotencyKey());
+
+        if (existingTransaction.isPresent()) {
+            log.info("Duplicate transfer request detected for idempotency key: {}", command.getIdempotencyKey());
+
+            return existingTransaction.get();
+        }
+
         Transaction transaction = this.createTransaction(sourceAccount.getId(), destinationAccount.getId(),
                 command.getCurrencyId(), TransactionType.TRANSFER, command.getAmount(), command.getDescription(),
                 command.getIdempotencyKey());
@@ -275,7 +291,7 @@ public class TransactionServiceImpl implements TransactionService {
             return existingTransaction.get();
         }
 
-        Transaction originalTransaction = this.transactionRepository.findById(command.getTransactionId())
+        Transaction originalTransaction = this.transactionRepository.findByIdForUpdate(command.getTransactionId())
                 .orElseThrow(() -> {
                     log.warn("Transaction not found with ID {}", command.getTransactionId());
                     return new ApiResourceException("Transaction not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
@@ -333,6 +349,14 @@ public class TransactionServiceImpl implements TransactionService {
 
         AccountView account = this.getActiveAccount(command.getAccountId());
 
+        existingTransaction = this.getCompletedOrPendingTransaction(command.getIdempotencyKey());
+
+        if (existingTransaction.isPresent()) {
+            log.info("Duplicate fee charge request detected for idempotency key: {}", command.getIdempotencyKey());
+
+            return existingTransaction.get();
+        }
+
         this.validateCurrency(command.getCurrencyId(), account.getCurrencyId());
 
         BigDecimal availableBalance = this.getAvailableBalance(account.getId());
@@ -378,6 +402,14 @@ public class TransactionServiceImpl implements TransactionService {
         }
 
         AccountView account = this.getActiveAccount(command.getAccountId());
+
+        existingTransaction = this.getCompletedOrPendingTransaction(command.getIdempotencyKey());
+
+        if (existingTransaction.isPresent()) {
+            log.info("Duplicate interest posting request detected for idempotency key: {}", command.getIdempotencyKey());
+
+            return existingTransaction.get();
+        }
 
         this.validateCurrency(command.getCurrencyId(), account.getCurrencyId());
 

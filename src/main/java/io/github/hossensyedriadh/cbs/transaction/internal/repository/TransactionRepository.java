@@ -3,9 +3,11 @@ package io.github.hossensyedriadh.cbs.transaction.internal.repository;
 import io.github.hossensyedriadh.cbs.transaction.api.enumerator.TransactionStatus;
 import io.github.hossensyedriadh.cbs.transaction.api.enumerator.TransactionType;
 import io.github.hossensyedriadh.cbs.transaction.internal.domain.Transaction;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -20,6 +22,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
                                                                                        TransactionStatus status, TransactionType transactionType, Pageable pageable);
 
     Page<Transaction> findAllByAccountId(Long accountId, Pageable pageable);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select t from Transaction t where t.id = :id")
+    Optional<Transaction> findByIdForUpdate(@Param("id") Long id);
 
     @Query("""
             select t from Transaction t
