@@ -36,7 +36,7 @@ public class AccessTokenConfiguration {
     @Bean
     public OAuth2TokenCustomizer<JwtEncodingContext> accessTokenCustomizer() {
         return context -> {
-            if (!OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
+            if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
                 final String SWITCH_CLIENT_ID = "atm-pos-switch";
                 final String GATEWAY_CLIENT_ID = "banking-api-gateway";
                 final String GATEWAY_AUDIENCE = "banking-api-gateway";
