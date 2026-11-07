@@ -61,9 +61,6 @@ spring:
         provider:
           banking-iam-server:
             issuer-uri: "${BANKING_IAM_SERVER_ISSUER_URI}"
-  jackson:
-    property-naming-strategy: "SNAKE_CASE"
-    default-property-inclusion: non_null
 server:
   servlet:
     session:
