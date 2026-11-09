@@ -30,7 +30,7 @@ public class SecurityConfiguration {
     public SecurityFilterChain filterChain(HttpSecurity http, LogoutSuccessHandler oidcLogoutSuccessHandler) {
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(authorize -> authorize.requestMatchers("/error", "/actuator/health/**",
-                                "/actuator/info").permitAll()
+                                "/actuator/info", "/v3/api-docs/**", "/swagger-ui/**", "/ui-docs.html").permitAll()
                         .anyRequest().access(this.oidcUserAuthorizationManager))
                 .oauth2Login(Customizer.withDefaults())
                 .logout(logoutConfigurer -> logoutConfigurer.logoutUrl("/logout")
