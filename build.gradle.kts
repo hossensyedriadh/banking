@@ -59,7 +59,7 @@ dependencies {
     implementation("io.github.hossensyedriadh:crypto-commons:1.0.0-SNAPSHOT")
     implementation("org.apache.commons:commons-pool2:2.13.1")
     implementation("org.springframework.boot:spring-boot-starter-log4j2")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.0")
     implementation("org.apache.httpcomponents.client5:httpclient5:5.6.4")
     implementation("org.apache.httpcomponents.core5:httpcore5:5.4.4")
     implementation("org.json:json:20251224")

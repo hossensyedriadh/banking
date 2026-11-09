@@ -44,7 +44,9 @@ info:
     email: "riadhhossen@gmail.com"
     url: "https://hossensyedriadh.github.io"
 springdoc:
+  api-docs:
+    path: /docs/cbs/v3/api-docs
   swagger-ui:
-    supported-submit-methods: [ ]
-    config-url: /api/docs/cbs/v3/api-docs/swagger-config
-    url: /api/docs/cbs/v3/api-docs
+    supported-submit-methods: []
+    config-url: /cbs/docs/v3/api-docs/swagger-config
+    url: /cbs/docs/v3/api-docs
