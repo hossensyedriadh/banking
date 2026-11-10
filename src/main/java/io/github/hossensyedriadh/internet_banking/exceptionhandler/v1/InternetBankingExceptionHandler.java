@@ -1,9 +1,7 @@
 package io.github.hossensyedriadh.internet_banking.exceptionhandler.v1;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.github.hossensyedriadh.internet_banking.exception.InternetBankingErrorResponse;
-import io.github.hossensyedriadh.internet_banking.exception.ResourceException;
-import io.github.hossensyedriadh.internet_banking.exception.ValidationErrorResponse;
+import io.github.hossensyedriadh.internet_banking.exception.*;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,6 +83,24 @@ public class InternetBankingExceptionHandler {
 
     @ExceptionHandler(ResourceException.class)
     public ResponseEntity<?> handleResourceException(ResourceException e) {
+        InternetBankingErrorResponse errorResponse = new InternetBankingErrorResponse(this.httpServletRequest, e.getHttpStatus().value(),
+                e.getHttpStatus().getReasonPhrase(), e.getMessage());
+
+        return new ResponseEntity<>(errorResponse, e.getHttpStatus());
+    }
+
+    @ExceptionHandler({CoreBankingException.class})
+    public ResponseEntity<?> handleCoreBankingException(CoreBankingException e) {
+        HttpStatus httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+
+        InternetBankingErrorResponse errorResponse = new InternetBankingErrorResponse(this.httpServletRequest, httpStatus.value(),
+                httpStatus.getReasonPhrase(), e.getMessage());
+
+        return new ResponseEntity<>(errorResponse, httpStatus);
+    }
+
+    @ExceptionHandler({CoreBankingCommunicationException.class})
+    public ResponseEntity<?> handleCoreBankingCommunicationException(CoreBankingCommunicationException e) {
         InternetBankingErrorResponse errorResponse = new InternetBankingErrorResponse(this.httpServletRequest, e.getHttpStatus().value(),
                 e.getHttpStatus().getReasonPhrase(), e.getMessage());
 

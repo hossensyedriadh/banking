@@ -57,10 +57,15 @@ spring:
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             client-name: "Internet Banking"
-            scope: [openid, profile, email, phone]
+            scope: [openid, profile, email, phone, ibanking.balance.read, ibanking.account-info.list, ibanking.account-info.read, ibanking.card-info.read, ibanking.card-pin.verify, ibanking.currency-info.read, ibanking.account-product-info.read, ibanking.transfer.create, ibanking.reversal.create, ibanking.transactions-search.read, ibanking.transaction.read]
         provider:
           banking-iam-server:
             issuer-uri: "${BANKING_IAM_SERVER_ISSUER_URI}"
+logging:
+  level:
+    org.springframework.security: info
+    org.springframework.security.oauth2: info
+    org.springframework.web: info
 server:
   servlet:
     session:
@@ -83,3 +88,8 @@ springdoc:
     enabled: true
   swagger-ui:
     enabled: true
+
+#custom properties
+core-banking:
+  api-gateway:
+    base-url: "${CBS_APIGW_BASE_URL}"
