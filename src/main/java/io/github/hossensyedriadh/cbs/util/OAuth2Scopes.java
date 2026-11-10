@@ -5,6 +5,7 @@ public final class OAuth2Scopes {
     }
 
     public static final String BALANCE_READ = "SCOPE_cbs.balance.read";
+    public static final String ACCOUNT_LIST = "SCOPE_cbs.account.list";
     public static final String ACCOUNT_READ = "SCOPE_cbs.account.read";
     public static final String CARD_READ = "SCOPE_cbs.card.read";
     public static final String CARD_PIN_VERIFY = "SCOPE_cbs.card-pin.verify";

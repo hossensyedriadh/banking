@@ -23,5 +23,8 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     @Query(value = "select * from account.accounts a inner join account.account_holders h on a.id = h.account_id where h.customer_id = :customer_id", nativeQuery = true)
     List<Account> findAllByCustomerId(@Param("customer_id") Long customerId);
 
+    @Query(value = "select * from account.accounts a inner join account.account_holders h on a.id = h.account_id where h.customer_id = :customer_id and a.status = :status", nativeQuery = true)
+    List<Account> findAllByCustomerId(@Param("customer_id") Long customerId, @Param("status") AccountStatus status);
+
     List<Account> findAllByStatus(AccountStatus status);
 }

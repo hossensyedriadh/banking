@@ -9,7 +9,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface AccountService {
-    List<AccountView> getAccountByCustomerId(Long customerId);
+    List<AccountView> getAccountsByCustomerId(Long customerId);
+
+    List<AccountView> getActiveAccountsByCustomerId(Long customerId);
 
     List<AccountView> getActiveAccounts();
 

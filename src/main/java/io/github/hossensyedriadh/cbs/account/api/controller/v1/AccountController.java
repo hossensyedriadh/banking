@@ -54,10 +54,30 @@ public class AccountController {
             @ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, array = @ArraySchema(schema = @Schema(implementation = AccountView.class)))),
             @ApiResponse(responseCode = "204", description = "No Content", content = @Content)
     })
-    @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).ACCOUNT_READ)")
+    @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).ACCOUNT_LIST)")
     @GetMapping("/customer/{customerId}")
     public ResponseEntity<List<AccountView>> getAccountsForCustomer(@PathVariable("customerId") Long customerId) {
-        List<AccountView> accountViews = this.accountService.getAccountByCustomerId(customerId);
+        List<AccountView> accountViews = this.accountService.getAccountsByCustomerId(customerId);
+
+        if (accountViews.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(accountViews);
+    }
+
+    @Operation(summary = "Get list of active accounts for customer", description = "Get active accounts for a customer by customer ID", parameters = {
+            @Parameter(name = "customerId", description = "Customer ID", required = true, examples = {
+                    @ExampleObject(value = "1", summary = "Customer ID example")
+            })
+    }, responses = {
+            @ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, array = @ArraySchema(schema = @Schema(implementation = AccountView.class)))),
+            @ApiResponse(responseCode = "204", description = "No Content", content = @Content)
+    })
+    @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).ACCOUNT_LIST)")
+    @GetMapping("/customer/{customerId}/active")
+    public ResponseEntity<List<AccountView>> getActiveAccountsForCustomer(@PathVariable("customerId") Long customerId) {
+        List<AccountView> accountViews = this.accountService.getActiveAccountsByCustomerId(customerId);
 
         if (accountViews.isEmpty()) {
             return ResponseEntity.noContent().build();
