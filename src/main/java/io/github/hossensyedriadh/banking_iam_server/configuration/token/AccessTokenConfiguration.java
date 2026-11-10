@@ -4,6 +4,7 @@ import io.github.hossensyedriadh.banking_iam_server.entity.IamUser;
 import io.github.hossensyedriadh.banking_iam_server.entity.IamUserProfile;
 import io.github.hossensyedriadh.banking_iam_server.repository.IamUserRepository;
 import io.github.hossensyedriadh.banking_iam_server.util.OidcClaims;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,13 +18,11 @@ import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Log4j2
 @Configuration
 public class AccessTokenConfiguration {
     private final IamUserRepository userRepository;
@@ -39,6 +38,8 @@ public class AccessTokenConfiguration {
             if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
                 final String SWITCH_CLIENT_ID = "atm-pos-switch";
                 final String GATEWAY_CLIENT_ID = "banking-api-gateway";
+                final String INTERNET_BANKING_CLIENT_ID = "internet-banking";
+
                 final String GATEWAY_AUDIENCE = "banking-api-gateway";
                 final String CBS_AUDIENCE = "cbs";
 
@@ -47,18 +48,21 @@ public class AccessTokenConfiguration {
 
                 if (AuthorizationGrantType.CLIENT_CREDENTIALS.equals(grantType)) {
                     if (SWITCH_CLIENT_ID.equals(clientId) || GATEWAY_CLIENT_ID.equals(clientId)) {
-                        context.getClaims().audience(
-                                new ArrayList<>(Collections.singleton(GATEWAY_AUDIENCE))
-                        );
+                        context.getClaims().audience(new ArrayList<>(List.of(GATEWAY_AUDIENCE)));
                     }
 
                     return;
                 }
 
-                if (AuthorizationGrantType.TOKEN_EXCHANGE.equals(grantType)) {
-                    context.getClaims().audience(
-                            new ArrayList<>(Collections.singleton(CBS_AUDIENCE))
+                if (AuthorizationGrantType.AUTHORIZATION_CODE.equals(grantType) && INTERNET_BANKING_CLIENT_ID.equals(clientId)) {
+                    context.getClaims().audience(new ArrayList<>(
+                            Arrays.asList(INTERNET_BANKING_CLIENT_ID,
+                                    GATEWAY_AUDIENCE))
                     );
+                }
+
+                if (AuthorizationGrantType.TOKEN_EXCHANGE.equals(grantType)) {
+                    context.getClaims().audience(new ArrayList<>(List.of(CBS_AUDIENCE)));
                 }
             }
 

@@ -1,5 +1,6 @@
 package io.github.hossensyedriadh.banking_iam_server.configuration.client;
 
+import io.github.hossensyedriadh.banking_iam_server.util.InternetBankingOAuth2Scopes;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -54,6 +55,7 @@ public class UserClientConfiguration {
                         scopes.add(OidcScopes.PROFILE);
                         scopes.add(OidcScopes.EMAIL);
                         scopes.add(OidcScopes.PHONE);
+                        scopes.addAll(InternetBankingOAuth2Scopes.all());
                     })
                     .clientSecret(passwordEncoder.encode(clientSecret))
                     .clientSettings(ClientSettings.builder().requireProofKey(true)

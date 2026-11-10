@@ -1,5 +1,6 @@
 package io.github.hossensyedriadh.banking_iam_server.authentication.tokenexchange;
 
+import io.github.hossensyedriadh.banking_iam_server.enumerator.ChannelType;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -50,7 +51,10 @@ public class TokenExchangePolicy {
         this.validateActor(actorAuthorization);
         this.validateAudience(subjectAuthorization);
         this.validateRequestedAudience(exchange.getAudiences().stream().toList());
-        this.validateRequestedScopes(subjectAuthorization, exchange.getScopes());
+
+        ChannelType channelType = this.resolveChannelType(subjectAuthorization);
+
+        this.validateRequestedScopes(subjectAuthorization, channelType, exchange.getScopes());
     }
 
     private void validateAuthenticatedClient(RegisteredClient client) {
@@ -132,7 +136,7 @@ public class TokenExchangePolicy {
         }
     }
 
-    private void validateRequestedScopes(OAuth2Authorization subjectAuthorization, Set<String> requestedScopes) {
+    private void validateRequestedScopes(OAuth2Authorization subjectAuthorization, ChannelType channelType, Set<String> requestedScopes) {
         if (requestedScopes == null || requestedScopes.isEmpty()) {
             throw this.error(OAuth2ErrorCodes.INVALID_SCOPE, "At least one CBS scope is required");
         }
@@ -145,14 +149,26 @@ public class TokenExchangePolicy {
             throw this.error(OAuth2ErrorCodes.INVALID_GRANT, "Subject token has no valid scope claim");
         }
 
-        Set<String> atmScopes = subjectScopes.stream().filter(String.class::isInstance)
-                .map(String.class::cast).collect(Collectors.toSet());
+        Set<String> scopes = subjectScopes.stream().filter(String.class::isInstance).map(String.class::cast).collect(Collectors.toSet());
 
-        Set<String> allowedCbsScopes = TokenExchangeScopeMappings.allowedCbsScopes(atmScopes);
+        Set<String> allowedCbsScopes = TokenExchangeScopeMappings.allowedCbsScopes(channelType, scopes);
 
         if (!allowedCbsScopes.containsAll(requestedScopes)) {
-            throw this.error(OAuth2ErrorCodes.INVALID_SCOPE, "Requested CBS scopes exceed ATM permissions");
+            throw this.error(OAuth2ErrorCodes.INVALID_SCOPE, "Requested CBS scopes exceed " + channelType + " permissions");
         }
+    }
+
+    private ChannelType resolveChannelType(OAuth2Authorization subjectAuthorization) {
+        String clientId = subjectAuthorization.getRegisteredClientId();
+
+        return switch (clientId) {
+            case "atm-pos-switch" -> ChannelType.SWITCH;
+            case "internet-banking" -> ChannelType.INTERNET_BANKING;
+            default -> throw this.error(
+                    OAuth2ErrorCodes.INVALID_GRANT,
+                    "Unsupported subject client: " + clientId
+            );
+        };
     }
 
     private OAuth2AuthenticationException error(String errorCode, String description) {
