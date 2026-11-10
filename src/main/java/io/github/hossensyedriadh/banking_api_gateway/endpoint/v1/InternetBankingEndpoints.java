@@ -12,6 +12,9 @@ public final class InternetBankingEndpoints {
     public static final String ACCOUNT_INFO = BASE + "/accounts/{id}";
     public static final String ACCOUNT_INFO_REWRITE = BASE + "/accounts/(?<id>[^/]+)";
 
+    public static final String ACCOUNT_LIST = BASE + "/accounts/customer/{customerId}/list";
+    public static final String ACCOUNT_LIST_REWRITE = BASE + "/accounts/customer/(?<customerId>[^/]+)/list";
+
     public static final String ACCOUNT_PRODUCT_INFO = BASE + "/account-products/{id}";
     public static final String ACCOUNT_PRODUCT_INFO_REWRITE = BASE + "/account-products/(?<id>[^/]+)";
 
@@ -32,9 +35,6 @@ public final class InternetBankingEndpoints {
 
     public static final String TRANSACTION_BY_IDEMPOTENCY = BASE + "/transactions/idempotency/{key}";
     public static final String TRANSACTION_BY_IDEMPOTENCY_REWRITE = BASE + "/transactions/idempotency/(?<key>[^/]+)";
-
-    public static final String TRANSACTION_WITHDRAWAL = BASE + "/transactions/withdrawals";
-    public static final String TRANSACTION_WITHDRAWAL_REWRITE = BASE + "/transactions/withdrawals";
 
     public static final String TRANSACTION_TRANSFER = BASE + "/transactions/transfers";
     public static final String TRANSACTION_TRANSFER_REWRITE = BASE + "/transactions/transfers";

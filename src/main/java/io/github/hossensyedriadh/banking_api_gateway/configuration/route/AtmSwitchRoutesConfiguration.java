@@ -2,6 +2,7 @@ package io.github.hossensyedriadh.banking_api_gateway.configuration.route;
 
 import io.github.hossensyedriadh.banking_api_gateway.endpoint.v1.AtmEndpoints;
 import io.github.hossensyedriadh.banking_api_gateway.endpoint.v1.CbsEndpoints;
+import io.github.hossensyedriadh.banking_api_gateway.enumerator.ChannelType;
 import io.github.hossensyedriadh.banking_api_gateway.tokenexchange.DelegatedTokenGatewayFilterFactory;
 import io.github.hossensyedriadh.banking_api_gateway.util.AtmOAuth2Scopes;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,42 +30,42 @@ public class AtmSwitchRoutesConfiguration {
                                         AtmEndpoints.ACCOUNT_BALANCE_REWRITE,
                                         CbsEndpoints.ACCOUNT_BALANCE_REWRITE)
                                 .filter(this.delegatedTokenGatewayFilterFactory
-                                        .apply(new DelegatedTokenGatewayFilterFactory.Config(AtmOAuth2Scopes.ATM_BALANCE_READ))))
+                                        .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.SWITCH, AtmOAuth2Scopes.BALANCE_READ))))
                         .uri(cbsBaseUrl))
                 .route("atm-account-info", r -> r.path(AtmEndpoints.ACCOUNT_INFO)
                         .and().method(HttpMethod.GET).filters(f -> f.rewritePath(
                                         AtmEndpoints.ACCOUNT_INFO_REWRITE,
                                         CbsEndpoints.ACCOUNT_INFO_REWRITE)
                                 .filter(this.delegatedTokenGatewayFilterFactory
-                                        .apply(new DelegatedTokenGatewayFilterFactory.Config(AtmOAuth2Scopes.ATM_ACCOUNT_INFO_READ))))
+                                        .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.SWITCH, AtmOAuth2Scopes.ACCOUNT_INFO_READ))))
                         .uri(cbsBaseUrl))
                 .route("atm-account-product-info", r -> r.path(AtmEndpoints.ACCOUNT_PRODUCT_INFO)
                         .and().method(HttpMethod.GET).filters(f -> f.rewritePath(
                                         AtmEndpoints.ACCOUNT_PRODUCT_INFO_REWRITE,
                                         CbsEndpoints.ACCOUNT_PRODUCT_INFO_REWRITE)
                                 .filter(this.delegatedTokenGatewayFilterFactory
-                                        .apply(new DelegatedTokenGatewayFilterFactory.Config(AtmOAuth2Scopes.ATM_ACCOUNT_PRODUCT_INFO_READ))))
+                                        .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.SWITCH, AtmOAuth2Scopes.ACCOUNT_PRODUCT_INFO_READ))))
                         .uri(cbsBaseUrl))
                 .route("atm-currency-info", r -> r.path(AtmEndpoints.CURRENCY_INFO)
                         .and().method(HttpMethod.GET).filters(f -> f.rewritePath(
                                         AtmEndpoints.CURRENCY_INFO_REWRITE,
                                         CbsEndpoints.CURRENCY_INFO_REWRITE)
                                 .filter(this.delegatedTokenGatewayFilterFactory
-                                        .apply(new DelegatedTokenGatewayFilterFactory.Config(AtmOAuth2Scopes.ATM_CURRENCY_INFO_READ))))
+                                        .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.SWITCH, AtmOAuth2Scopes.CURRENCY_INFO_READ))))
                         .uri(cbsBaseUrl))
                 .route("atm-card-info-by-pan", r -> r.path(AtmEndpoints.CARD_INFO_BY_PAN)
                         .and().method(HttpMethod.GET).filters(f -> f.rewritePath(
                                         AtmEndpoints.CARD_INFO_BY_PAN_REWRITE,
                                         CbsEndpoints.CARD_INFO_BY_PAN_REWRITE)
                                 .filter(this.delegatedTokenGatewayFilterFactory
-                                        .apply(new DelegatedTokenGatewayFilterFactory.Config(AtmOAuth2Scopes.ATM_CARD_INFO_READ))))
+                                        .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.SWITCH, AtmOAuth2Scopes.CARD_INFO_READ))))
                         .uri(cbsBaseUrl))
                 .route("atm-card-pin-verification", r -> r.path(AtmEndpoints.CARD_PIN_VERIFICATION)
                         .and().method(HttpMethod.POST).filters(f -> f.rewritePath(
                                         AtmEndpoints.CARD_PIN_VERIFICATION_REWRITE,
                                         CbsEndpoints.CARD_PIN_VERIFICATION_REWRITE)
                                 .filter(this.delegatedTokenGatewayFilterFactory
-                                        .apply(new DelegatedTokenGatewayFilterFactory.Config(AtmOAuth2Scopes.ATM_CARD_PIN_VERIFY))))
+                                        .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.SWITCH, AtmOAuth2Scopes.CARD_PIN_VERIFY))))
                         .uri(cbsBaseUrl))
                 .route("atm-transactions-search", r -> r.path(AtmEndpoints.TRANSACTIONS_SEARCH)
                         .and().method(HttpMethod.GET).and().query("from").and().query("to")
@@ -72,28 +73,28 @@ public class AtmSwitchRoutesConfiguration {
                                         AtmEndpoints.TRANSACTIONS_SEARCH_REWRITE,
                                         CbsEndpoints.TRANSACTIONS_SEARCH_REWRITE)
                                 .filter(this.delegatedTokenGatewayFilterFactory
-                                        .apply(new DelegatedTokenGatewayFilterFactory.Config(AtmOAuth2Scopes.ATM_TRANSACTIONS_SEARCH_READ))))
+                                        .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.SWITCH, AtmOAuth2Scopes.TRANSACTIONS_SEARCH_READ))))
                         .uri(cbsBaseUrl))
                 .route("atm-transactions-by-idempotency", r -> r.path(AtmEndpoints.TRANSACTION_BY_IDEMPOTENCY)
                         .and().method(HttpMethod.GET).filters(f -> f.rewritePath(
                                         AtmEndpoints.TRANSACTION_BY_IDEMPOTENCY_REWRITE,
                                         CbsEndpoints.TRANSACTION_BY_IDEMPOTENCY_REWRITE)
                                 .filter(this.delegatedTokenGatewayFilterFactory
-                                        .apply(new DelegatedTokenGatewayFilterFactory.Config(AtmOAuth2Scopes.ATM_TRANSACTION_READ))))
+                                        .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.SWITCH, AtmOAuth2Scopes.TRANSACTION_READ))))
                         .uri(cbsBaseUrl))
                 .route("atm-withdrawal", r -> r.path(AtmEndpoints.TRANSACTION_WITHDRAWAL)
                         .and().method(HttpMethod.POST).filters(f -> f.rewritePath(
                                         AtmEndpoints.TRANSACTION_WITHDRAWAL_REWRITE,
                                         CbsEndpoints.TRANSACTION_WITHDRAWAL_REWRITE)
                                 .filter(this.delegatedTokenGatewayFilterFactory
-                                        .apply(new DelegatedTokenGatewayFilterFactory.Config(AtmOAuth2Scopes.ATM_WITHDRAW_CREATE))))
+                                        .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.SWITCH, AtmOAuth2Scopes.WITHDRAW_CREATE))))
                         .uri(cbsBaseUrl))
                 .route("atm-reversal", r -> r.path(AtmEndpoints.TRANSACTION_REVERSAL)
                         .and().method(HttpMethod.POST).filters(f -> f.rewritePath(
                                         AtmEndpoints.TRANSACTION_REVERSAL_REWRITE,
                                         CbsEndpoints.TRANSACTION_REVERSAL_REWRITE)
                                 .filter(this.delegatedTokenGatewayFilterFactory
-                                        .apply(new DelegatedTokenGatewayFilterFactory.Config(AtmOAuth2Scopes.ATM_REVERSAL_CREATE))))
+                                        .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.SWITCH, AtmOAuth2Scopes.REVERSAL_CREATE))))
                         .uri(cbsBaseUrl))
                 .build();
     }

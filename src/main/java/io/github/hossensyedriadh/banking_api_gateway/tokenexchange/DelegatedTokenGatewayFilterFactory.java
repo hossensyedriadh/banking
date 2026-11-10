@@ -1,5 +1,6 @@
 package io.github.hossensyedriadh.banking_api_gateway.tokenexchange;
 
+import io.github.hossensyedriadh.banking_api_gateway.enumerator.ChannelType;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
@@ -28,16 +29,16 @@ public class DelegatedTokenGatewayFilterFactory extends AbstractGatewayFilterFac
     @NonNull
     public GatewayFilter apply(@NonNull Config config) {
         return (exchange, chain) -> exchange.getPrincipal()
-                .cast(JwtAuthenticationToken.class).switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authenticated Switch JWT is required")))
+                .cast(JwtAuthenticationToken.class).switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authenticated " + config.getChannel().toString() + " JWT is required")))
                 .flatMap(authentication -> {
                     boolean hasRequiredAuthority = authentication.getAuthorities().stream()
                             .anyMatch(authority -> Objects.equals(authority.getAuthority(), config.getRequiredAuthority()));
 
                     if (!hasRequiredAuthority) {
-                        return Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "Required ATM authority is missing"));
+                        return Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "Required " + config.getChannel().toString() + " authority is missing"));
                     }
 
-                    return this.delegatedTokenService.exchange(authentication.getToken().getTokenValue(), config.getRequiredAuthority());
+                    return this.delegatedTokenService.exchange(authentication.getToken().getTokenValue(), config.getChannel(), config.getRequiredAuthority());
                 }).flatMap(delegatedToken -> {
                     ServerHttpRequest mutatedRequest = exchange.getRequest().mutate().headers(headers -> headers.setBearerAuth(delegatedToken.accessToken())).build();
 
@@ -51,14 +52,20 @@ public class DelegatedTokenGatewayFilterFactory extends AbstractGatewayFilterFac
     }
 
     public static class Config {
-
+        private ChannelType channel;
         private String requiredAuthority;
 
-        public Config() {
+        public Config(ChannelType channel, String requiredAuthority) {
+            this.channel = channel;
+            this.requiredAuthority = requiredAuthority;
         }
 
-        public Config(String requiredAuthority) {
-            this.requiredAuthority = requiredAuthority;
+        public ChannelType getChannel() {
+            return channel;
+        }
+
+        public void setChannel(ChannelType channel) {
+            this.channel = channel;
         }
 
         public String getRequiredAuthority() {
