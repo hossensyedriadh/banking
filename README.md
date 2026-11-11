@@ -1,5 +1,15 @@
 # Banking API Gateway
 
+<p align="center">
+  <img src="https://img.shields.io/badge/Java-25-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java 25" />
+  <img src="https://img.shields.io/badge/Spring%20Boot-4-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot 4" />
+  <img src="https://img.shields.io/badge/Spring%20Cloud-Gateway-6DB33F?style=for-the-badge&logo=spring&logoColor=white" alt="Spring Cloud Gateway" />
+  <img src="https://img.shields.io/badge/Spring%20Security-OAuth2-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white" alt="Spring Security OAuth2" />
+  <img src="https://img.shields.io/badge/Gradle-Kotlin%20DSL-02303A?style=for-the-badge&logo=gradle&logoColor=white" alt="Gradle Kotlin DSL" />
+  <img src="https://img.shields.io/badge/Kubernetes-MicroK8s-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white" alt="Kubernetes MicroK8s" />
+  <img src="https://wakatime.com/badge/user/e2b59800-befa-4fbb-b409-570cc377f0eb/project/4e170512-0108-426e-afbb-3f0a04a3dde9.svg?style=for-the-badge" alt="Wakatime" />
+</p>
+
 A secure, multi-channel API gateway for a modular Core Banking System (CBS), providing centralized API routing, access-token validation, authorization enforcement, and secure service-to-service communication for banking channels.
 
 ## Overview
