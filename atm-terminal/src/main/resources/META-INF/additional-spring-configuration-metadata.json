@@ -1,0 +1,39 @@
+{
+  "properties": [
+    {
+      "name": "atm.terminal-id",
+      "type": "java.lang.String",
+      "description": "Unique identifier of the ATM terminal."
+    },
+    {
+      "name": "atm.timezone",
+      "type": "java.lang.String",
+      "description": "IANA timezone ID for ATM terminal."
+    },
+    {
+      "name": "atm.switch-config.host",
+      "type": "java.lang.String",
+      "description": "Hostname of the ATM Switch TCP server."
+    },
+    {
+      "name": "atm.switch-config.port",
+      "type": "java.lang.Integer",
+      "description": "Port of the ATM Switch TCP server."
+    },
+    {
+      "name": "atm.switch-config.connect-timeout",
+      "type": "java.lang.Integer",
+      "description": "Connection timeout (milliseconds) for ATM Switch TCP server."
+    },
+    {
+      "name": "atm.switch-config.read-timeout",
+      "type": "java.lang.Integer",
+      "description": "Read timeout (milliseconds) ATM Switch TCP server."
+    },
+    {
+      "name": "atm.security.pin-block.encryption-secret-key",
+      "type": "java.lang.String",
+      "description": "TDES encryption secret key for encryption of PIN block."
+    }
+  ]
+}
