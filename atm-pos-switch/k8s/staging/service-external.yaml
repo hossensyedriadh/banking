@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: switch-tcp
+  namespace: banking-channel-services-staging
+spec:
+  selector:
+    app: switch
+  ports:
+    - name: iso8583-tcp
+      protocol: TCP
+      port: 15000
+      targetPort: 15000
+      nodePort: 31000
+  type: NodePort

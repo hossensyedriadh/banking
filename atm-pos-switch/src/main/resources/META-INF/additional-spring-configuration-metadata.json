@@ -1,0 +1,69 @@
+{
+  "properties": [
+    {
+      "name": "switch.tcp.host",
+      "type": "java.lang.String",
+      "description": "Hostname of the TCP server."
+    },
+    {
+      "name": "switch.tcp.port",
+      "type": "java.lang.Integer",
+      "description": "Port of the TCP server."
+    },
+    {
+      "name": "switch.tcp.read-timeout",
+      "type": "java.lang.Integer",
+      "description": "TCP Read timeout in milliseconds."
+    },
+    {
+      "name": "switch.tcp.idle-timeout",
+      "type": "java.lang.Integer",
+      "description": "TCP Idle timeout in milliseconds."
+    },
+    {
+      "name": "switch.unknown-transactions-reconciliation.fixed-delay",
+      "type": "java.lang.Integer",
+      "description": "Switch's unknown transactions reconciliation fixed delay in milliseconds."
+    },
+    {
+      "name": "switch.stuck-transactions-recovery.fixed-delay",
+      "type": "java.lang.Integer",
+      "description": "Switch's stuck transactions recovery fixed delay in milliseconds."
+    },
+    {
+      "name": "core-banking.atm-gateway.base-url",
+      "type": "java.lang.String",
+      "description": "Base URL of Core Banking ATM gateway."
+    },
+    {
+      "name": "atm-terminal.session.idle-timeout",
+      "type": "java.time.Duration",
+      "description": "Idle timeout duration for an ATM terminal session."
+    },
+    {
+      "name": "atm-terminal.session.max-age",
+      "type": "java.time.Duration",
+      "description": "Max age duration for an ATM terminal session."
+    },
+    {
+      "name": "iam.token-uri",
+      "type": "java.lang.String",
+      "description": "Max age duration for an ATM terminal session."
+    },
+    {
+      "name": "iam.client-id",
+      "type": "java.lang.String",
+      "description": "Max age duration for an ATM terminal session."
+    },
+    {
+      "name": "iam.client-secret",
+      "type": "java.lang.String",
+      "description": "Max age duration for an ATM terminal session."
+    },
+    {
+      "name": "iam.scopes",
+      "type": "java.util.List<java.lang.String>",
+      "description": "Max age duration for an ATM terminal session."
+    }
+  ]
+}

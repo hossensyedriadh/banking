@@ -1,0 +1,78 @@
+spring:
+  datasource:
+    driver-class-name: "org.postgresql.Driver"
+    url: "${POSTGRES_URL}"
+    username: "${POSTGRES_USER}"
+    password: "${POSTGRES_PWD}"
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX_SIZE}
+      minimum-idle: ${DB_POOL_MIN_IDLE}
+      idle-timeout: ${DB_POOL_IDLE_TIMEOUT}
+      connection-timeout: ${DB_POOL_CONN_TIMEOUT}
+      max-lifetime: ${DB_POOL_MAX_LIFETIME}
+      leak-detection-threshold: ${DB_POOL_LEAK_THRESHOLD}
+      connection-test-query: "select 1;"
+      driver-class-name: "org.postgresql.Driver"
+      pool-name: "Hikari Connection Pool [ATM/POS Switch: Dev]"
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  data:
+    redis:
+      host: "${REDIS_HOST}"
+      port: ${REDIS_PORT}
+      username: "${REDIS_USER}"
+      password: "${REDIS_PWD}"
+      timeout: ${REDIS_READ_TIMEOUT}
+      connect-timeout: ${REDIS_CONN_TIMEOUT}
+      ssl:
+        enabled: true
+      repositories:
+        enabled: false
+      database: 2
+      lettuce:
+        pool:
+          enabled: true
+          max-active: ${REDIS_POOL_MAX_ACTIVE}
+          max-idle: ${REDIS_POOL_MAX_IDLE}
+          min-idle: ${REDIS_POOL_MIN_IDLE}
+          time-between-eviction-runs: "${REDIS_POOL_EVICTION_RUNTIME}"
+          max-wait: "${REDIS_POOL_MAX_WAIT}"
+      client-type: lettuce
+      client-name: "atm-pos-switch"
+server:
+  tomcat:
+    connection-timeout: 15s
+    keep-alive-timeout: 30s
+  shutdown: GRACEFUL
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "info,health"
+  endpoint:
+    health:
+      show-details: always
+
+#custom properties
+switch:
+  tcp:
+    host: "${SWITCH_TCP_HOST}"
+    port: "${SWITCH_TCP_PORT}"
+    read-timeout: ${SWITCH_TCP_READ_TIMEOUT:30000}
+    idle-timeout: ${SWITCH_TCP_IDLE_TIMEOUT:300000}
+  unknown-transactions-reconciliation:
+    fixed-delay: ${UNKNOWN_TXN_RECONCILIATION_FIXED_DELAY:30000}
+  stuck-transactions-recovery:
+    fixed-delay: ${STUCK_TXN_RECOVERY_FIXED_DELAY:60000}
+atm-terminal:
+  session:
+    idle-timeout: "${ATM_SESSION_IDLE_TIMEOUT:2m}"
+    max-age: "${ATM_SESSION_MAX_AGE:10m}"
+core-banking:
+  atm-gateway:
+    base-url: "${CORE_BANKING_ATM_GATEWAY_BASE_URL}"
+iam:
+  token-uri: ${TOKEN_ISSUER_URL}
+  client-id: ${IAM_CLIENT_ID}
+  client-secret: ${IAM_CLIENT_SECRET}
+  scopes: "atm.balance.read atm.account-info.read atm.card-info.read atm.card-pin.verify atm.currency-info.read atm.account-product-info.read atm.withdraw.create atm.reversal.create atm.transactions-search.read atm.transaction.read"
