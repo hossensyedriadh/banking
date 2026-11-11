@@ -1,0 +1,56 @@
+spring:
+  cloud:
+    discovery:
+      enabled: false
+    gateway:
+      server:
+        webflux:
+          httpclient:
+            connect-timeout: ${HTTP_CONNECT_TIMEOUT:5000}
+            response-timeout: "${HTTP_RESPONSE_TIMEOUT:60s}"
+            pool:
+              type: "${HTTP_POOL_TYPE:FIXED}"
+              max-connections: ${HTTP_POOL_MAX_CONNECTIONS:50}
+              acquire-timeout: ${HTTP_POOL_ACQUIRE_TIMEOUT:5000}
+              max-idle-time: "${HTTP_POOL_MAX_IDLE_TIME:30s}"
+              max-life-time: "${HTTP_POOL_MAX_LIFE_TIME:5m}"
+              eviction-interval: "${HTTP_POOL_EVICTION_INTERVAL:30s}"
+              metrics: "${HTTP_POOL_METRICS_ENABLED:true}"
+          httpserver:
+            wiretap: false
+  netty:
+    leak-detection: ADVANCED
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: "${OAUTH2_ISSUER}"
+          audiences:
+            - "banking-api-gateway"
+logging:
+  level:
+    org.springframework.security: info
+    org.springframework.security.oauth2: info
+    org.springframework.cloud.gateway.route: info
+    org.springframework.cloud.gateway.handler: info
+    reactor.netty.http.client: info
+    reactor.netty.http.server: info
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "info,health"
+  endpoint:
+    health:
+      show-details: always
+
+#custom properties
+banking:
+  cbs:
+    base-url: "${CBS_BASE_URL:http://cbs.banking-cbs-staging.svc.cluster.local:8080}"
+  iam:
+    base-url: "${IAM_BASE_URL:http://banking-iam-server.banking-iam-staging.svc.cluster.local:8080}"
+    token-uri: "${IAM_TOKEN_URI:${banking.iam.base-url}/oauth2/token}"
+    client-id: "${IAM_CLIENT_ID}"
+    client-secret: "${IAM_CLIENT_SECRET}"
+    client-authentication-method: "client_secret_basic"

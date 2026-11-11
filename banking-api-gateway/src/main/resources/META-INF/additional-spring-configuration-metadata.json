@@ -1,0 +1,34 @@
+{
+  "properties": [
+    {
+      "name": "banking.cbs.base-url",
+      "type": "java.net.URI",
+      "description": "Base URL of CBS application."
+    },
+    {
+      "name": "banking.iam.base-url",
+      "type": "java.net.URI",
+      "description": "Base URL of IAM Server application."
+    },
+    {
+      "name": "banking.iam.token-uri",
+      "type": "java.net.URI",
+      "description": "IAM token endpoint, if separately configured."
+    },
+    {
+      "name": "banking.iam.client-id",
+      "type": "java.lang.String",
+      "description": "Gateway OAuth2 client ID."
+    },
+    {
+      "name": "banking.iam.client-secret",
+      "type": "java.lang.String",
+      "description": "Gateway OAuth2 client secret."
+    },
+    {
+      "name": "banking.iam.client-authentication-method",
+      "type": "java.lang.String",
+      "description": "CBS internal service address."
+    }
+  ]
+}
