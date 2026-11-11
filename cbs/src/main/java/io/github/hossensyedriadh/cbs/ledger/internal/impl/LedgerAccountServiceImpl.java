@@ -1,0 +1,158 @@
+package io.github.hossensyedriadh.cbs.ledger.internal.impl;
+
+import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
+import io.github.hossensyedriadh.cbs.ledger.api.command.CreateLedgerAccountCommand;
+import io.github.hossensyedriadh.cbs.ledger.api.command.UpdateLedgerAccountCommand;
+import io.github.hossensyedriadh.cbs.ledger.api.event.ledger.LedgerAccountActivatedEvent;
+import io.github.hossensyedriadh.cbs.ledger.api.event.ledger.LedgerAccountCreatedEvent;
+import io.github.hossensyedriadh.cbs.ledger.api.event.ledger.LedgerAccountDeactivatedEvent;
+import io.github.hossensyedriadh.cbs.ledger.api.event.ledger.LedgerAccountUpdatedEvent;
+import io.github.hossensyedriadh.cbs.ledger.api.model.LedgerAccountView;
+import io.github.hossensyedriadh.cbs.ledger.api.service.LedgerAccountService;
+import io.github.hossensyedriadh.cbs.ledger.internal.domain.LedgerAccount;
+import io.github.hossensyedriadh.cbs.ledger.internal.mapper.LedgerAccountMapper;
+import io.github.hossensyedriadh.cbs.ledger.internal.repository.LedgerAccountRepository;
+import io.github.hossensyedriadh.cbs.product.api.model.CurrencyView;
+import io.github.hossensyedriadh.cbs.product.api.service.CurrencyService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+
+@Log4j2
+@Service
+@Transactional(readOnly = true)
+public class LedgerAccountServiceImpl implements LedgerAccountService {
+    private final LedgerAccountRepository ledgerAccountRepository;
+    private final LedgerAccountMapper ledgerAccountMapper;
+    private final CurrencyService currencyService;
+    private final ApplicationEventPublisher applicationEventPublisher;
+    private final HttpServletRequest httpServletRequest;
+
+    @Autowired
+    public LedgerAccountServiceImpl(LedgerAccountRepository ledgerAccountRepository, LedgerAccountMapper ledgerAccountMapper,
+                                    CurrencyService currencyService, ApplicationEventPublisher applicationEventPublisher,
+                                    HttpServletRequest httpServletRequest) {
+        this.ledgerAccountRepository = ledgerAccountRepository;
+        this.ledgerAccountMapper = ledgerAccountMapper;
+        this.currencyService = currencyService;
+        this.applicationEventPublisher = applicationEventPublisher;
+        this.httpServletRequest = httpServletRequest;
+    }
+
+    @Override
+    public List<LedgerAccountView> getLedgerAccounts() {
+        return this.ledgerAccountRepository.findAll().stream().map(this.ledgerAccountMapper::toView).toList();
+    }
+
+    @Override
+    public Optional<LedgerAccountView> getLedgerAccount(Long id) {
+        return this.ledgerAccountRepository.findById(id).map(this.ledgerAccountMapper::toView);
+    }
+
+    @Override
+    public Optional<LedgerAccountView> getLedgerAccountByCode(String accountCode) {
+        return this.ledgerAccountRepository.findByAccountCode(accountCode).map(this.ledgerAccountMapper::toView);
+    }
+
+    @Transactional
+    @Override
+    public LedgerAccountView createLedgerAccount(@Valid CreateLedgerAccountCommand command) {
+        if (this.ledgerAccountRepository.existsByAccountCode(command.getAccountCode())) {
+            log.warn("Ledger Account code {} already exists", command.getAccountCode());
+            throw new ApiResourceException("Ledger Account code already exists", HttpStatus.CONFLICT, this.httpServletRequest);
+        }
+
+        CurrencyView currency = this.currencyService.getCurrency(command.getCurrencyId())
+                .orElseThrow(() -> {
+                    log.warn("Currency not found with ID: {}", command.getCurrencyId());
+                    return new ApiResourceException("Currency not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
+                });
+
+        if (!currency.isActive()) {
+            log.warn("Current ID: {} is not active.", command.getCurrencyId());
+            throw new ApiResourceException("Current is not active", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        }
+
+        LedgerAccount account = this.ledgerAccountMapper.toEntity(command);
+        LedgerAccount saved = this.ledgerAccountRepository.save(account);
+
+        this.applicationEventPublisher.publishEvent(new LedgerAccountCreatedEvent(saved.getId(), saved.getAccountCode()));
+
+        log.info("Created ledger account with code: {}", saved.getAccountCode());
+
+        return this.ledgerAccountMapper.toView(saved);
+    }
+
+    @Transactional
+    @Override
+    public LedgerAccountView updateLedgerAccount(Long id, @Valid UpdateLedgerAccountCommand command) {
+        LedgerAccount account = this.ledgerAccountRepository.findById(id).orElseThrow(() -> {
+            log.warn("Ledger account with ID: {} not found", id);
+            return new ApiResourceException("Ledger account not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
+        });
+
+        if (account.getActive() == Boolean.FALSE) {
+            log.warn("Ledger account with ID: {} is not active", id);
+            throw new ApiResourceException("Ledger account not active", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+        }
+
+        this.ledgerAccountMapper.toPatchedEntity(command, account);
+        LedgerAccount updated = this.ledgerAccountRepository.save(account);
+
+        this.applicationEventPublisher.publishEvent(new LedgerAccountUpdatedEvent(updated.getId(), updated.getAccountCode()));
+
+        log.info("Updated ledger account with ID: {}", id);
+
+        return this.ledgerAccountMapper.toView(updated);
+    }
+
+    @Transactional
+    @Override
+    public void activateLedgerAccount(Long id) {
+        this.ledgerAccountRepository.findById(id).ifPresentOrElse(account -> {
+            if (account.getActive() == Boolean.TRUE) {
+                log.warn("Ledger account with ID: {} is already active", id);
+                throw new ApiResourceException("Ledger account is already active", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            }
+
+            account.setActive(Boolean.TRUE);
+            this.ledgerAccountRepository.save(account);
+
+            this.applicationEventPublisher.publishEvent(new LedgerAccountActivatedEvent(account.getId(), account.getAccountCode()));
+
+            log.info("Activated ledger account with ID: {}", id);
+        }, () -> {
+            log.warn("Ledger account with ID: {} not found", id);
+            throw new ApiResourceException("Ledger account not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
+        });
+    }
+
+    @Transactional
+    @Override
+    public void deactivateLedgerAccount(Long id) {
+        this.ledgerAccountRepository.findById(id).ifPresentOrElse(account -> {
+            if (account.getActive() == Boolean.FALSE) {
+                log.warn("Ledger account with ID: {} is already inactive", id);
+                throw new ApiResourceException("Ledger account is already inactive", HttpStatus.BAD_REQUEST, this.httpServletRequest);
+            }
+
+            account.setActive(Boolean.FALSE);
+            this.ledgerAccountRepository.save(account);
+
+            this.applicationEventPublisher.publishEvent(new LedgerAccountDeactivatedEvent(account.getId(), account.getAccountCode()));
+
+            log.info("Deactivated ledger account with ID: {}", id);
+        }, () -> {
+            log.warn("Ledger account with ID: {} not found", id);
+            throw new ApiResourceException("Ledger account not found", HttpStatus.NOT_FOUND, this.httpServletRequest);
+        });
+    }
+}

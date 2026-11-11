@@ -1,0 +1,138 @@
+spring:
+  datasource:
+    driver-class-name: "org.postgresql.Driver"
+    url: "${POSTGRES_URL}"
+    username: "${POSTGRES_USER}"
+    password: "${POSTGRES_PWD}"
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX_SIZE}
+      minimum-idle: ${DB_POOL_MIN_IDLE}
+      idle-timeout: ${DB_POOL_IDLE_TIMEOUT}
+      connection-timeout: ${DB_POOL_CONN_TIMEOUT}
+      max-lifetime: ${DB_POOL_MAX_LIFETIME}
+      leak-detection-threshold: ${DB_POOL_LEAK_THRESHOLD}
+      connection-test-query: "select 1;"
+      driver-class-name: "org.postgresql.Driver"
+      pool-name: "Hikari Connection Pool [CBS: Dev]"
+  jpa:
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+  data:
+    web:
+      pageable:
+        max-page-size: 30
+        default-page-size: 10
+    redis:
+      host: "${REDIS_HOST}"
+      port: ${REDIS_PORT}
+      username: "${REDIS_USER}"
+      password: "${REDIS_PWD}"
+      timeout: ${REDIS_READ_TIMEOUT}
+      connect-timeout: ${REDIS_CONN_TIMEOUT}
+      ssl:
+        enabled: true
+      repositories:
+        enabled: false
+      database: 1
+      lettuce:
+        pool:
+          enabled: true
+          max-active: ${REDIS_POOL_MAX_ACTIVE}
+          max-idle: ${REDIS_POOL_MAX_IDLE}
+          min-idle: ${REDIS_POOL_MIN_IDLE}
+          time-between-eviction-runs: "${REDIS_POOL_EVICTION_RUNTIME}"
+          max-wait: "${REDIS_POOL_MAX_WAIT}"
+      client-type: lettuce
+      client-name: "cbs"
+  modulith:
+    events:
+      jdbc:
+        schema: "modulith"
+        schema-initialization:
+          enabled: false
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: never
+      platform: postgres
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceName: "cbs"
+            instanceId: "AUTO"
+          threadPool:
+            class: org.quartz.simpl.SimpleThreadPool
+            threadCount: 10
+            threadPriority: 5
+            threadsInheritContextClassLoaderOfInitializingThread: true
+          jobStore:
+            dataSource: "cbs"
+            class: org.quartz.impl.jdbcjobstore.JobStoreTX
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+            tablePrefix: quartz_
+            isClustered: true
+            clusterCheckinInterval: 20000
+            misfireThreshold: 60000
+          dataSource:
+            cbs:
+              driver: org.postgresql.Driver
+              URL: "${POSTGRES_URL}?currentSchema=scheduler"
+              user: "${POSTGRES_SCHED_USER}"
+              password: "${POSTGRES_SCHED_PWD}"
+              maxConnections: 10
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: "${OAUTH2_ISSUER_URI}"
+          audiences:
+            - cbs
+server:
+  tomcat:
+    connection-timeout: 15s
+    keep-alive-timeout: 30s
+  shutdown: GRACEFUL
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "info,health"
+  endpoint:
+    health:
+      show-details: always
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
+#custom properties
+cbs:
+  timezone: "${CBS_IANA_TZ}"
+card:
+  security:
+    crypto:
+      pan-hmac-secret: "${PAN_HASH_HMAC_SECRET_KEY}"
+      pin-simulator:
+        tdes-key-base64: "${CARD_PIN_SIMULATOR_TDES_KEY_BASE64}"
+        verification-key-base64: "${CARD_PIN_SIMULATOR_VERIFICATION_KEY_BASE64}"
+kafka:
+  bootstrap-servers: "${KAFKA_BOOTSTRAP_SERVERS}"
+  sasl:
+    username: "${KAFKA_SASL_USERNAME}"
+    pwd: "${KAFKA_SASL_PWD}"
+  ssl:
+    truststore:
+      path: "${KAFKA_SSL_TRUSTSTORE}"
+      pwd: "${KAFKA_SSL_TRUSTSTORE_PWD}"
+    keystore:
+      path: "${KAFKA_SSL_KEYSTORE}"
+      pwd: "${KAFKA_SSL_KEYSTORE_PWD}"
+    key-pwd: "${KAFKA_SSL_KEY_PWD}"
+  confluent:
+    avro:
+      schema-registry:
+        url: "${KAFKA_SCHEMA_REGISTRY_URL}"

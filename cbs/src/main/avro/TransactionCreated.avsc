@@ -1,0 +1,60 @@
+{
+  "type": "record",
+  "name": "TransactionCreated",
+  "namespace": "io.github.hossensyedriadh.cbs.transaction.event",
+  "fields": [
+    {
+      "name": "eventId",
+      "type": "string"
+    },
+    {
+      "name": "transactionId",
+      "type": "long"
+    },
+    {
+      "name": "transactionReference",
+      "type": "string"
+    },
+    {
+      "name": "accountId",
+      "type": "long"
+    },
+    {
+      "name": "destinationAccountId",
+      "type": ["null", "long"],
+      "default": null
+    },
+    {
+      "name": "currencyId",
+      "type": "long"
+    },
+    {
+      "name": "transactionType",
+      "type": "string"
+    },
+    {
+      "name": "amount",
+      "type": "string"
+    },
+    {
+      "name": "status",
+      "type": "string"
+    },
+    {
+      "name": "description",
+      "type": ["null", "string"],
+      "default": null
+    },
+    {
+      "name": "idempotencyKey",
+      "type": "string"
+    },
+    {
+      "name": "occurredAt",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      }
+    }
+  ]
+}

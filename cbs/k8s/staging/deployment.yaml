@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cbs
+  namespace: banking-cbs-staging
+  labels:
+    app: cbs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cbs
+  template:
+    metadata:
+      name: cbs
+      labels:
+        app: cbs
+    spec:
+      imagePullSecrets:
+        - name: nexus-oss-docker
+      containers:
+        - name: cbs
+          image: __IMAGE__
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: cbs
+            - secretRef:
+                name: cbs
+          volumeMounts:
+            - mountPath: /app/ssl
+              name: kafka-ssl-volume
+              readOnly: true
+            - mountPath: /log/cbs
+              name: app-logs
+            - mountPath: /heapdumps
+              name: heapdump
+          env:
+            - name: KAFKA_SSL_TRUSTSTORE
+              value: /app/ssl/KAFKA_SSL_TRUSTSTORE
+            - name: KAFKA_SSL_KEYSTORE
+              value: /app/ssl/KAFKA_SSL_KEYSTORE
+            - name: LOG_PATH
+              value: /log/cbs
+          resources:
+            requests:
+              cpu: 200m
+              memory: 1.5Gi
+            limits:
+              cpu: 1
+              memory: 4Gi
+          readinessProbe:
+            httpGet:
+              path: /api/actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 5
+          livenessProbe:
+            httpGet:
+              path: /api/actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 90
+            periodSeconds: 30
+            failureThreshold: 5
+      volumes:
+        - name: kafka-ssl-volume
+          secret:
+            secretName: cbs
+        - name: app-logs
+          hostPath:
+            path: /var/log/banking/cbs/logs
+            type: DirectoryOrCreate
+        - name: heapdump
+          hostPath:
+            path: /var/log/banking/cbs/heapdumps
+            type: DirectoryOrCreate
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      hostAliases:
+        - ip: "192.168.59.10"
+          hostnames:
+            - "postgres.cerberus.internal"
+            - "redis.cerberus.internal"
+            - "kafka.cerberus.internal"
+            - "schema-registry.cerberus.internal"
+      restartPolicy: Always
