@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: "internet-banking"
+  profiles:
+    active: "${SPRING_PROFILES_ACTIVE:dev}"
+  threads:
+    virtual:
+      enabled: true
+  main:
+    keep-alive: true
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    database-platform: "org.hibernate.dialect.PostgreSQLDialect"
+  web:
+    error:
+      whitelabel:
+        enabled: false
+      include-binding-errors: on_param
+      include-exception: false
+      include-stacktrace: never
+      include-message: always
+      include-path: always
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+        add-additional-paths: true
+  info:
+    env:
+      enabled: true
+logging:
+  level:
+    org.springframework.security.oauth2: info
+    org.springframework.web.client: info
+info:
+  application:
+    name: "${spring.application.name}"
+    version: "1.0.0-SNAPSHOT"
+    description: "Internet Banking Channel Service"
+  developer:
+    name: "Syed Riadh Hossen"
+    email: "riadhhossen@gmail.com"
+    url: "https://hossensyedriadh.github.io"
+springdoc:
+  swagger-ui:
+    supported-submit-methods: [ ]
+    path: "/ui-docs.html"

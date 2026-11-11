@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: internet-banking
+  namespace: banking-channel-services-staging
+spec:
+  selector:
+    app: internet-banking
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 31010
+  type: NodePort
