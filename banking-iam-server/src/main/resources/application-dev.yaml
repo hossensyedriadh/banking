@@ -1,0 +1,94 @@
+spring:
+  datasource:
+    driver-class-name: "org.postgresql.Driver"
+    url: "${POSTGRES_URL}"
+    username: "${POSTGRES_USER}"
+    password: "${POSTGRES_PWD}"
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX_SIZE}
+      minimum-idle: ${DB_POOL_MIN_IDLE}
+      idle-timeout: ${DB_POOL_IDLE_TIMEOUT}
+      connection-timeout: ${DB_POOL_CONN_TIMEOUT}
+      max-lifetime: ${DB_POOL_MAX_LIFETIME}
+      leak-detection-threshold: ${DB_POOL_LEAK_THRESHOLD}
+      connection-test-query: "select 1;"
+      driver-class-name: "org.postgresql.Driver"
+      pool-name: "Hikari Connection Pool [Banking IAM: Dev]"
+  jpa:
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+  data:
+    web:
+      pageable:
+        max-page-size: 30
+        default-page-size: 10
+    redis:
+      host: "${REDIS_HOST}"
+      port: ${REDIS_PORT}
+      username: "${REDIS_USER}"
+      password: "${REDIS_PWD}"
+      timeout: ${REDIS_READ_TIMEOUT}
+      connect-timeout: ${REDIS_CONN_TIMEOUT}
+      ssl:
+        enabled: true
+      repositories:
+        enabled: false
+      database: 3
+      lettuce:
+        pool:
+          enabled: true
+          max-active: ${REDIS_POOL_MAX_ACTIVE}
+          max-idle: ${REDIS_POOL_MAX_IDLE}
+          min-idle: ${REDIS_POOL_MIN_IDLE}
+          time-between-eviction-runs: "${REDIS_POOL_EVICTION_RUNTIME}"
+          max-wait: "${REDIS_POOL_MAX_WAIT}"
+      client-type: lettuce
+      client-name: "banking-iam"
+server:
+  servlet:
+    session:
+      cookie:
+        name: "IAMSESSIONID"
+  tomcat:
+    connection-timeout: 15s
+    keep-alive-timeout: 30s
+  shutdown: GRACEFUL
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "info,health"
+  endpoint:
+    health:
+      show-details: always
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+logging:
+  level:
+    org.springframework.security: info
+    org.springframework.security.oauth2.server.authorization: info
+#custom properties
+authorization-server:
+  issuer: "${AUTHORIZATION_SERVER_ISSUER}"
+banking:
+  iam:
+    signing:
+      keystore: "${IAM_SIGNING_KEYSTORE}"
+      store-password: "${IAM_SIGNING_STORE_PASSWORD}"
+      key-password: "${IAM_SIGNING_KEY_PASSWORD}"
+      alias: "${IAM_SIGNING_KEY_ALIAS}"
+      key-id: "${IAM_SIGNING_KEY_ID}"
+    clients:
+      atm-pos-switch:
+        secret: "${ATM_POS_SWITCH_CLIENT_SECRET}"
+      banking-api-gateway:
+        secret: "${BANKING_API_GATEWAY_CLIENT_SECRET}"
+      internet-banking:
+        secret: "${INTERNET_BANKING_CLIENT_SECRET}"
+        redirect-uri: "${INTERNET_BANKING_CLIENT_REDIRECT_URI}"
+        post-logout-redirect-uri: "${INTERNET_BANKING_CLIENT_POST_LOGOUT_REDIRECT_URI}"

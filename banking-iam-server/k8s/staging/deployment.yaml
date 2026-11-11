@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: banking-iam-server
+  namespace: banking-iam-staging
+  labels:
+    app: banking-iam-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: banking-iam-server
+  template:
+    metadata:
+      name: banking-iam-server
+      labels:
+        app: banking-iam-server
+    spec:
+      imagePullSecrets:
+        - name: nexus-oss-docker
+      containers:
+        - name: banking-iam-server
+          image: __IMAGE__
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: banking-iam-server
+            - secretRef:
+                name: banking-iam-server
+          volumeMounts:
+            - mountPath: /app/keystore
+              name: iam-signing-keystore
+              readOnly: true
+            - mountPath: /log/baning-iam-server
+              name: app-logs
+            - mountPath: /heapdumps
+              name: heapdump
+          env:
+            - name: IAM_SIGNING_KEYSTORE
+              value: /app/keystore/IAM_SIGNING_KEYSTORE
+            - name: LOG_PATH
+              value: /log/baning-iam-server
+          resources:
+            requests:
+              cpu: 200m
+              memory: 1Gi
+            limits:
+              cpu: 1
+              memory: 3Gi
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 45
+            periodSeconds: 15
+            failureThreshold: 5
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 3
+      volumes:
+        - name: iam-signing-keystore
+          secret:
+            secretName: banking-iam-server
+        - name: app-logs
+          hostPath:
+            path: /var/log/banking/iam-server/logs
+            type: DirectoryOrCreate
+        - name: heapdump
+          hostPath:
+            path: /var/log/banking/iam-server/heapdumps
+            type: DirectoryOrCreate
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      hostAliases:
+        - ip: "192.168.59.10"
+          hostnames:
+            - "postgres.cerberus.internal"
+            - "redis.cerberus.internal"
+      restartPolicy: Always

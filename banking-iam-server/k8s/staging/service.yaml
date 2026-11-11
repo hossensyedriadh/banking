@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: banking-iam-server
+  namespace: banking-iam-staging
+spec:
+  type: ClusterIP
+  selector:
+    app: banking-iam-server
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
