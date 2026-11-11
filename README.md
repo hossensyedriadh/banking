@@ -1,7 +1,7 @@
 # Banking Platform
 
 <p align="center">
-  <strong>A mini Banking Platform simulation with Core Banking, Internet Banking, ATM/POS Switching, and Centralized Identity & Access Management.</strong>
+  <strong>A mini Banking Platform simulation with Core Banking, Internet Banking Channel, ATM/POS Switching, and Centralized Identity & Access Management.</strong>
 </p>
 
 <p align="center">
