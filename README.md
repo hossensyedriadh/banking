@@ -97,7 +97,7 @@ Each component can be developed, maintained, and deployed independently.
 
 ### 1. Core Banking System (CBS)
 
-**Directory:** `apps/cbs`
+**Directory:** `cbs`
 
 The Core Banking System is the central banking engine responsible for maintaining banking records and executing financial operations.
 
@@ -123,7 +123,7 @@ The application follows a modular architecture using Spring Modulith, with domai
 
 ### 2. Banking API Gateway
 
-**Directory:** `apps/banking-api-gateway`
+**Directory:** `banking-api-gateway`
 
 The Banking API Gateway acts as the central entry point for banking channel applications accessing core banking services.
 
@@ -146,7 +146,7 @@ The gateway helps keep channel applications decoupled from the internal API stru
 
 ### 3. Banking Identity & Access Management (IAM) Server
 
-**Directory:** `apps/banking-iam-server`
+**Directory:** `banking-iam-server`
 
 The Banking IAM Server provides centralized identity and access management for the banking ecosystem.
 
@@ -171,7 +171,7 @@ It establishes a centralized security infrastructure that allows different banki
 
 ### 4. ATM/POS Switch
 
-**Directory:** `apps/atm-pos-switch`
+**Directory:** `atm-pos-switch`
 
 The ATM/POS Switch is responsible for processing and routing financial transactions originating from ATM and POS terminals.
 
@@ -197,7 +197,7 @@ The switch handles the communication and transaction processing requirements of 
 
 ### 5. Internet Banking
 
-**Directory:** `apps/internet-banking`
+**Directory:** `internet-banking`
 
 Internet Banking provides the customer-facing digital banking channel.
 
@@ -222,7 +222,7 @@ The application demonstrates how a digital banking channel can consume core bank
 
 ### 6. ATM Terminal
 
-**Directory:** `apps/atm-terminal`
+**Directory:** `atm-terminal`
 
 The ATM Terminal is a standalone ATM client application developed to simulate interactions between an ATM device and the ATM/POS Switch.
 
@@ -331,7 +331,7 @@ Each application is independently buildable.
 Navigate to the application directory:
 
 ```bash
-cd apps/cbs
+cd cbs
 ```
 
 Build using its Gradle Wrapper:
@@ -402,7 +402,7 @@ For example, to synchronize the Core Banking System:
 
 ```bash
 git subtree pull \
-  --prefix=apps/cbs \
+  --prefix=cbs \
   https://github.com/hossensyedriadh/cbs.git \
   main
 ```
