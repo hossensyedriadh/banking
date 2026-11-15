@@ -58,8 +58,6 @@ public class BankingAuthorizationAspect {
                     throw new IllegalStateException("Invalid parameter type");
                 }
 
-                System.out.println("Parameter: " + parameterName + ", Value: " +value);
-
                 return value;
             }
         }

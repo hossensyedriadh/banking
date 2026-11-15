@@ -183,8 +183,6 @@ public class AccountController {
     @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).BALANCE_READ)")
     @GetMapping("/balance/{accountId}")
     public ResponseEntity<AccountBalanceView> getBalance(@PathVariable("accountId") Long accountId) {
-        System.out.println("Test Account ID: " +accountId);
-
         AccountBalanceView accountBalanceView = this.accountBalanceService.getBalance(accountId);
 
         return ResponseEntity.ok(accountBalanceView);
@@ -227,9 +225,6 @@ public class AccountController {
     @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).BALANCE_READ)")
     @GetMapping("/balance/{accountId}/card/{cardId}")
     public ResponseEntity<AccountBalanceView> getBalance(@PathVariable("accountId") Long accountId, @PathVariable("cardId") Long cardId) {
-        System.out.println("Account ID: " +accountId);
-        System.out.println("Card ID: "+ cardId);
-
         AccountBalanceView accountBalanceView = this.accountBalanceService.getBalance(accountId, cardId);
 
         return ResponseEntity.ok(accountBalanceView);
