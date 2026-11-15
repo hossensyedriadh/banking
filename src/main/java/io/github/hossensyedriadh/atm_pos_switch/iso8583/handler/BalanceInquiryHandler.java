@@ -80,7 +80,7 @@ public class BalanceInquiryHandler implements TransactionHandler {
             return this.isoResponseFactory.createResponse(request, ResponseCodes.SYSTEM_ERROR);
         }
 
-        CoreBankingAccountBalanceResponse balanceResponse = this.balanceLookupService.lookupBalance(aggregateResult.accountId());
+        CoreBankingAccountBalanceResponse balanceResponse = this.balanceLookupService.lookupBalance(aggregateResult.accountId(), aggregateResult.cardId());
 
         if (balanceResponse == null) {
             return this.isoResponseFactory.createResponse(request, ResponseCodes.SYSTEM_ERROR);
