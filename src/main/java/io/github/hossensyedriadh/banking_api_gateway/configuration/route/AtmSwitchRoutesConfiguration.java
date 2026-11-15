@@ -28,7 +28,7 @@ public class AtmSwitchRoutesConfiguration {
                 .route("atm-account-balance", r -> r.path(AtmEndpoints.ACCOUNT_BALANCE)
                         .and().method(HttpMethod.GET).filters(f -> f.rewritePath(
                                         AtmEndpoints.ACCOUNT_BALANCE_REWRITE,
-                                        CbsEndpoints.ACCOUNT_BALANCE_REWRITE)
+                                        CbsEndpoints.ATM_ACCOUNT_BALANCE_REWRITE)
                                 .filter(this.delegatedTokenGatewayFilterFactory
                                         .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.SWITCH, AtmOAuth2Scopes.BALANCE_READ))))
                         .uri(cbsBaseUrl))

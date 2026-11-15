@@ -19,7 +19,7 @@ public class SecurityConfiguration {
         return http.csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchange -> exchange.pathMatchers("/error", "/actuator/health/**",
                                 "/actuator/info",  "/cbs/docs", "/cbs/docs/**").permitAll()
-                        .pathMatchers(HttpMethod.GET, AtmEndpoints.BASE + "/accounts/*/balance"
+                        .pathMatchers(HttpMethod.GET, AtmEndpoints.BASE + "/accounts/*/cards/*/balance"
                         ).hasAuthority(AtmOAuth2Scopes.BALANCE_READ)
                         .pathMatchers(HttpMethod.GET, AtmEndpoints.BASE + "/accounts/*"
                         ).hasAuthority(AtmOAuth2Scopes.ACCOUNT_INFO_READ)
