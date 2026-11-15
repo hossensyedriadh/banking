@@ -19,7 +19,7 @@ public class SecurityConfiguration {
         return http.csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchange -> exchange.pathMatchers("/error", "/actuator/health/**",
                                 "/actuator/info",  "/cbs/docs", "/cbs/docs/**").permitAll()
-                        .pathMatchers(HttpMethod.GET, AtmEndpoints.BASE + "/accounts/*/balance"
+                        .pathMatchers(HttpMethod.GET, AtmEndpoints.BASE + "/accounts/*/cards/*/balance"
                         ).hasAuthority(AtmOAuth2Scopes.BALANCE_READ)
                         .pathMatchers(HttpMethod.GET, AtmEndpoints.BASE + "/accounts/*"
                         ).hasAuthority(AtmOAuth2Scopes.ACCOUNT_INFO_READ)
@@ -47,6 +47,8 @@ public class SecurityConfiguration {
                         ).hasAuthority(InternetBankingOAuth2Scopes.ACCOUNT_INFO_LIST)
                         .pathMatchers(HttpMethod.GET, InternetBankingEndpoints.BASE + "/accounts/*"
                         ).hasAuthority(InternetBankingOAuth2Scopes.ACCOUNT_INFO_READ)
+                        .pathMatchers(HttpMethod.GET, InternetBankingEndpoints.BASE + "/branches/*"
+                        ).hasAuthority(InternetBankingOAuth2Scopes.BRANCH_INFO_READ)
                         .pathMatchers(HttpMethod.GET, InternetBankingEndpoints.BASE + "/account-products/*"
                         ).hasAuthority(InternetBankingOAuth2Scopes.ACCOUNT_PRODUCT_INFO_READ)
                         .pathMatchers(HttpMethod.GET, InternetBankingEndpoints.BASE + "/currencies/*"

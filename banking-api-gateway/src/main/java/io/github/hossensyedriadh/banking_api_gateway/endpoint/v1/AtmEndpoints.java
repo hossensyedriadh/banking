@@ -6,8 +6,8 @@ public final class AtmEndpoints {
 
     public static final String BASE = "/api/v1/atm";
 
-    public static final String ACCOUNT_BALANCE = BASE + "/accounts/{id}/balance";
-    public static final String ACCOUNT_BALANCE_REWRITE = BASE + "/accounts/(?<id>[^/]+)/balance";
+    public static final String ACCOUNT_BALANCE = BASE + "/accounts/{accountId}/cards/{cardId}/balance";
+    public static final String ACCOUNT_BALANCE_REWRITE = BASE + "/accounts/(?<accountId>[^/]+)/cards/(?<cardId>[^/]+)/balance";
 
     public static final String ACCOUNT_INFO = BASE + "/accounts/{id}";
     public static final String ACCOUNT_INFO_REWRITE = BASE + "/accounts/(?<id>[^/]+)";

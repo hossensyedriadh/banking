@@ -7,6 +7,7 @@ public final class CbsOAuth2Scopes {
     public static final String BALANCE_READ = "cbs.balance.read";
     public static final String ACCOUNT_LIST = "cbs.account.list";
     public static final String ACCOUNT_READ = "cbs.account.read";
+    public static final String BRANCH_READ = "cbs.branch.read";
     public static final String CARD_READ = "cbs.card.read";
     public static final String CARD_PIN_VERIFY = "cbs.card-pin.verify";
     public static final String CURRENCY_READ = "cbs.currency.read";
