@@ -4,10 +4,7 @@ import io.github.hossensyedriadh.internet_banking.customer.model.PrincipalIdenti
 import io.github.hossensyedriadh.internet_banking.customer.service.CustomerIdentityService;
 import io.github.hossensyedriadh.internet_banking.exception.CoreBankingCommunicationException;
 import io.github.hossensyedriadh.internet_banking.exception.CoreBankingException;
-import io.github.hossensyedriadh.internet_banking.http.cbs.model.CbsAccountBalanceResponse;
-import io.github.hossensyedriadh.internet_banking.http.cbs.model.CbsAccountProductResponse;
-import io.github.hossensyedriadh.internet_banking.http.cbs.model.CbsAccountResponse;
-import io.github.hossensyedriadh.internet_banking.http.cbs.model.CbsCurrencyResponse;
+import io.github.hossensyedriadh.internet_banking.http.cbs.model.*;
 import lombok.extern.log4j.Log4j2;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -159,6 +156,30 @@ public class CoreBankingSolutionService {
         } catch (RestClientException e) {
             log.error("CBS/Gateway returned invalid response for Currency [ID: {}] information fetch", currencyId, e);
             throw new CoreBankingException("Failed to fetch currency information", e);
+        }
+    }
+
+    public CbsBranchResponse fetchBranchInfo(@NonNull Long branchId) {
+        try {
+            String token = this.getAccessToken();
+
+            CbsBranchResponse branchResponse = this.restClient.get().uri(this.coreBankingApiGatewayBaseUrl + INTERNET_BANKING_BASE_URL + "/branches/" + branchId)
+                    .headers(headers -> headers.setBearerAuth(token))
+                    .retrieve()
+                    .body(CbsBranchResponse.class);
+
+            if (branchResponse == null) {
+                log.error("CBS/Gateway returned empty response for Branch [ID: {}] information fetch", branchId);
+                throw new CoreBankingException("Failed to fetch branch information");
+            }
+
+            return branchResponse;
+        } catch (RestClientResponseException e) {
+            log.error("CBS/Gateway returned HTTP {} while trying to fetch Branch [ID: {}] information", e.getStatusCode().value(), branchId, e);
+            throw new CoreBankingCommunicationException("Failed to fetch branch information", HttpStatus.resolve(e.getStatusCode().value()), e);
+        } catch (RestClientException e) {
+            log.error("CBS/Gateway returned invalid response for Branch [ID: {}] information fetch", branchId, e);
+            throw new CoreBankingException("Failed to fetch branch information", e);
         }
     }
 
