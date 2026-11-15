@@ -9,6 +9,7 @@ public final class CbsOAuth2Scopes {
     public static final String BALANCE_READ = "cbs.balance.read";
     public static final String ACCOUNT_LIST = "cbs.account.list";
     public static final String ACCOUNT_READ = "cbs.account.read";
+    public static final String BRANCH_READ = "cbs.branch.read";
     public static final String CARD_READ = "cbs.card.read";
     public static final String CARD_PIN_VERIFY = "cbs.card-pin.verify";
     public static final String CURRENCY_READ = "cbs.currency.read";
@@ -20,7 +21,7 @@ public final class CbsOAuth2Scopes {
     public static final String TRANSACTION_READ = "cbs.transaction.read";
 
     public static Set<String> all() {
-        return Set.of(BALANCE_READ, ACCOUNT_LIST, ACCOUNT_READ, CARD_READ, CARD_PIN_VERIFY, CURRENCY_READ, ACCOUNT_PRODUCT_READ,
+        return Set.of(BALANCE_READ, ACCOUNT_LIST, ACCOUNT_READ, BRANCH_READ, CARD_READ, CARD_PIN_VERIFY, CURRENCY_READ, ACCOUNT_PRODUCT_READ,
                 WITHDRAW_CREATE, REVERSAL_CREATE, TRANSFER_CREATE, TRANSACTIONS_SEARCH_READ, TRANSACTION_READ);
     }
 }
