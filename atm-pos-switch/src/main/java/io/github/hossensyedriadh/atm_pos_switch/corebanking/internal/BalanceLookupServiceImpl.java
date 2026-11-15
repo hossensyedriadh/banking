@@ -27,9 +27,9 @@ class BalanceLookupServiceImpl implements BalanceLookupService {
     }
 
     @Override
-    public CoreBankingAccountBalanceResponse lookupBalance(Long accountId) {
+    public CoreBankingAccountBalanceResponse lookupBalance(Long accountId, Long cardId) {
         try {
-            CoreBankingAccountBalanceResponse response = this.restClient.get().uri(this.coreBankingAtmGatewayBaseUrl + "/accounts/" + accountId + "/balance")
+            CoreBankingAccountBalanceResponse response = this.restClient.get().uri(this.coreBankingAtmGatewayBaseUrl + "/accounts/" + accountId + "/cards/" + cardId + "/balance")
                     .retrieve().body(CoreBankingAccountBalanceResponse.class);
 
             if (response == null) {

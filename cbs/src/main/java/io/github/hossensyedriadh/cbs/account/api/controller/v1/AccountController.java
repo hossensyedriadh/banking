@@ -189,6 +189,48 @@ public class AccountController {
     }
 
     @Operation(
+            summary = "Get account balance",
+            description = "Get the current balance of an account by account ID and card ID",
+            parameters = {
+                    @Parameter(
+                            name = "accountId",
+                            description = "Account ID",
+                            required = true,
+                            examples = {
+                                    @ExampleObject(value = "1", summary = "Account ID example")
+                            }
+                    ),
+                    @Parameter(
+                            name = "cardId",
+                            description = "Card ID",
+                            required = true,
+                            examples = {
+                                    @ExampleObject(value = "2", summary = "Card ID example")
+                            }
+                    )
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "OK",
+                            content = @Content(schema = @Schema(implementation = AccountBalanceView.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Account not Found",
+                            content = @Content
+                    )
+            }
+    )
+    @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).BALANCE_READ)")
+    @GetMapping("/balance/{accountId}/card/{cardId}")
+    public ResponseEntity<AccountBalanceView> getBalance(@PathVariable("accountId") Long accountId, @PathVariable("cardId") Long cardId) {
+        AccountBalanceView accountBalanceView = this.accountBalanceService.getBalance(accountId, cardId);
+
+        return ResponseEntity.ok(accountBalanceView);
+    }
+
+    @Operation(
             summary = "Create account",
             description = "Create a new customer account",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(

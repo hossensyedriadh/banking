@@ -15,6 +15,7 @@ import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
@@ -63,6 +64,7 @@ public class BranchController {
                     }),
                     @ApiResponse(responseCode = "404", description = "Not Found")
             })
+    @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).BRANCH_READ)")
     @GetMapping("/{id}")
     public ResponseEntity<BranchView> getBranch(@PathVariable Long id) {
         Optional<BranchView> branch = this.branchService.getBranch(id);

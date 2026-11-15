@@ -21,6 +21,9 @@ public final class InternetBankingEndpoints {
     public static final String CURRENCY_INFO = BASE + "/currencies/{id}";
     public static final String CURRENCY_INFO_REWRITE = BASE + "/currencies/(?<id>[^/]+)";
 
+    public static final String BRANCH_INFO = BASE + "/branches/{id}";
+    public static final String BRANCH_INFO_REWRITE = BASE + "/branches/(?<id>[^/]+)";
+
     public static final String CARD_INFO_BY_ID = BASE + "/cards/{id}";
     public static final String CARD_INFO_BY_ID_REWRITE = BASE + "/cards/(?<id>[^/]+)";
 

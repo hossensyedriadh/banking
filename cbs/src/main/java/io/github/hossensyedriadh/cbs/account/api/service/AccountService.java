@@ -21,6 +21,8 @@ public interface AccountService {
 
     Optional<AccountView> getAccountForUpdate(Long id);
 
+    Optional<AccountView> getActiveAccountByAccountIdAndCustomerId(Long accountId, Long customerId);
+
     AccountView createAccount(@Valid CreateAccountCommand command);
 
     void activateAccount(Long id);

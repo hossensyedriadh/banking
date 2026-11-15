@@ -60,6 +60,13 @@ public class InternetBankingRoutesConfiguration {
                                 .filter(this.delegatedTokenGatewayFilterFactory
                                         .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.INTERNET_BANKING, InternetBankingOAuth2Scopes.CURRENCY_INFO_READ))))
                         .uri(cbsBaseUrl))
+                .route("internet-banking-branch-info", r -> r.path(InternetBankingEndpoints.BRANCH_INFO)
+                        .and().method(HttpMethod.GET).filters(f -> f.rewritePath(
+                                        InternetBankingEndpoints.BRANCH_INFO_REWRITE,
+                                        CbsEndpoints.BRANCH_INFO_REWRITE)
+                                .filter(this.delegatedTokenGatewayFilterFactory
+                                        .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.INTERNET_BANKING, InternetBankingOAuth2Scopes.BRANCH_INFO_READ))))
+                        .uri(cbsBaseUrl))
                 .route("internet-banking-card-info-by-pan", r -> r.path(InternetBankingEndpoints.CARD_INFO_BY_PAN)
                         .and().method(HttpMethod.GET).filters(f -> f.rewritePath(
                                         InternetBankingEndpoints.CARD_INFO_BY_PAN_REWRITE,

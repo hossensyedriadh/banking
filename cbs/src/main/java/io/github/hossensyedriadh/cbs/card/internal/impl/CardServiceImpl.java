@@ -35,7 +35,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.Optional;
@@ -168,10 +167,6 @@ public class CardServiceImpl implements CardService {
         Card issued = this.cardRepository.save(card);
 
         log.info("Card [Network: {}] with id: {} has been issued", cardProduct.getCardNetwork().toString(), issued.getId());
-
-        //fixme: DANGEROUS LOG
-        //todo: remove after testing
-        log.info("Issued Card: {}, Exp: {}", generatedPan, card.getExpiryDate().format(DateTimeFormatter.ISO_DATE));
 
         this.createStatusHistory(issued.getId(), CardStatus.INACTIVE, "Newly issued");
 

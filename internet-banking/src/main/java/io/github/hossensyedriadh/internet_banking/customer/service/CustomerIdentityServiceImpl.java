@@ -38,18 +38,10 @@ class CustomerIdentityServiceImpl implements CustomerIdentityService {
 
         if (customerIdentityOptional.isEmpty()) {
             log.warn("Customer identity not found for IAM subject {}", oidcUser.getSubject());
-            throw new ResourceException("Customer identity not found", HttpStatus.BAD_REQUEST);
+            throw new ResourceException("Customer identity not found", HttpStatus.NOT_FOUND);
         }
 
-        CustomerIdentity identity = customerIdentityOptional.get();
-
-        CustomerIdentityModel customerIdentityModel = new CustomerIdentityModel();
-        customerIdentityModel.setId(identity.getId());
-        customerIdentityModel.setIamSubject(oidcUser.getSubject());
-        customerIdentityModel.setCbsCustomerId(identity.getCbsCustomerId());
-        customerIdentityModel.setStatus(identity.getStatus());
-        customerIdentityModel.setCreatedAt(identity.getCreatedAt());
-        customerIdentityModel.setUpdatedAt(identity.getUpdatedAt());
+        CustomerIdentityModel customerIdentityModel = this.customerIdentityMapper.toModel(customerIdentityOptional.get());
 
         PrincipalIdentityModel model = new PrincipalIdentityModel();
         model.setName(oidcUser.getName());
@@ -60,17 +52,6 @@ class CustomerIdentityServiceImpl implements CustomerIdentityService {
         model.setCustomerIdentity(customerIdentityModel);
 
         return model;
-    }
-
-    @Override
-    public Optional<CustomerIdentityModel> getByIamSubject(String iamSubject) {
-        return this.customerIdentityRepository.findByIamSubject(iamSubject).map(this.customerIdentityMapper::toModel);
-    }
-
-    @Override
-    public Optional<CustomerIdentityModel> getActiveByIamSubject(String iamSubject) {
-        return this.customerIdentityRepository.findByIamSubjectAndStatus(iamSubject, CustomerIdentityStatus.ACTIVE)
-                .map(this.customerIdentityMapper::toModel);
     }
 
     @Override
@@ -95,7 +76,7 @@ class CustomerIdentityServiceImpl implements CustomerIdentityService {
 
             log.info("Customer identity with ID {} has been blocked.", id);
         }, () -> {
-            log.warn("Customer identity with ID {} does not exist.", id);
+            log.warn("Customer identity with ID {} does not exist, failed to block", id);
         });
     }
 
@@ -116,7 +97,7 @@ class CustomerIdentityServiceImpl implements CustomerIdentityService {
 
             log.info("Customer identity with ID {} has been unblocked.", id);
         }, () -> {
-            log.warn("Customer identity with ID {} does not exist.", id);
+            log.warn("Customer identity with ID {} does not exist, failed to unblock.", id);
         });
     }
 
@@ -137,7 +118,7 @@ class CustomerIdentityServiceImpl implements CustomerIdentityService {
 
             log.info("Customer identity with ID {} has been closed.", id);
         }, () -> {
-            log.warn("Customer identity with ID {} does not exist.", id);
+            log.warn("Customer identity with ID {} does not exist, failed to close", id);
         });
     }
 }

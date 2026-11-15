@@ -9,6 +9,9 @@ public final class CbsEndpoints {
     public static final String ACCOUNT_BALANCE = BASE + "/accounts/v1/balance/{id}";
     public static final String ACCOUNT_BALANCE_REWRITE = BASE + "/accounts/v1/balance/${id}";
 
+    public static final String ATM_ACCOUNT_BALANCE = BASE + "/accounts/v1/balance/{accountId}/card/{cardId}";
+    public static final String ATM_ACCOUNT_BALANCE_REWRITE = BASE + "/accounts/v1/balance/${accountId}/card/${cardId}";
+
     public static final String ACCOUNT_LIST = BASE + "/accounts/v1/customer/{customerId}/active";
     public static final String ACCOUNT_LIST_REWRITE = BASE + "/accounts/v1/customer/${customerId}/active";
 
@@ -20,6 +23,9 @@ public final class CbsEndpoints {
 
     public static final String CURRENCY_INFO = BASE + "/currencies/v1/{id}";
     public static final String CURRENCY_INFO_REWRITE = BASE + "/currencies/v1/${id}";
+
+    public static final String BRANCH_INFO = BASE + "/branches/v1/{id}";
+    public static final String BRANCH_INFO_REWRITE = BASE + "/branches/v1/${id}";
 
     public static final String CARD_INFO_BY_PAN = BASE + "/cards/v1/pan/{pan}";
     public static final String CARD_INFO_BY_PAN_REWRITE = BASE + "/cards/v1/pan/${pan}";
