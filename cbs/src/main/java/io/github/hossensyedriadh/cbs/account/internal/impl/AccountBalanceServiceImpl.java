@@ -1,10 +1,12 @@
 package io.github.hossensyedriadh.cbs.account.internal.impl;
 
-import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountHoldStatus;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountBalanceView;
 import io.github.hossensyedriadh.cbs.account.api.service.AccountBalanceService;
-import io.github.hossensyedriadh.cbs.account.api.service.AccountService;
-import io.github.hossensyedriadh.cbs.account.internal.repository.AccountHoldRepository;
+import io.github.hossensyedriadh.cbs.account.api.service.AccountHoldService;
+import io.github.hossensyedriadh.cbs.aspect.annotation.AuthorizeAccountAccess;
+import io.github.hossensyedriadh.cbs.card.api.enumerator.CardStatus;
+import io.github.hossensyedriadh.cbs.card.api.model.CardView;
+import io.github.hossensyedriadh.cbs.card.api.service.CardService;
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
 import io.github.hossensyedriadh.cbs.ledger.api.model.SubLedgerAccountView;
 import io.github.hossensyedriadh.cbs.ledger.api.service.LedgerService;
@@ -20,30 +22,47 @@ import java.math.BigDecimal;
 @Service
 @Transactional(readOnly = true)
 public class AccountBalanceServiceImpl implements AccountBalanceService {
-    private final AccountService accountService;
     private final LedgerService ledgerService;
-    private final AccountHoldRepository accountHoldRepository;
+    private final CardService cardService;
+    private final AccountHoldService accountHoldService;
 
     @Autowired
-    public AccountBalanceServiceImpl(AccountService accountService, LedgerService ledgerService,
-                                     AccountHoldRepository accountHoldRepository) {
-        this.accountService = accountService;
+    public AccountBalanceServiceImpl(LedgerService ledgerService, CardService cardService, AccountHoldService accountHoldService) {
         this.ledgerService = ledgerService;
-        this.accountHoldRepository = accountHoldRepository;
+        this.cardService = cardService;
+        this.accountHoldService = accountHoldService;
     }
 
     @Override
+    @AuthorizeAccountAccess(accountIdParam = "accountId")
     public AccountBalanceView getBalance(Long accountId) {
-        this.accountService.getAccount(accountId).orElseThrow(() -> {
-            log.warn("Account with id {} not found", accountId);
-            return new ApiResourceException("Account not found", HttpStatus.NOT_FOUND);
+        return this.prepareBalanceResponse(accountId);
+    }
+
+    @Override
+    @AuthorizeAccountAccess(accountIdParam = "accountId", cardIdParam = "cardId")
+    public AccountBalanceView getBalance(Long accountId, Long cardId) {
+        CardView card = this.cardService.getCard(cardId).orElseThrow(() -> {
+            log.warn("Card not found with ID: {}", cardId);
+            return new ApiResourceException("Card not found", HttpStatus.NOT_FOUND);
         });
 
-        BigDecimal ledgerBalance = this.ledgerService.getSubLedgerAccountByAccountId(accountId)
-                .map(SubLedgerAccountView::getBalance).orElse(BigDecimal.ZERO);
+        if (card.getStatus() != CardStatus.ACTIVE) {
+            log.warn("Card [ID: {}] is not active", cardId);
+            throw new ApiResourceException("Card is not active", HttpStatus.BAD_REQUEST);
+        }
 
-        BigDecimal heldAmount = this.accountHoldRepository.sumAmountByAccountIdAndStatus(accountId, AccountHoldStatus.ACTIVE);
+        if (!card.getAccountId().equals(accountId)) {
+            log.warn("Card [ID: {}] is not associated with requested account [ID: {}]", cardId, accountId);
+            throw new ApiResourceException("Card is not associated with this account", HttpStatus.FORBIDDEN);
+        }
 
+        return this.prepareBalanceResponse(card.getAccountId());
+    }
+
+    private AccountBalanceView prepareBalanceResponse(Long accountId) {
+        BigDecimal ledgerBalance = this.ledgerService.getSubLedgerAccountByAccountId(accountId).map(SubLedgerAccountView::getBalance).orElse(BigDecimal.ZERO);
+        BigDecimal heldAmount = this.accountHoldService.getActiveHoldSum(accountId);
         BigDecimal availableBalance = ledgerBalance.subtract(heldAmount);
 
         return new AccountBalanceView(accountId, ledgerBalance, heldAmount, availableBalance);

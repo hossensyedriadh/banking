@@ -6,10 +6,8 @@ import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountHoldStatus;
 import io.github.hossensyedriadh.cbs.account.api.enumerator.AccountStatus;
 import io.github.hossensyedriadh.cbs.account.api.event.AccountHoldCreatedEvent;
 import io.github.hossensyedriadh.cbs.account.api.event.AccountHoldReleasedEvent;
-import io.github.hossensyedriadh.cbs.account.api.model.AccountBalanceView;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountHoldView;
 import io.github.hossensyedriadh.cbs.account.api.model.AccountView;
-import io.github.hossensyedriadh.cbs.account.api.service.AccountBalanceService;
 import io.github.hossensyedriadh.cbs.account.api.service.AccountHoldService;
 import io.github.hossensyedriadh.cbs.account.api.service.AccountService;
 import io.github.hossensyedriadh.cbs.account.internal.domain.AccountHold;
@@ -18,6 +16,8 @@ import io.github.hossensyedriadh.cbs.account.internal.mapper.AccountHoldMapper;
 import io.github.hossensyedriadh.cbs.account.internal.repository.AccountHoldRepository;
 import io.github.hossensyedriadh.cbs.account.internal.repository.AccountHoldStatusHistoryRepository;
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
+import io.github.hossensyedriadh.cbs.ledger.api.model.SubLedgerAccountView;
+import io.github.hossensyedriadh.cbs.ledger.api.service.LedgerService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.log4j.Log4j2;
@@ -28,6 +28,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -43,7 +44,7 @@ public class AccountHoldServiceImpl implements AccountHoldService {
     private final AccountHoldRepository accountHoldRepository;
     private final AccountHoldStatusHistoryRepository accountHoldStatusHistoryRepository;
     private final AccountService accountService;
-    private final AccountBalanceService accountBalanceService;
+    private final LedgerService ledgerService;
     private final AccountHoldMapper accountHoldMapper;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final HttpServletRequest httpServletRequest;
@@ -53,12 +54,12 @@ public class AccountHoldServiceImpl implements AccountHoldService {
 
     @Autowired
     public AccountHoldServiceImpl(AccountHoldRepository accountHoldRepository, AccountHoldStatusHistoryRepository accountHoldStatusHistoryRepository,
-                                  AccountService accountService, AccountBalanceService accountBalanceService, AccountHoldMapper accountHoldMapper,
+                                  AccountService accountService, LedgerService ledgerService, AccountHoldMapper accountHoldMapper,
                                   ApplicationEventPublisher applicationEventPublisher, HttpServletRequest httpServletRequest) {
         this.accountHoldRepository = accountHoldRepository;
         this.accountHoldStatusHistoryRepository = accountHoldStatusHistoryRepository;
         this.accountService = accountService;
-        this.accountBalanceService = accountBalanceService;
+        this.ledgerService = ledgerService;
         this.accountHoldMapper = accountHoldMapper;
         this.applicationEventPublisher = applicationEventPublisher;
         this.httpServletRequest = httpServletRequest;
@@ -90,9 +91,11 @@ public class AccountHoldServiceImpl implements AccountHoldService {
             throw new ApiResourceException("Account is not active", HttpStatus.BAD_REQUEST, this.httpServletRequest);
         }
 
-        AccountBalanceView balance = this.accountBalanceService.getBalance(account.getId());
+        BigDecimal ledgerBalance = this.ledgerService.getSubLedgerAccountByAccountId(account.getId()).map(SubLedgerAccountView::getBalance).orElse(BigDecimal.ZERO);
+        BigDecimal heldAmount = this.getActiveHoldSum(account.getId());
+        BigDecimal balance = ledgerBalance.subtract(heldAmount);
 
-        if (command.getAmount().compareTo(balance.getAvailableBalance()) > 0) {
+        if (command.getAmount().compareTo(balance) > 0) {
             log.warn("Insufficient funds to create account hold for account ID: {}", command.getAccountId());
             throw new ApiResourceException("Insufficient funds", HttpStatus.BAD_REQUEST, this.httpServletRequest);
         }
@@ -152,6 +155,11 @@ public class AccountHoldServiceImpl implements AccountHoldService {
         this.accountHoldStatusHistoryRepository.saveAll(expired);
 
         log.info("Expired {} account balance holds expiring before: {}", accountHolds.size(), expirationBoundary.format(DateTimeFormatter.ISO_DATE_TIME));
+    }
+
+    @Override
+    public BigDecimal getActiveHoldSum(Long accountId) {
+        return this.accountHoldRepository.sumAmountByAccountIdAndStatus(accountId, AccountHoldStatus.ACTIVE);
     }
 
     private void addStatusHistory(AccountHold hold, AccountHoldStatus status, String reason, OffsetDateTime createdAt) {

@@ -20,6 +20,9 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     Optional<Account> findByAccountNumber(String accountNumber);
 
+    @Query(value = "select * from account.accounts a inner join account.account_holders ah on a.id = ah.account_id where ah.customer_id = :customer_id and a.id = :account_id and a.status = 'ACTIVE'", nativeQuery = true)
+    Optional<Account> findActiveAccountByIdAndCustomerId(@Param("account_id") Long accountId, @Param("customer_id") Long customerId);
+
     @Query(value = "select * from account.accounts a inner join account.account_holders h on a.id = h.account_id where h.customer_id = :customer_id", nativeQuery = true)
     List<Account> findAllByCustomerId(@Param("customer_id") Long customerId);
 

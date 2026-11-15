@@ -112,6 +112,11 @@ public class AccountServiceImpl implements AccountService {
         return this.accountRepository.findByIdForUpdate(id).map(this.accountMapper::toView);
     }
 
+    @Override
+    public Optional<AccountView> getActiveAccountByAccountIdAndCustomerId(Long accountId, Long customerId) {
+        return this.accountRepository.findActiveAccountByIdAndCustomerId(accountId, customerId).map(this.accountMapper::toView);
+    }
+
     @Transactional
     @Override
     public AccountView createAccount(@Valid CreateAccountCommand command) {
