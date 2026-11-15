@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface AccountService {
     List<AccountOverviewModel> overview();
+
+    AccountOverviewModel viewAccount(Long id);
 }
