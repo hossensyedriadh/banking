@@ -24,6 +24,9 @@ public final class CbsEndpoints {
     public static final String CURRENCY_INFO = BASE + "/currencies/v1/{id}";
     public static final String CURRENCY_INFO_REWRITE = BASE + "/currencies/v1/${id}";
 
+    public static final String BRANCH_INFO = BASE + "/branches/v1/{id}";
+    public static final String BRANCH_INFO_REWRITE = BASE + "/branches/v1/${id}";
+
     public static final String CARD_INFO_BY_PAN = BASE + "/cards/v1/pan/{pan}";
     public static final String CARD_INFO_BY_PAN_REWRITE = BASE + "/cards/v1/pan/${pan}";
 

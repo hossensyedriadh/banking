@@ -47,6 +47,8 @@ public class SecurityConfiguration {
                         ).hasAuthority(InternetBankingOAuth2Scopes.ACCOUNT_INFO_LIST)
                         .pathMatchers(HttpMethod.GET, InternetBankingEndpoints.BASE + "/accounts/*"
                         ).hasAuthority(InternetBankingOAuth2Scopes.ACCOUNT_INFO_READ)
+                        .pathMatchers(HttpMethod.GET, InternetBankingEndpoints.BASE + "/branches/*"
+                        ).hasAuthority(InternetBankingOAuth2Scopes.BRANCH_INFO_READ)
                         .pathMatchers(HttpMethod.GET, InternetBankingEndpoints.BASE + "/account-products/*"
                         ).hasAuthority(InternetBankingOAuth2Scopes.ACCOUNT_PRODUCT_INFO_READ)
                         .pathMatchers(HttpMethod.GET, InternetBankingEndpoints.BASE + "/currencies/*"

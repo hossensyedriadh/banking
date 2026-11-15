@@ -24,17 +24,18 @@ public final class TokenExchangeScopeMappings {
             AtmOAuth2Scopes.TRANSACTION_READ, CbsOAuth2Scopes.TRANSACTION_READ
     );
 
-    public static final Map<String, String> INTERNET_BANKING_TO_CBS = Map.of(
-            InternetBankingOAuth2Scopes.BALANCE_READ, CbsOAuth2Scopes.BALANCE_READ,
-            InternetBankingOAuth2Scopes.ACCOUNT_INFO_LIST, CbsOAuth2Scopes.ACCOUNT_LIST,
-            InternetBankingOAuth2Scopes.ACCOUNT_INFO_READ, CbsOAuth2Scopes.ACCOUNT_READ,
-            InternetBankingOAuth2Scopes.CARD_INFO_READ, CbsOAuth2Scopes.CARD_READ,
-            InternetBankingOAuth2Scopes.CURRENCY_INFO_READ, CbsOAuth2Scopes.CURRENCY_READ,
-            InternetBankingOAuth2Scopes.ACCOUNT_PRODUCT_INFO_READ, CbsOAuth2Scopes.ACCOUNT_PRODUCT_READ,
-            InternetBankingOAuth2Scopes.TRANSFER_CREATE, CbsOAuth2Scopes.TRANSFER_CREATE,
-            InternetBankingOAuth2Scopes.REVERSAL_CREATE, CbsOAuth2Scopes.REVERSAL_CREATE,
-            InternetBankingOAuth2Scopes.TRANSACTIONS_SEARCH_READ, CbsOAuth2Scopes.TRANSACTIONS_SEARCH_READ,
-            InternetBankingOAuth2Scopes.TRANSACTION_READ, CbsOAuth2Scopes.TRANSACTION_READ
+    public static final Map<String, String> INTERNET_BANKING_TO_CBS = Map.ofEntries(
+            Map.entry(InternetBankingOAuth2Scopes.BALANCE_READ, CbsOAuth2Scopes.BALANCE_READ),
+            Map.entry(InternetBankingOAuth2Scopes.ACCOUNT_INFO_LIST, CbsOAuth2Scopes.ACCOUNT_LIST),
+            Map.entry(InternetBankingOAuth2Scopes.ACCOUNT_INFO_READ, CbsOAuth2Scopes.ACCOUNT_READ),
+            Map.entry(InternetBankingOAuth2Scopes.BRANCH_INFO_READ, CbsOAuth2Scopes.BRANCH_READ),
+            Map.entry(InternetBankingOAuth2Scopes.CARD_INFO_READ, CbsOAuth2Scopes.CARD_READ),
+            Map.entry(InternetBankingOAuth2Scopes.CURRENCY_INFO_READ, CbsOAuth2Scopes.CURRENCY_READ),
+            Map.entry(InternetBankingOAuth2Scopes.ACCOUNT_PRODUCT_INFO_READ, CbsOAuth2Scopes.ACCOUNT_PRODUCT_READ),
+            Map.entry(InternetBankingOAuth2Scopes.TRANSFER_CREATE, CbsOAuth2Scopes.TRANSFER_CREATE),
+            Map.entry(InternetBankingOAuth2Scopes.REVERSAL_CREATE, CbsOAuth2Scopes.REVERSAL_CREATE),
+            Map.entry(InternetBankingOAuth2Scopes.TRANSACTIONS_SEARCH_READ, CbsOAuth2Scopes.TRANSACTIONS_SEARCH_READ),
+            Map.entry(InternetBankingOAuth2Scopes.TRANSACTION_READ, CbsOAuth2Scopes.TRANSACTION_READ)
     );
 
     public static Map<String, String> forChannel(ChannelType channel) {

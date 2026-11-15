@@ -1,8 +1,11 @@
 package io.github.hossensyedriadh.banking_api_gateway.security.token;
 
 import io.github.hossensyedriadh.banking_api_gateway.configuration.properties.IamProperties;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -16,6 +19,8 @@ import java.util.TreeSet;
 
 @Component
 public class TokenExchangeClient {
+    private static final Logger logger = LogManager.getLogger(TokenExchangeClient.class);
+
     private static final String TOKEN_EXCHANGE_GRANT = "urn:ietf:params:oauth:grant-type:token-exchange";
     private static final String ACCESS_TOKEN_TYPE = "urn:ietf:params:oauth:token-type:access_token";
 
@@ -47,6 +52,13 @@ public class TokenExchangeClient {
                 .headers(headers -> headers.setBasicAuth(iamProperties.clientId(), iamProperties.clientSecret()))
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(BodyInserters.fromFormData(form))
-                .retrieve().bodyToMono(OAuth2TokenResponse.class);
+                .retrieve().onStatus(HttpStatusCode::isError, response ->
+                        response.bodyToMono(String.class)
+                                .defaultIfEmpty("")
+                                .flatMap(errorBody -> {
+                                    logger.error("IAM token exchange failed: status={}, body={}", response.statusCode(), errorBody);
+                                    return Mono.error(new IllegalStateException("IAM token exchange failed"));
+                                })
+                ).bodyToMono(OAuth2TokenResponse.class);
     }
 }
