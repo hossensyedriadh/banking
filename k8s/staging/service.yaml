@@ -6,7 +6,7 @@ metadata:
 spec:
   type: NodePort
   selector:
-    app: atm
+    app: atm-terminal
   ports:
     - name: atm-tcp
       protocol: TCP
