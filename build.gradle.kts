@@ -29,18 +29,16 @@ repositories {
 }
 
 configurations.configureEach {
-	exclude(group = "org.springframework.boot", module = "spring-boot-starter-logging")
+    exclude(group = "org.springframework.boot", module = "spring-boot-starter-logging")
 }
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-actuator")
-	implementation("org.springframework.boot:spring-boot-starter-log4j2")
+    implementation("org.springframework.boot:spring-boot-starter-log4j2")
     compileOnly("org.projectlombok:lombok")
     implementation("org.jpos:jpos:3.0.2")
     implementation("io.github.hossensyedriadh:crypto-commons:1.0.0-SNAPSHOT")
     annotationProcessor("org.projectlombok:lombok")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
-    testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
     testCompileOnly("org.projectlombok:lombok")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testAnnotationProcessor("org.projectlombok:lombok")

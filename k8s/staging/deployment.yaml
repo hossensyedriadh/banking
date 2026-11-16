@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: atm-terminal
+  namespace: banking-channel-apps-staging
+  labels:
+    app: atm-terminal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: atm-terminal
+  template:
+    metadata:
+      labels:
+        app: atm-terminal
+      name: atm-terminal
+    spec:
+      imagePullSecrets:
+        - name: nexus-oss-docker
+      containers:
+        - name: atm-terminal
+          image: __IMAGE__
+          imagePullPolicy: Always
+          ports:
+            - name: atm-terminal-tcp
+              containerPort: 2323
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: atm-terminal
+            - secretRef:
+                name: atm-terminal
+          volumeMounts:
+            - mountPath: /log/atm-terminal
+              name: app-logs
+            - mountPath: /heapdumps
+              name: heapdump
+          env:
+            - name: LOG_PATH
+              value: /log/atm-terminal
+          resources:
+            requests:
+              cpu: 150m
+              memory: 1Gi
+            limits:
+              cpu: 1
+              memory: 2Gi
+          readinessProbe:
+            tcpSocket:
+              port: atm-terminal-tcp
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: atm-terminal-tcp
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: app-logs
+          hostPath:
+            path: /var/log/banking/atm-terminal/logs
+            type: DirectoryOrCreate
+        - name: heapdump
+          hostPath:
+            path: /var/log/banking/atm-terminal/heapdumps
+            type: DirectoryOrCreate
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      hostAliases:
+        - ip: "192.168.59.10"
+          hostnames:
+            - "nexus.cerberus.internal"
+      restartPolicy: Always

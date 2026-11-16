@@ -17,7 +17,7 @@ atm:
   terminal-id: "${ATM_TERMINAL_ID}"
   timezone: "${ATM_TIMEZONE_IANA}"
   tcp-server:
-    port: "${ATM_TCP_SERVER_PORT}"
+    port: "${ATM_TCP_SERVER_PORT:2323}"
   switch-config:
     host: "${ATM_SWITCH_TCP_HOST}"
     port: "${ATM_SWITCH_TCP_PORT}"
