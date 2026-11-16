@@ -204,7 +204,7 @@ public class AtmTerminalServer implements SmartLifecycle {
 
     private void writeLine(PrintWriter output, String text) {
         output.print(text);
-        output.print(LineSeparator.CRNL);
+        output.print(LineSeparator.CRNL.value());
         output.flush();
     }
 }

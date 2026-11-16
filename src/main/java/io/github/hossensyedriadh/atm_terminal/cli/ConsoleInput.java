@@ -114,7 +114,7 @@ public final class ConsoleInput implements AutoCloseable {
     }
 
     private void newLine() {
-        this.writer.print(LineSeparator.CRNL);
+        this.writer.print(LineSeparator.CRNL.value());
         this.writer.flush();
     }
 }

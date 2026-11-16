@@ -9,6 +9,7 @@ import io.github.hossensyedriadh.atm_terminal.service.AtmSessionTerminationServi
 import io.github.hossensyedriadh.atm_terminal.service.BalanceInquiryService;
 import io.github.hossensyedriadh.atm_terminal.service.WithdrawalService;
 import lombok.extern.log4j.Log4j2;
+import org.jdom2.output.LineSeparator;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
@@ -47,8 +48,8 @@ public class AtmTerminalCli {
 
     private boolean runCardSession(ConsoleInput input) throws IOException {
         PrintWriter output = input.writer();
-        output.println("Welcome to ATM Terminal");
-        output.println();
+        this.writeLine(output, "Welcome to ATM Terminal");
+        this.writeLine(output, "");
 
         String pan = input.readPan();
         String pin = input.readPin();
@@ -58,19 +59,19 @@ public class AtmTerminalCli {
 
             switch (result.status()) {
                 case SUCCESS -> this.displayMenu(input, pan, result.sessionToken());
-                case INVALID_PIN -> output.println("Incorrect PIN");
-                case PIN_BLOCKED -> output.println("PIN blocked");
-                case SYSTEM_ERROR -> output.println("Unable to authenticate card");
+                case INVALID_PIN -> this.writeLine(output, "Incorrect PIN");
+                case PIN_BLOCKED -> this.writeLine(output, "PIN blocked");
+                case SYSTEM_ERROR -> this.writeLine(output, "Unable to authenticate card");
             }
 
         } catch (EOFException e) {
             throw e;
         } catch (Exception e) {
-            output.println("Unable to connect to ATM Switch");
+            this.writeLine(output, "Unable to connect to ATM Switch");
             log.error("ATM authentication failed", e);
         }
 
-        output.println();
+        this.writeLine(output, "");
         input.readLine("Press Enter to continue...");
 
         return true;
@@ -81,12 +82,12 @@ public class AtmTerminalCli {
 
         try {
             while (true) {
-                output.println();
-                output.println("=== ATM Menu ===");
-                output.println("1. Balance Inquiry");
-                output.println("2. Withdraw");
-                output.println("3. Exit");
-                output.println();
+                this.writeLine(output, "");
+                this.writeLine(output, "=== ATM Menu ===");
+                this.writeLine(output, "1. Balance Inquiry");
+                this.writeLine(output, "2. Withdraw");
+                this.writeLine(output, "3. Exit");
+                this.writeLine(output, "");
 
                 String selection = input.readLine("Select: ");
 
@@ -96,11 +97,11 @@ public class AtmTerminalCli {
                     case "2" -> this.handleWithdrawal(input, pan, sessionToken, output);
 
                     case "3" -> {
-                        output.println("Car session ended");
+                        this.writeLine(output, "Card session ended");
                         return;
                     }
 
-                    default -> output.println("Invalid selection");
+                    default -> this.writeLine(output, "Invalid selection");
                 }
 
                 output.flush();
@@ -116,17 +117,17 @@ public class AtmTerminalCli {
             BalanceInquiryResult result = this.balanceInquiryService.inquire(pan, sessionToken);
 
             if (result.successful()) {
-                output.println();
-                output.println("Balance inquiry successful");
-                output.printf("Available balance: %s %s%n", result.currency(), result.availableBalance());
+                this.writeLine(output, "");
+                this.writeLine(output, "Balance inquiry successful");
+                output.printf("Available balance: %s %s\r\n", result.currency(), result.availableBalance());
             } else {
-                output.println(result.message() != null ? "Balance inquiry failed. Reason: " + result.message() : "Balance inquiry declined");
+                this.writeLine(output, result.message() != null ? "Balance inquiry failed. Reason: " + result.message() : "Balance inquiry declined");
             }
 
-            output.println();
+            this.writeLine(output, "");
         } catch (Exception e) {
             log.error("Balance inquiry failed", e);
-            output.println("Balance inquiry failed");
+            this.writeLine(output, "Balance inquiry failed");
         }
     }
 
@@ -147,21 +148,21 @@ public class AtmTerminalCli {
             WithdrawalResult result = this.withdrawalService.withdraw(pan, amount, sessionToken);
 
             if (result.successful()) {
-                output.println();
-                output.println("Withdrawal successful");
-                output.println("Amount: " + result.currency() + " " + result.amount());
-                output.println(result.message());
+                this.writeLine(output, "");
+                this.writeLine(output, "Withdrawal successful");
+                this.writeLine(output, "Amount: " + result.currency() + " " + result.amount());
+                this.writeLine(output, result.message());
             } else {
-                output.println(result.message() != null ? "Withdrawal failed. Reason: " + result.message() : "Withdrawal declined");
+                this.writeLine(output, result.message() != null ? "Withdrawal failed. Reason: " + result.message() : "Withdrawal declined");
             }
 
-            output.println();
+            this.writeLine(output, "");
         } catch (EOFException e) {
             throw e;
 
         } catch (Exception e) {
             log.error("Withdrawal failed", e);
-            output.println("Unable to confirm the withdrawal. Please check the transaction status.");
+            this.writeLine(output, "Unable to confirm the withdrawal. Please check the transaction status.");
         }
     }
 
@@ -170,15 +171,21 @@ public class AtmTerminalCli {
             boolean terminated = this.atmSessionTerminationService.terminate(pan, sessionToken);
 
             if (terminated) {
-                output.println("ATM session terminated");
+                this.writeLine(output, "ATM session terminated");
             } else {
-                output.println("Could not confirm session termination. The session may expire automatically");
+                this.writeLine(output, "Could not confirm session termination. The session may expire automatically");
             }
         } catch (Exception e) {
             log.error("ATM session termination failed", e);
-            output.println("Unable to confirm ATM session termination.");
+            this.writeLine(output, "Unable to confirm ATM session termination.");
         }
 
+        output.flush();
+    }
+
+    private void writeLine(PrintWriter output, String text) {
+        output.print(text);
+        output.print(LineSeparator.CRNL.value());
         output.flush();
     }
 }
