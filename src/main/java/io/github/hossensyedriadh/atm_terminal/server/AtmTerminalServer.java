@@ -3,6 +3,7 @@ package io.github.hossensyedriadh.atm_terminal.server;
 import io.github.hossensyedriadh.atm_terminal.session.AtmSessionManager;
 import io.github.hossensyedriadh.atm_terminal.session.AtmTerminalSession;
 import lombok.extern.log4j.Log4j2;
+import org.jdom2.output.LineSeparator;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.SmartLifecycle;
@@ -128,15 +129,15 @@ public class AtmTerminalServer implements SmartLifecycle {
 
     private void rejectConnection(Socket socket) {
         try (socket; PrintWriter output = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8)) {
-            output.println();
-            output.println("================================");
-            output.println("       Welcome to Dummy ATM");
-            output.println("================================");
-            output.println();
-            output.println("ATM is currently in use.");
-            output.println("Please try again later.");
-            output.println();
-            output.println("Connection closing...");
+            this.writeLine(output, "");
+            this.writeLine(output, "================================");
+            this.writeLine(output, "       Welcome to Dummy ATM");
+            this.writeLine(output, "================================");
+            this.writeLine(output, "");
+            this.writeLine(output, "ATM is currently in use.");
+            this.writeLine(output, "Please try again later.");
+            this.writeLine(output, "");
+            this.writeLine(output, "Connection closing...");
 
             log.info("Rejected connection because ATM is occupied: {}", socket.getRemoteSocketAddress());
         } catch (IOException e) {
@@ -199,5 +200,11 @@ public class AtmTerminalServer implements SmartLifecycle {
     @Override
     public int getPhase() {
         return Integer.MAX_VALUE;
+    }
+
+    private void writeLine(PrintWriter output, String text) {
+        output.print(text);
+        output.print(LineSeparator.CRNL);
+        output.flush();
     }
 }
