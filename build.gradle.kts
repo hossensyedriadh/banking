@@ -29,11 +29,12 @@ repositories {
 }
 
 configurations.configureEach {
-    exclude(group = "org.springframework.boot", module = "spring-boot-starter-logging")
+	exclude(group = "org.springframework.boot", module = "spring-boot-starter-logging")
 }
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-log4j2")
+    implementation("org.springframework.boot:spring-boot-starter")
+	implementation("org.springframework.boot:spring-boot-starter-log4j2")
     compileOnly("org.projectlombok:lombok")
     implementation("org.jpos:jpos:3.0.2")
     implementation("io.github.hossensyedriadh:crypto-commons:1.0.0-SNAPSHOT")
