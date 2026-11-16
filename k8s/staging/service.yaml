@@ -8,7 +8,7 @@ spec:
   selector:
     app: atm
   ports:
-    - name: atm-terminal-tcp
+    - name: atm-tcp
       protocol: TCP
       port: 2323
       targetPort: 2323
