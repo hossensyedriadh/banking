@@ -31,6 +31,8 @@ management:
   info:
     env:
       enabled: true
+server:
+  forward-headers-strategy: FRAMEWORK
 logging:
   level:
     org.springframework.security.oauth2: info
