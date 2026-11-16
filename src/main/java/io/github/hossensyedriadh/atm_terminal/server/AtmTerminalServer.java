@@ -88,7 +88,7 @@ public class AtmTerminalServer implements SmartLifecycle {
 
                 AtmSessionManager.SessionLease lease = this.atmSessionManager.tryAcquire();
 
-                if (lease == null || this.atmSessionManager.isOccupied()) {
+                if (lease == null) {
                     this.rejectConnection(socket);
                     continue;
                 }
