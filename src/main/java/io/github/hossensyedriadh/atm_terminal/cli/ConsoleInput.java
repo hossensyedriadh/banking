@@ -57,7 +57,7 @@ public final class ConsoleInput implements AutoCloseable {
             int input = this.reader.read();
 
             if (input == -1) {
-                throw new IOException("Client disconnected");
+                throw new EOFException("ATM terminal client disconnected");
             }
 
             char character = (char) input;
