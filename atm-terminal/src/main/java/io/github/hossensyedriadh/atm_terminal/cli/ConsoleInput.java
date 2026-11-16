@@ -1,88 +1,120 @@
 package io.github.hossensyedriadh.atm_terminal.cli;
 
-import org.jline.keymap.KeyMap;
-import org.jline.reader.Binding;
-import org.jline.reader.LineReader;
-import org.jline.reader.LineReaderBuilder;
-import org.jline.reader.Widget;
-import org.jline.terminal.Terminal;
-import org.jline.terminal.TerminalBuilder;
+import org.jdom2.output.LineSeparator;
 
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 public final class ConsoleInput implements AutoCloseable {
-    private final Terminal terminal;
-    private final LineReader reader;
+    private final BufferedReader reader;
+    private final PrintWriter writer;
+    private boolean previousWasCR;
 
-    public ConsoleInput() throws IOException {
-        this.terminal = TerminalBuilder.builder().system(true).build();
-        this.reader = LineReaderBuilder.builder().terminal(terminal).build();
-
-        this.bindDigitOnlyInput();
+    public ConsoleInput(InputStream input, OutputStream output) {
+        this.reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
+        this.writer = new PrintWriter(output, true, StandardCharsets.UTF_8);
     }
 
-    private void bindDigitOnlyInput() {
-        KeyMap<Binding> keyMap = this.reader.getKeyMaps().get(LineReader.MAIN);
-
-        for (char c = 32; c <= 126; c++) {
-            final char character = c;
-
-            Widget widget = () -> {
-                if (character >= '0' && character <= '9' && reader.getBuffer().length() < 19) {
-                    this.reader.getBuffer().write(character);
-                }
-
-                return true;
-            };
-
-            this.reader.getWidgets().put("digit-" + (int) character, widget);
-
-            keyMap.bind(widget, String.valueOf(character));
-        }
+    public String readPan() throws IOException {
+        return this.readDigits("Enter PAN: ", 12, 19, false);
     }
 
-    public String readPan() {
-        return this.readDigits("Enter PAN: ", 12, 19, null);
+    public String readPin() throws IOException {
+        return this.readDigits("Enter PIN: ", 4, 12, true);
     }
 
-    public String readPin() {
-        this.reader.setVariable(LineReader.DISABLE_HISTORY, true);
-
-        try {
-            return this.readDigits("Enter PIN: ", 4, 12, '*');
-        } finally {
-            this.reader.setVariable(LineReader.DISABLE_HISTORY, false);
-        }
+    public String readAmount(String prompt) throws IOException {
+        return this.readDigits(prompt, 3, 12, false);
     }
 
-    public String readLine(String prompt) {
-        return this.reader.readLine(prompt);
+    public String readLine(String prompt) throws IOException {
+        this.writer.print(prompt);
+        this.writer.flush();
+
+        return this.readInput(false);
     }
 
-    public String readAmount(String prompt) {
-        return this.readDigits(prompt, 3, 12, null);
-    }
-
-    private String readDigits(String prompt, int minLength, int maxLength, Character mask) {
+    private String readDigits(String prompt, int minLength, int maxLength, boolean masked) throws IOException {
         while (true) {
-            String value = this.reader.readLine(prompt, mask);
+            this.writer.print(prompt);
+            this.writer.flush();
+
+            String value = this.readInput(masked);
 
             if (value.matches("[0-9]{" + minLength + "," + maxLength + "}")) {
                 return value;
             }
 
-            this.terminal.writer().printf("Enter between %d and %d digits.%n", minLength, maxLength);
-            this.terminal.flush();
+            this.writer.printf("Enter between %d and %d digits.\r\n", minLength, maxLength);
+            this.writer.flush();
+        }
+    }
+
+    private String readInput(boolean masked) throws IOException {
+        StringBuilder value = new StringBuilder();
+
+        while (true) {
+            int input = this.reader.read();
+
+            if (input == -1) {
+                throw new EOFException("ATM terminal client disconnected");
+            }
+
+            char character = (char) input;
+
+            if (character == '\r') {
+                this.previousWasCR = true;
+                this.newLine();
+                this.writer.flush();
+                return value.toString();
+            }
+
+            if (character == '\n') {
+                if (this.previousWasCR) {
+                    this.previousWasCR = false;
+                    continue;
+                }
+
+                this.newLine();
+                this.writer.flush();
+                return value.toString();
+            }
+
+            this.previousWasCR = false;
+
+            if (character == '\b' || character == 127) {
+                if (!value.isEmpty()) {
+                    value.deleteCharAt(value.length() - 1);
+                    this.writer.print("\b \b");
+                    this.writer.flush();
+                }
+                continue;
+            }
+
+            if (character >= '0' && character <= '9') {
+                value.append(character);
+                this.writer.print(masked ? '*' : character);
+                this.writer.flush();
+            }
         }
     }
 
     public void clearScreen() {
-        this.terminal.puts(org.jline.utils.InfoCmp.Capability.clear_screen);
-        this.terminal.flush();
+        this.writer.print("\033[2J\033[H");
+        this.writer.flush();
+    }
+
+    public PrintWriter writer() {
+        return this.writer;
     }
 
     @Override
-    public void close() throws IOException {
-        this.terminal.close();
+    public void close() {
+        this.writer.flush();
+    }
+
+    private void newLine() {
+        this.writer.print(LineSeparator.CRNL.value());
+        this.writer.flush();
     }
 }

@@ -16,6 +16,10 @@ management:
 atm:
   terminal-id: "${ATM_TERMINAL_ID}"
   timezone: "${ATM_TIMEZONE_IANA}"
+  health-check-server:
+    port: "${ATM_HEALTH_CHECK_SERVER_PORT:8080}"
+  tcp-server:
+    port: "${ATM_TCP_SERVER_PORT:2323}"
   switch-config:
     host: "${ATM_SWITCH_TCP_HOST}"
     port: "${ATM_SWITCH_TCP_PORT}"

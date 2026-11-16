@@ -11,6 +11,16 @@
       "description": "IANA timezone ID for ATM terminal."
     },
     {
+      "name": "atm.tcp-server.port",
+      "type": "java.lang.Integer",
+      "description": "ATM Terminal TCP server port."
+    },
+    {
+      "name": "atm.health-check-server.port",
+      "type": "java.lang.Integer",
+      "description": "ATM Terminal health check server port."
+    },
+    {
       "name": "atm.switch-config.host",
       "type": "java.lang.String",
       "description": "Hostname of the ATM Switch TCP server."
