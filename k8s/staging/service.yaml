@@ -4,7 +4,7 @@ metadata:
   name: banking-iam-server
   namespace: banking-iam-staging
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: banking-iam-server
   ports:
@@ -12,3 +12,4 @@ spec:
       protocol: TCP
       port: 8080
       targetPort: 8080
+      nodePort: 31000
