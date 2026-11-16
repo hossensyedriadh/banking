@@ -26,6 +26,9 @@ spec:
             - name: atm-tcp
               containerPort: 2323
               protocol: TCP
+            - name: health-http
+              containerPort: 8080
+              protocol: TCP
           envFrom:
             - configMapRef:
                 name: atm-terminal
@@ -47,15 +50,17 @@ spec:
               cpu: 1
               memory: 2Gi
           readinessProbe:
-            tcpSocket:
-              port: atm-tcp
+            httpGet:
+              path: /health/readiness
+              port: health-http
             initialDelaySeconds: 10
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 3
           livenessProbe:
-            tcpSocket:
-              port: atm-tcp
+            httpGet:
+              path: /health/liveness
+              port: health-http
             initialDelaySeconds: 15
             periodSeconds: 20
             timeoutSeconds: 5

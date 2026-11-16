@@ -48,7 +48,7 @@ RUN chown -R 1000:1000 /app
 
 USER atm
 
-EXPOSE 2323
+EXPOSE 2323 8080
 
 ENV JAVA_OPTS="-XX:MaxRAMPercentage=75 \
                -XX:InitialRAMPercentage=50 \

@@ -23,6 +23,8 @@ import java.util.concurrent.atomic.AtomicReference;
 public class AtmTerminalServer implements SmartLifecycle {
     private final AtmSessionManager atmSessionManager;
     private final AtmTerminalSession atmTerminalSession;
+    private final HealthCheckServer healthCheckServer;
+
     private final int port;
 
     private final AtomicReference<Socket> activeSocket = new AtomicReference<>();
@@ -33,9 +35,10 @@ public class AtmTerminalServer implements SmartLifecycle {
     private Thread serverThread;
 
     public AtmTerminalServer(AtmSessionManager atmSessionManager, AtmTerminalSession atmTerminalSession,
-                             @Value("${atm.tcp-server.port}") int port) {
+                             HealthCheckServer healthCheckServer, @Value("${atm.tcp-server.port}") int port) {
         this.atmSessionManager = atmSessionManager;
         this.atmTerminalSession = atmTerminalSession;
+        this.healthCheckServer = healthCheckServer;
         this.port = port;
     }
 
@@ -55,6 +58,8 @@ public class AtmTerminalServer implements SmartLifecycle {
 
             this.serverThread = Thread.ofVirtual().name("atm-terminal-server")
                     .start(this::acceptConnections);
+
+            this.healthCheckServer.setReady(true);
 
             log.info("ATM terminal TCP server listening on port {}", this.port);
         } catch (IOException e) {
@@ -174,6 +179,8 @@ public class AtmTerminalServer implements SmartLifecycle {
         if (this.serverThread != null) {
             this.serverThread.interrupt();
         }
+
+        this.healthCheckServer.setReady(false);
 
         log.info("ATM terminal TCP server stopped.");
     }
