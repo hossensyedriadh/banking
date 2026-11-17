@@ -117,7 +117,7 @@ public class TcpServer implements SmartLifecycle {
 
                 this.activeSockets.add(socket);
 
-                log.info("Terminal TCP connection accepted from {}", socket.getRemoteSocketAddress());
+                log.info("Terminal TCP connection accepted from {}", socket.getInetAddress().getHostAddress());
 
                 try {
                     this.connectionExecutor.submit(() -> handleConnection(socket));
@@ -157,7 +157,7 @@ public class TcpServer implements SmartLifecycle {
                     byte[] payload = this.isoFrameReader.read(inputStream);
 
                     if (payload == null) {
-                        log.info("Terminal disconnected: {}", socket.getRemoteSocketAddress());
+                        log.info("Terminal disconnected: {}", socket.getInetAddress().getHostAddress());
                         break;
                     }
 
@@ -184,15 +184,15 @@ public class TcpServer implements SmartLifecycle {
                     long idleMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - lastActivity);
 
                     if (idleMillis >= this.properties.idleTimeout()) {
-                        log.info("Closing idle terminal connection: {}", socket.getRemoteSocketAddress());
+                        log.info("Closing idle terminal connection: {}", socket.getInetAddress().getHostAddress());
                     }
                 }
             }
         } catch (ISOException e) {
-            log.warn("Invalid ISO 8583 message from {}", socket.getRemoteSocketAddress());
+            log.warn("Invalid ISO 8583 message from {}", socket.getInetAddress().getHostAddress());
         } catch (IOException exception) {
             if (this.running) {
-                log.debug("Terminal connection ended: {}", socket.getRemoteSocketAddress());
+                log.debug("Terminal connection ended: {}", socket.getInetAddress().getHostAddress());
             }
         } finally {
             this.activeSockets.remove(socket);
