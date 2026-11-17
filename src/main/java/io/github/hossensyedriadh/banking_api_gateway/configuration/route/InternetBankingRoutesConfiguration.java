@@ -42,7 +42,7 @@ public class InternetBankingRoutesConfiguration {
                 .route("internet-banking-account-info", r -> r.path(InternetBankingEndpoints.ACCOUNT_INFO)
                         .and().method(HttpMethod.GET).filters(f -> f.rewritePath(
                                         InternetBankingEndpoints.ACCOUNT_INFO_REWRITE,
-                                        CbsEndpoints.ACCOUNT_INFO_REWRITE)
+                                        CbsEndpoints.PRINCIPAL_ACCOUNT_INFO_REWRITE)
                                 .filter(this.delegatedTokenGatewayFilterFactory
                                         .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.INTERNET_BANKING, InternetBankingOAuth2Scopes.ACCOUNT_INFO_READ))))
                         .uri(cbsBaseUrl))
