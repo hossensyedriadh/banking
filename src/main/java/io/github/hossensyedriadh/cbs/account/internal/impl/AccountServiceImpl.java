@@ -20,6 +20,7 @@ import io.github.hossensyedriadh.cbs.account.internal.repository.AccountHoldRepo
 import io.github.hossensyedriadh.cbs.account.internal.repository.AccountHolderRepository;
 import io.github.hossensyedriadh.cbs.account.internal.repository.AccountRepository;
 import io.github.hossensyedriadh.cbs.account.internal.repository.AccountRestrictionRepository;
+import io.github.hossensyedriadh.cbs.aspect.annotation.AuthorizeAccountAccess;
 import io.github.hossensyedriadh.cbs.branch.api.service.BranchService;
 import io.github.hossensyedriadh.cbs.customer.api.service.CustomerService;
 import io.github.hossensyedriadh.cbs.exception.ApiResourceException;
@@ -98,6 +99,12 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Optional<AccountView> getAccount(Long id) {
+        return this.accountRepository.findById(id).map(this.accountMapper::toView);
+    }
+
+    @AuthorizeAccountAccess(accountIdParam = "id")
+    @Override
+    public Optional<AccountView> getPrincipalAccount(Long id) {
         return this.accountRepository.findById(id).map(this.accountMapper::toView);
     }
 
