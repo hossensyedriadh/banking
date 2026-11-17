@@ -13,8 +13,9 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -27,7 +28,7 @@ import java.util.List;
 public class CoreBankingSolutionService {
     private final RestClient restClient;
     private final CustomerIdentityService customerIdentityService;
-    private final OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
+    private final OAuth2AuthorizedClientManager authorizedClientManager;
 
     @Value("${core-banking.api-gateway.base-url}")
     private String coreBankingApiGatewayBaseUrl;
@@ -39,10 +40,10 @@ public class CoreBankingSolutionService {
 
     @Autowired
     public CoreBankingSolutionService(RestClient restClient, CustomerIdentityService customerIdentityService,
-                                      OAuth2AuthorizedClientService oAuth2AuthorizedClientService) {
+                                      OAuth2AuthorizedClientManager authorizedClientManager) {
         this.restClient = restClient;
         this.customerIdentityService = customerIdentityService;
-        this.oAuth2AuthorizedClientService = oAuth2AuthorizedClientService;
+        this.authorizedClientManager = authorizedClientManager;
     }
 
     public List<CbsAccountResponse> fetchBankAccounts() {
@@ -191,12 +192,14 @@ public class CoreBankingSolutionService {
             throw new IllegalStateException("No authenticated customer");
         }
 
-        OAuth2AuthorizedClient authorizedClient = this.oAuth2AuthorizedClientService.loadAuthorizedClient(
-                this.iamClientId, authentication.getName());
+        OAuth2AuthorizeRequest authorizeRequest = OAuth2AuthorizeRequest.withClientRegistrationId(this.iamClientId)
+                        .principal(authentication).build();
+
+        OAuth2AuthorizedClient authorizedClient = this.authorizedClientManager.authorize(authorizeRequest);
 
         if (authorizedClient == null) {
-            log.error("Internet Banking OAuth2 Client [ID: {}] not found", this.iamClientId);
-            throw new CoreBankingException("Internet Banking OAuth2 client not found");
+            log.error("Unable to authorize Internet Banking OAuth2 client [ID: {}]", this.iamClientId);
+            throw new CoreBankingException("Unable to authorize Internet Banking OAuth2 client");
         }
 
         return authorizedClient.getAccessToken().getTokenValue();

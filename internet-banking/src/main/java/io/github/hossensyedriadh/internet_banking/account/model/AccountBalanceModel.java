@@ -1,5 +1,6 @@
 package io.github.hossensyedriadh.internet_banking.account.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
 import tools.jackson.databind.PropertyNamingStrategies;
@@ -16,7 +17,9 @@ public class AccountBalanceModel implements Serializable {
     @Serial
     private static final long serialVersionUID = -4782589590615619048L;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private BigDecimal availableBalance;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private BigDecimal ledgerBalance;
 }
