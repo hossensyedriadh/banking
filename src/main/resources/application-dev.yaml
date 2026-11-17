@@ -98,3 +98,6 @@ springdoc:
 core-banking:
   api-gateway:
     base-url: "${CBS_APIGW_BASE_URL}"
+security:
+  oauth2:
+    token-encryption-key: ${OAUTH2_TOKEN_ENCRYPTION_KEY}

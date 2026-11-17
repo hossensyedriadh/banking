@@ -1,5 +1,7 @@
 package io.github.hossensyedriadh.internet_banking.configuration.security;
 
+import io.github.hossensyedriadh.internet_banking.configuration.security.encryption.EncryptedJdbcOAuth2AuthorizedClientService;
+import io.github.hossensyedriadh.internet_banking.configuration.security.encryption.TokenEncryptionService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcOperations;
@@ -9,9 +11,9 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 @Configuration
 public class OAuth2AuthorizedClientConfiguration {
     @Bean
-    public OAuth2AuthorizedClientService oAuth2AuthorizedClientService(JdbcOperations jdbcOperations,
-                                                                       ClientRegistrationRepository clientRegistrationRepository) {
-        return new JdbcOAuth2AuthorizedClientService(jdbcOperations, clientRegistrationRepository);
+    public OAuth2AuthorizedClientService oAuth2AuthorizedClientService(JdbcOperations jdbcOperations, ClientRegistrationRepository clientRegistrationRepository,
+                                                                       TokenEncryptionService tokenEncryptionService) {
+        return new EncryptedJdbcOAuth2AuthorizedClientService(jdbcOperations, clientRegistrationRepository, tokenEncryptionService);
     }
 
     @Bean
