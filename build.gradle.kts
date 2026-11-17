@@ -28,7 +28,9 @@ configurations.configureEach {
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+	implementation("org.springframework.boot:spring-boot-starter-jdbc")
 	implementation("org.springframework.boot:spring-boot-starter-data-redis")
+	implementation("org.springframework.boot:spring-boot-starter-session-jdbc")
 //	implementation("org.springframework.boot:spring-boot-starter-flyway")
 //	implementation("org.springframework.boot:spring-boot-starter-kafka")
 //	implementation("org.springframework.boot:spring-boot-starter-quartz")
@@ -66,6 +68,8 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-security-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-validation-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+	testImplementation("org.springframework.boot:spring-boot-starter-session-jdbc-test")
+	testImplementation("org.springframework.boot:spring-boot-starter-jdbc-test")
 	testCompileOnly("org.projectlombok:lombok")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	testAnnotationProcessor("org.projectlombok:lombok")

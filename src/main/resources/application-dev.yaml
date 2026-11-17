@@ -46,6 +46,10 @@ spring:
           max-wait: "${REDIS_POOL_MAX_WAIT}"
       client-type: lettuce
       client-name: "internet-banking"
+  session:
+    jdbc:
+      initialize-schema: NEVER
+      table-name: core.spring_session
   security:
     oauth2:
       client:
@@ -57,7 +61,7 @@ spring:
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             client-name: "Internet Banking"
-            scope: [openid, profile, email, phone, ibanking.balance.read, ibanking.branch-info.read, ibanking.account-info.list, ibanking.account-info.read, ibanking.card-info.read, ibanking.card-pin.verify, ibanking.currency-info.read, ibanking.account-product-info.read, ibanking.transfer.create, ibanking.reversal.create, ibanking.transactions-search.read, ibanking.transaction.read]
+            scope: [openid, profile, email, phone, offline_access, ibanking.balance.read, ibanking.branch-info.read, ibanking.account-info.list, ibanking.account-info.read, ibanking.card-info.read, ibanking.card-pin.verify, ibanking.currency-info.read, ibanking.account-product-info.read, ibanking.transfer.create, ibanking.reversal.create, ibanking.transactions-search.read, ibanking.transaction.read]
         provider:
           banking-iam-server:
             issuer-uri: "${BANKING_IAM_SERVER_ISSUER_URI}"
@@ -71,6 +75,7 @@ server:
     session:
       cookie:
         name: "IBSESSIONID"
+        http-only: true
   tomcat:
     connection-timeout: 15s
     keep-alive-timeout: 30s
