@@ -8,6 +8,7 @@ spring:
       enabled: true
   main:
     keep-alive: true
+    web-application-type: NONE
   web:
     error:
       whitelabel:
@@ -17,21 +18,3 @@ spring:
       include-stacktrace: never
       include-message: always
       include-path: always
-management:
-  endpoint:
-    health:
-      probes:
-        enabled: true
-        add-additional-paths: true
-  info:
-    env:
-      enabled: true
-info:
-  application:
-    name: "${spring.application.name}"
-    version: "1.0.0-SNAPSHOT"
-    description: "ATM Terminal simulation application"
-  developer:
-    name: "Syed Riadh Hossen"
-    email: "riadhhossen@gmail.com"
-    url: "https://hossensyedriadh.github.io"

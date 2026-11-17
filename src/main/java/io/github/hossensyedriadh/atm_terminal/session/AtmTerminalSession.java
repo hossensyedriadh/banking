@@ -4,7 +4,6 @@ import io.github.hossensyedriadh.atm_terminal.cli.AtmTerminalCli;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.net.Socket;
 
 @Component
@@ -16,7 +15,7 @@ public class AtmTerminalSession {
         this.atmTerminalCli = atmTerminalCli;
     }
 
-    public void run(Socket socket) throws IOException {
-        this.atmTerminalCli.run(socket.getInputStream(), socket.getOutputStream());
+    public void run(Socket socket) {
+        this.atmTerminalCli.run(socket);
     }
 }

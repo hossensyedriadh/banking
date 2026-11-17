@@ -5,6 +5,7 @@ metadata:
   namespace: banking-channel-apps-staging
 spec:
   type: NodePort
+  externalTrafficPolicy: Local
   selector:
     app: atm-terminal
   ports:

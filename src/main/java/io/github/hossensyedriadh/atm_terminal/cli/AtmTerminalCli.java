@@ -1,6 +1,7 @@
 
 package io.github.hossensyedriadh.atm_terminal.cli;
 
+import io.github.hossensyedriadh.atm_terminal.configuration.properties.AtmTerminalSessionProperties;
 import io.github.hossensyedriadh.atm_terminal.model.AuthenticationResult;
 import io.github.hossensyedriadh.atm_terminal.model.BalanceInquiryResult;
 import io.github.hossensyedriadh.atm_terminal.model.WithdrawalResult;
@@ -10,10 +11,14 @@ import io.github.hossensyedriadh.atm_terminal.service.BalanceInquiryService;
 import io.github.hossensyedriadh.atm_terminal.service.WithdrawalService;
 import lombok.extern.log4j.Log4j2;
 import org.jdom2.output.LineSeparator;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.*;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.math.BigDecimal;
+import java.net.Socket;
 
 @Log4j2
 @Component
@@ -22,16 +27,19 @@ public class AtmTerminalCli {
     private final BalanceInquiryService balanceInquiryService;
     private final WithdrawalService withdrawalService;
     private final AtmSessionTerminationService atmSessionTerminationService;
+    private final AtmTerminalSessionProperties sessionProperties;
 
-    public AtmTerminalCli(AtmAuthenticationService atmAuthenticationService, BalanceInquiryService balanceInquiryService, WithdrawalService withdrawalService, AtmSessionTerminationService atmSessionTerminationService) {
+    @Autowired
+    public AtmTerminalCli(AtmAuthenticationService atmAuthenticationService, BalanceInquiryService balanceInquiryService, WithdrawalService withdrawalService, AtmSessionTerminationService atmSessionTerminationService, AtmTerminalSessionProperties sessionProperties) {
         this.atmAuthenticationService = atmAuthenticationService;
         this.balanceInquiryService = balanceInquiryService;
         this.withdrawalService = withdrawalService;
         this.atmSessionTerminationService = atmSessionTerminationService;
+        this.sessionProperties = sessionProperties;
     }
 
-    public void run(InputStream input, OutputStream output) {
-        try (ConsoleInput consoleInput = new ConsoleInput(input, output)) {
+    public void run(Socket socket) {
+        try (ConsoleInput consoleInput = new ConsoleInput(socket, this.sessionProperties)) {
             boolean terminalRunning = true;
 
             while (terminalRunning) {
@@ -39,6 +47,8 @@ public class AtmTerminalCli {
                 terminalRunning = this.runCardSession(consoleInput);
             }
 
+        } catch (ConsoleInput.SessionTimeoutException e) {
+            log.info("ATM terminal session terminated: {}", e.getMessage());
         } catch (EOFException e) {
             log.info("ATM terminal client disconnected");
         } catch (Exception e) {
@@ -157,9 +167,8 @@ public class AtmTerminalCli {
             }
 
             this.writeLine(output, "");
-        } catch (EOFException e) {
+        } catch (ConsoleInput.SessionTimeoutException | EOFException e) {
             throw e;
-
         } catch (Exception e) {
             log.error("Withdrawal failed", e);
             this.writeLine(output, "Unable to confirm the withdrawal. Please check the transaction status.");

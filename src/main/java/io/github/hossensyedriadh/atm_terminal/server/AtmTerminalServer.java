@@ -115,7 +115,7 @@ public class AtmTerminalServer implements SmartLifecycle {
 
     private void handleSession(Socket socket, AtmSessionManager.SessionLease lease) {
         try (lease; socket) {
-            log.info("ATM terminal client connected: {}", socket.getRemoteSocketAddress());
+            log.info("ATM terminal client connected: {}", socket.getInetAddress().getHostAddress());
 
             this.atmTerminalSession.run(socket);
         } catch (Exception e) {
@@ -139,7 +139,7 @@ public class AtmTerminalServer implements SmartLifecycle {
             this.writeLine(output, "");
             this.writeLine(output, "Connection closing...");
 
-            log.info("Rejected connection because ATM is occupied: {}", socket.getRemoteSocketAddress());
+            log.info("Rejected connection because ATM is occupied: {}", socket.getInetAddress().getHostAddress());
         } catch (IOException e) {
             log.debug("Could not send ATM busy message: {}", e.getMessage());
         }
