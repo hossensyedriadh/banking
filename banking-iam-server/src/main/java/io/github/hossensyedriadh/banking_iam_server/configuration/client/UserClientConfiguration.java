@@ -35,8 +35,9 @@ public class UserClientConfiguration {
             @Qualifier("clientPwdEncoder") PasswordEncoder passwordEncoder,
             @Value("${banking.iam.clients.internet-banking.secret}") String clientSecret,
             @Value("${banking.iam.clients.internet-banking.redirect-uri}") String redirectUri,
-            @Value("${banking.iam.clients.internet-banking.post-logout-redirect-uri}") String postLogoutRedirectUri) {
-
+            @Value("${banking.iam.clients.internet-banking.post-logout-redirect-uri}") String postLogoutRedirectUri,
+            @Value("${banking.iam.clients.internet-banking.access-token.ttl}") Duration accessTokenTtl,
+            @Value("${banking.iam.clients.internet-banking.refresh-token.ttl}") Duration refreshTokenTtl) {
         return _ -> {
             RegisteredClient existingClient = this.clientRepository.findByClientId("internet-banking");
 
@@ -55,14 +56,15 @@ public class UserClientConfiguration {
                         scopes.add(OidcScopes.PROFILE);
                         scopes.add(OidcScopes.EMAIL);
                         scopes.add(OidcScopes.PHONE);
+                        scopes.add("offline_access");
                         scopes.addAll(InternetBankingOAuth2Scopes.all());
                     })
                     .clientSecret(passwordEncoder.encode(clientSecret))
                     .clientSettings(ClientSettings.builder().requireProofKey(true)
                             .requireAuthorizationConsent(true)
                             .build())
-                    .tokenSettings(TokenSettings.builder().accessTokenTimeToLive(Duration.ofMinutes(5))
-                            .refreshTokenTimeToLive(Duration.ofDays(3))
+                    .tokenSettings(TokenSettings.builder().accessTokenTimeToLive(accessTokenTtl)
+                            .refreshTokenTimeToLive(refreshTokenTtl)
                             .reuseRefreshTokens(false)
                             .build())
                     .postLogoutRedirectUri(postLogoutRedirectUri)

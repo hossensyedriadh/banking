@@ -18,7 +18,10 @@ import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -54,11 +57,9 @@ public class AccessTokenConfiguration {
                     return;
                 }
 
-                if (AuthorizationGrantType.AUTHORIZATION_CODE.equals(grantType) && INTERNET_BANKING_CLIENT_ID.equals(clientId)) {
-                    context.getClaims().audience(new ArrayList<>(
-                            Arrays.asList(INTERNET_BANKING_CLIENT_ID,
-                                    GATEWAY_AUDIENCE))
-                    );
+                if ((AuthorizationGrantType.AUTHORIZATION_CODE.equals(grantType) || AuthorizationGrantType.REFRESH_TOKEN.equals(grantType))
+                        && INTERNET_BANKING_CLIENT_ID.equals(clientId)) {
+                    context.getClaims().audience(new ArrayList<>(List.of(INTERNET_BANKING_CLIENT_ID, GATEWAY_AUDIENCE)));
                 }
 
                 if (AuthorizationGrantType.TOKEN_EXCHANGE.equals(grantType)) {

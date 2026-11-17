@@ -28,7 +28,8 @@ public class MachineClientConfiguration {
     }
 
     @Bean
-    public ApplicationRunner registerAtmPostSwitchClient(@Qualifier("clientPwdEncoder") PasswordEncoder passwordEncoder, @Value("${banking.iam.clients.atm-pos-switch.secret}") String clientSecret) {
+    public ApplicationRunner registerAtmPostSwitchClient(@Qualifier("clientPwdEncoder") PasswordEncoder passwordEncoder, @Value("${banking.iam.clients.atm-pos-switch.secret}") String clientSecret,
+                                                         @Value("${banking.iam.clients.atm-pos-switch.access-token.ttl}") Duration accessTokenTtl) {
         return _ -> {
             RegisteredClient existingClient = this.clientRepository.findByClientId("atm-pos-switch");
 
@@ -41,7 +42,7 @@ public class MachineClientConfiguration {
                     .scopes(scopes -> scopes.addAll(AtmOAuth2Scopes.all()))
                     .clientSecret(passwordEncoder.encode(clientSecret))
                     .tokenSettings(TokenSettings.builder()
-                            .accessTokenTimeToLive(Duration.ofMinutes(5))
+                            .accessTokenTimeToLive(accessTokenTtl)
                             .build())
                     .build();
 
@@ -50,7 +51,8 @@ public class MachineClientConfiguration {
     }
 
     @Bean
-    public ApplicationRunner registerGatewayClient(@Qualifier("clientPwdEncoder") PasswordEncoder passwordEncoder, @Value("${banking.iam.clients.banking-api-gateway.secret}") String clientSecret) {
+    public ApplicationRunner registerGatewayClient(@Qualifier("clientPwdEncoder") PasswordEncoder passwordEncoder, @Value("${banking.iam.clients.banking-api-gateway.secret}") String clientSecret,
+                                                   @Value("${banking.iam.clients.banking-api-gateway.access-token.ttl}") Duration accessTokenTtl) {
         return _ -> {
             RegisteredClient existingClient = this.clientRepository.findByClientId("banking-api-gateway");
 
@@ -66,7 +68,7 @@ public class MachineClientConfiguration {
                     .scopes(scopes -> scopes.addAll(CbsOAuth2Scopes.all()))
                     .clientSecret(passwordEncoder.encode(clientSecret))
                     .tokenSettings(TokenSettings.builder()
-                            .accessTokenTimeToLive(Duration.ofMinutes(5))
+                            .accessTokenTimeToLive(accessTokenTtl)
                             .build())
                     .build();
 
