@@ -121,6 +121,40 @@ public class AccountController {
     }
 
     @Operation(
+            summary = "Get account by ID",
+            description = "Get an account by account ID for authenticated customer",
+            parameters = {
+                    @Parameter(
+                            name = "id",
+                            description = "Account ID",
+                            required = true,
+                            examples = {
+                                    @ExampleObject(value = "1", summary = "Account ID example")
+                            }
+                    )
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "OK",
+                            content = @Content(schema = @Schema(implementation = AccountView.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Account not found",
+                            content = @Content
+                    )
+            }
+    )
+    @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).ACCOUNT_READ)")
+    @GetMapping("/principal/{id}")
+    public ResponseEntity<AccountView> getPrincipalAccount(@PathVariable("id") Long id) {
+        Optional<AccountView> accountView = this.accountService.getPrincipalAccount(id);
+
+        return accountView.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @Operation(
             summary = "Get account by account number",
             description = "Get an account by account number",
             parameters = {

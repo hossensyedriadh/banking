@@ -17,6 +17,8 @@ public interface AccountService {
 
     Optional<AccountView> getAccount(Long id);
 
+    Optional<AccountView> getPrincipalAccount(Long id);
+
     Optional<AccountView> getAccountByNumber(String accountNumber);
 
     Optional<AccountView> getAccountForUpdate(Long id);
