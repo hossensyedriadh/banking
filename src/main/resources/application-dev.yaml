@@ -51,6 +51,7 @@ server:
     session:
       cookie:
         name: "IAMSESSIONID"
+        http-only: true
   tomcat:
     connection-timeout: 15s
     keep-alive-timeout: 30s
@@ -86,9 +87,17 @@ banking:
     clients:
       atm-pos-switch:
         secret: "${ATM_POS_SWITCH_CLIENT_SECRET}"
+        access-token:
+          ttl: "${ATM_POS_SWITCH_CLIENT_ACCESS_TOKEN_TTL:5m}"
       banking-api-gateway:
         secret: "${BANKING_API_GATEWAY_CLIENT_SECRET}"
+        access-token:
+          ttl: "${BANKING_API_GATEWAY_CLIENT_ACCESS_TOKEN_TTL:5m}"
       internet-banking:
         secret: "${INTERNET_BANKING_CLIENT_SECRET}"
         redirect-uri: "${INTERNET_BANKING_CLIENT_REDIRECT_URI}"
         post-logout-redirect-uri: "${INTERNET_BANKING_CLIENT_POST_LOGOUT_REDIRECT_URI}"
+        access-token:
+          ttl: "${INTERNET_BANKING_CLIENT_ACCESS_TOKEN_TTL:5m}"
+        refresh-token:
+          ttl: "${INTERNET_BANKING_CLIENT_REFRESH_TOKEN_TTL:3d}"
