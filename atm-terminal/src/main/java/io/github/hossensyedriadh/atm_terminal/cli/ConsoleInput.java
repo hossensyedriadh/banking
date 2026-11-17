@@ -1,18 +1,29 @@
 package io.github.hossensyedriadh.atm_terminal.cli;
 
+import io.github.hossensyedriadh.atm_terminal.configuration.properties.AtmTerminalSessionProperties;
 import org.jdom2.output.LineSeparator;
 
 import java.io.*;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 
 public final class ConsoleInput implements AutoCloseable {
     private final BufferedReader reader;
     private final PrintWriter writer;
     private boolean previousWasCR;
+    private final Socket socket;
+    private final AtmTerminalSessionProperties sessionProperties;
+    private final long sessionStartNanos;
 
-    public ConsoleInput(InputStream input, OutputStream output) {
-        this.reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
-        this.writer = new PrintWriter(output, true, StandardCharsets.UTF_8);
+    public ConsoleInput(Socket socket, AtmTerminalSessionProperties sessionProperties) throws IOException {
+        this.socket = socket;
+        this.sessionProperties = sessionProperties;
+        this.sessionStartNanos = System.nanoTime();
+
+        this.reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+        this.writer = new PrintWriter(socket.getOutputStream(), true, StandardCharsets.UTF_8);
     }
 
     public String readPan() throws IOException {
@@ -54,7 +65,16 @@ public final class ConsoleInput implements AutoCloseable {
         StringBuilder value = new StringBuilder();
 
         while (true) {
-            int input = this.reader.read();
+            this.configureReadTimeout();
+
+            int input;
+
+            try {
+                input = this.reader.read();
+            } catch (SocketTimeoutException e) {
+                this.handleTimeout();
+                throw e;
+            }
 
             if (input == -1) {
                 throw new EOFException("ATM terminal client disconnected");
@@ -99,6 +119,44 @@ public final class ConsoleInput implements AutoCloseable {
         }
     }
 
+    private void configureReadTimeout() throws IOException {
+        long elapsed = System.nanoTime() - this.sessionStartNanos;
+        long maxDurationNanos = this.sessionProperties.maxDuration().toNanos();
+
+        long remainingNanos = maxDurationNanos - elapsed;
+
+        if (remainingNanos <= 0) {
+            this.handleTimeout();
+        }
+
+        long idleTimeoutMillis = this.sessionProperties.idleTimeout().toMillis();
+
+        long remainingMillis = Math.max(
+                1,
+                TimeUnit.NANOSECONDS.toMillis(remainingNanos - 1) + 1
+        );
+
+        long timeoutMillis = Math.min(idleTimeoutMillis, remainingMillis);
+
+        int socketTimeoutMillis = Math.clamp(timeoutMillis, 1, Integer.MAX_VALUE);
+
+        this.socket.setSoTimeout(socketTimeoutMillis);
+    }
+
+    private void handleTimeout() throws IOException {
+        long elapsed = System.nanoTime() - this.sessionStartNanos;
+
+        if (elapsed >= this.sessionProperties.maxDuration().toNanos()) {
+            this.writer.print(LineSeparator.CRNL.value() + "Maximum ATM session duration exceeded." + LineSeparator.CRNL.value());
+        } else {
+            this.writer.print(LineSeparator.CRNL.value() + "ATM session terminated due to inactivity." + LineSeparator.CRNL.value());
+        }
+
+        this.writer.flush();
+
+        throw new SessionTimeoutException("ATM session timeout");
+    }
+
     public void clearScreen() {
         this.writer.print("\033[2J\033[H");
         this.writer.flush();
@@ -116,5 +174,14 @@ public final class ConsoleInput implements AutoCloseable {
     private void newLine() {
         this.writer.print(LineSeparator.CRNL.value());
         this.writer.flush();
+    }
+
+    public static class SessionTimeoutException extends IOException {
+        @Serial
+        private static final long serialVersionUID = 3075786328113247549L;
+
+        public SessionTimeoutException(String message) {
+            super(message);
+        }
     }
 }

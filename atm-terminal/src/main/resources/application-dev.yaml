@@ -3,14 +3,6 @@ spring:
     web-application-type: NONE
   lifecycle:
     timeout-per-shutdown-phase: 20s
-management:
-  endpoints:
-    web:
-      exposure:
-        include: "info,health"
-  endpoint:
-    health:
-      show-details: always
 
 #custom properties
 atm:
@@ -28,3 +20,7 @@ atm:
   security:
     pin-block:
       encryption-secret-key: "${ATM_SECURITY_PIN_BLOCK_ENCRYPTION_SECRET_KEY}"
+  terminal:
+    session:
+      idle-timeout: "${ATM_TERMINAL_SESSION_IDLE_TIMEOUT:2m}"
+      max-duration: "${ATM_TERMINAL_SESSION_MAX_DURATION:5m}"
