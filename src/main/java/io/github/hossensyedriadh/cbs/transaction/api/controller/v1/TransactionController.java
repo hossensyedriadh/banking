@@ -192,6 +192,7 @@ public class TransactionController {
             responses = {
                     @ApiResponse(responseCode = "201", description = "Created", content = @Content(schema = @Schema(implementation = TransactionView.class)))
             })
+    @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).TRANSFER_CREATE)")
     @PostMapping(value = "/transfers", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<TransactionView> transfer(@RequestBody CreateTransferCommand command) {
         TransactionView transfer = this.transactionService.transfer(command);

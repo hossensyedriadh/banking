@@ -14,6 +14,7 @@ public final class OAuth2Scopes {
     public static final String ACCOUNT_PRODUCT_READ = "SCOPE_cbs.account-product.read";
     public static final String WITHDRAW_CREATE = "SCOPE_cbs.withdraw.create";
     public static final String REVERSAL_CREATE = "SCOPE_cbs.reversal.create";
+    public static final String TRANSFER_CREATE = "SCOPE_cbs.transfer.create";
     public static final String TRANSACTIONS_SEARCH_READ = "SCOPE_cbs.transactions-search.read";
     public static final String TRANSACTION_READ = "SCOPE_cbs.transaction.read";
 }
