@@ -96,6 +96,13 @@ public class AtmSwitchRoutesConfiguration {
                                 .filter(this.delegatedTokenGatewayFilterFactory
                                         .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.SWITCH, AtmOAuth2Scopes.REVERSAL_CREATE))))
                         .uri(cbsBaseUrl))
+                .route("atm-transfer", r -> r.path(AtmEndpoints.TRANSACTION_TRANSFER)
+                        .and().method(HttpMethod.POST).filters(f -> f.rewritePath(
+                                        AtmEndpoints.TRANSACTION_TRANSFER_REWRITE,
+                                        CbsEndpoints.TRANSACTION_TRANSFER_REWRITE)
+                                .filter(this.delegatedTokenGatewayFilterFactory
+                                        .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.SWITCH, AtmOAuth2Scopes.TRANSFER_CREATE))))
+                        .uri(cbsBaseUrl))
                 .build();
     }
 }
