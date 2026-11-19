@@ -60,7 +60,7 @@ public class WithdrawalTransactionHandler implements TransactionHandler {
                     .orElse(null);
 
             if (transaction == null) {
-                log.error("Switch transaction not found: terminal={}, stan={}", terminalId, stan);
+                log.warn("Switch transaction not found: terminal={}, stan={}", terminalId, stan);
                 return this.isoResponseFactory.createResponse(request, ResponseCodes.SYSTEM_ERROR);
             }
 
@@ -73,12 +73,12 @@ public class WithdrawalTransactionHandler implements TransactionHandler {
             CoreBankingCurrencyResponse currencyResponse = this.currencyLookupService.lookupCurrency(cardAccount.currencyId());
 
             if (!currencyResponse.isActive()) {
-                log.error("Currency is not active: currencyCode={}", transactionCurrencyCode);
+                log.warn("Currency is not active: currencyCode={}", transactionCurrencyCode);
                 return this.isoResponseFactory.createResponse(request, ResponseCodes.INVALID_CURRENCY);
             }
 
             if (!currencyResponse.getNumericCode().equals(transactionCurrencyCode)) {
-                log.error("Currency code mismatch: cbsCurrencyCode={}, switchTransactionCurrencyCode={}", currencyResponse.getNumericCode(), transactionCurrencyCode);
+                log.warn("Currency code mismatch: cbsCurrencyCode={}, switchTransactionCurrencyCode={}", currencyResponse.getNumericCode(), transactionCurrencyCode);
                 return this.isoResponseFactory.createResponse(request, ResponseCodes.INVALID_CURRENCY);
             }
 

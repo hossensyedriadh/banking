@@ -105,13 +105,7 @@ public class IsoMessageHandler {
             }
 
             if ("0100".equals(mti)) {
-                ISOMsg response = this.transactionRouter.route(request);
-
-                if (response == null) {
-                    return this.isoResponseFactory.createResponse(request, ResponseCodes.INVALID_TRANSACTION);
-                }
-
-                return response;
+                return this.transactionRouter.route(request);
             }
 
             String amountField = request.getString(4);
@@ -175,11 +169,6 @@ public class IsoMessageHandler {
                 }
 
                 ISOMsg response = this.transactionRouter.route(request);
-
-                if (response == null) {
-                    log.warn("Unsupported processing code={}", request.getString(3));
-                    response = this.isoResponseFactory.createResponse(request, ResponseCodes.INVALID_TRANSACTION);
-                }
 
                 String responseCode = response.getString(39);
 

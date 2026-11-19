@@ -97,25 +97,60 @@ class CoreBankingServiceImpl implements CoreBankingService {
     }
 
     @Override
-    public Optional<CoreBankingTransactionResponse> findTransactionByIdempotencyKey(String idempotencyKey) {
+    public CoreBankingFundTransferResult transfer(SwitchTransactionSummary transaction, Long accountId, Long destinationAccountId, Long currencyId, String idempotencyKey) {
+        CoreBankingFundTransferRequest transferRequest = new CoreBankingFundTransferRequest();
+        transferRequest.setAccountId(accountId);
+        transferRequest.setDestinationAccountId(destinationAccountId);
+        transferRequest.setCurrencyId(currencyId);
+        transferRequest.setIdempotencyKey(idempotencyKey);
+        transferRequest.setAmount(transaction.transactionAmount());
+        transferRequest.setDescription(String.format("ATM fund transfer [Switch transaction ID: %d, Terminal: %s, STAN: %s, RRN: %s].", transaction.id(), transaction.terminalId(),
+                transaction.stan(), transaction.retrievalReference()));
+
         try {
-            CoreBankingTransactionResponse response = this.restClient.get().uri(this.coreBankingAtmGatewayBaseUrl + "/transactions/idempotency/{key}", idempotencyKey)
-                    .retrieve().body(CoreBankingTransactionResponse.class);
+            CoreBankingTransactionResponse response = this.restClient.post().uri(this.coreBankingAtmGatewayBaseUrl + "/transactions/transfers")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(transferRequest).retrieve()
+                    .body(CoreBankingTransactionResponse.class);
 
             if (response == null) {
-                log.error("CBS/Gateway returned an empty response for transaction lookup by idempotency key");
-                throw new CoreBankingCommunicationException("CBS/Gateway returned an empty response for transaction lookup by idempotency key");
+                log.error("CBS/Gateway returned an empty fund transfer response. Switch Transaction ID: {}", transaction.id());
+                throw new CoreBankingCommunicationException("CBS/Gateway returned an empty fund transfer response");
             }
 
-            return Optional.of(response);
-        } catch (HttpClientErrorException.NotFound e) {
-            return Optional.empty();
+            if (response.getStatus() == TransactionStatus.COMPLETED) {
+                if (response.getId() == null) {
+                    log.error("CBS/Gateway reported a completed fund transfer without a transaction ID. Switch transaction ID: {}", transaction.id());
+                    throw new CoreBankingCommunicationException("CBS/Gateway returned an incomplete fund transfer response");
+                }
+
+                return new CoreBankingFundTransferResult(true, response.getId(), ResponseCodes.APPROVED);
+            }
+
+            log.error("CBS/Gateway returned a non-completed fund transfer status. Switch transaction ID: {}, CBS status: {}", transaction.id(), response.getStatus());
+            throw new CoreBankingCommunicationException("CBS/Gateway fund transfer outcome is not confirmed");
         } catch (RestClientResponseException e) {
-            log.error("CBS/Gateway returned HTTP {} during idempotency lookup", e.getStatusCode().value(), e);
-            throw new CoreBankingCommunicationException("Could not determine CBS/Gateway transaction outcome", e);
+            CoreBankingErrorResponse errorResponse = null;
+
+            try {
+                errorResponse = e.getResponseBodyAs(CoreBankingErrorResponse.class);
+            } catch (RestClientException parseException) {
+                log.warn("Could not deserialize CBS/Gateway error response. Switch transaction ID: {}", transaction.id(), parseException);
+            }
+
+            Optional<String> responseCode = this.coreBankingResponseCodeMapper.toIsoResponseCode(errorResponse);
+
+            if (responseCode.isPresent()) {
+                log.info("CBS/Gateway definitively declined fund transfer. Switch Transaction ID: {}, response code: {}", transaction.id(), responseCode.get());
+
+                return new CoreBankingFundTransferResult(false, null, responseCode.get());
+            }
+
+            log.error("CBS/Gateway returned an unrecognized or ambiguous error during fund transfer. Switch transaction ID: {}, HTTP status: {}", transaction.id(), e.getStatusCode(), e);
+            throw new CoreBankingCommunicationException("CBS/Gateway fund transfer result could not be confirmed", e);
         } catch (RestClientException e) {
-            log.error("CBS/Gateway communication failure during idempotency lookup", e);
-            throw new CoreBankingCommunicationException("Could not determine CBS/Gateway transaction outcome", e);
+            log.error("CBS/Gateway communication failure during fund transfer. Switch transaction ID: {}", transaction.id(), e);
+            throw new CoreBankingCommunicationException("Could not confirm CBS/Gateway fund transfer outcome", e);
         }
     }
 
@@ -173,6 +208,29 @@ class CoreBankingServiceImpl implements CoreBankingService {
         } catch (RestClientException e) {
             log.error("Communication failure during CBS/Gateway reversal. Switch transaction ID: {}", originalTransaction.id(), e);
             throw new CoreBankingCommunicationException("CBS/Gateway reversal outcome could not be confirmed", e);
+        }
+    }
+
+    @Override
+    public Optional<CoreBankingTransactionResponse> findTransactionByIdempotencyKey(String idempotencyKey) {
+        try {
+            CoreBankingTransactionResponse response = this.restClient.get().uri(this.coreBankingAtmGatewayBaseUrl + "/transactions/idempotency/{key}", idempotencyKey)
+                    .retrieve().body(CoreBankingTransactionResponse.class);
+
+            if (response == null) {
+                log.error("CBS/Gateway returned an empty response for transaction lookup by idempotency key");
+                throw new CoreBankingCommunicationException("CBS/Gateway returned an empty response for transaction lookup by idempotency key");
+            }
+
+            return Optional.of(response);
+        } catch (HttpClientErrorException.NotFound e) {
+            return Optional.empty();
+        } catch (RestClientResponseException e) {
+            log.error("CBS/Gateway returned HTTP {} during idempotency lookup", e.getStatusCode().value(), e);
+            throw new CoreBankingCommunicationException("Could not determine CBS/Gateway transaction outcome", e);
+        } catch (RestClientException e) {
+            log.error("CBS/Gateway communication failure during idempotency lookup", e);
+            throw new CoreBankingCommunicationException("Could not determine CBS/Gateway transaction outcome", e);
         }
     }
 
