@@ -267,7 +267,7 @@ public class TransactionServiceImpl implements TransactionService {
 
         Long destinationLedgerAccountId = this.getCustomerLedgerAccountId(destinationAccount.getId());
 
-        BigDecimal fee = this.feeCalculationService.calculateFee("SAME_BANK_XFR_FEE", command.getAmount(), command.getCurrencyId());
+        BigDecimal fee = this.feeCalculationService.calculateFee(SystemFeeCodes.SAME_BANK_TRANSFER, command.getAmount(), command.getCurrencyId());
 
         this.ledgerService.postCustomerTransfer(savedTransaction.getId(), sourceLedgerAccountId, destinationLedgerAccountId, fee, command.getAmount());
 
