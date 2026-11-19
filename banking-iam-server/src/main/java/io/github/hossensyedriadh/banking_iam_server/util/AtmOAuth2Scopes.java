@@ -14,12 +14,13 @@ public final class AtmOAuth2Scopes {
     public static final String ACCOUNT_PRODUCT_INFO_READ = "atm.account-product-info.read";
     public static final String WITHDRAW_CREATE = "atm.withdraw.create";
     public static final String REVERSAL_CREATE = "atm.reversal.create";
+    public static final String TRANSFER_CREATE = "atm.transfer.create";
     public static final String TRANSACTIONS_SEARCH_READ = "atm.transactions-search.read";
     public static final String TRANSACTION_READ = "atm.transaction.read";
 
     public static Set<String> all() {
         return Set.of(BALANCE_READ, ACCOUNT_INFO_READ, CARD_INFO_READ, CARD_PIN_VERIFY,
                 CURRENCY_INFO_READ, ACCOUNT_PRODUCT_INFO_READ, WITHDRAW_CREATE, REVERSAL_CREATE,
-                TRANSACTIONS_SEARCH_READ, TRANSACTION_READ);
+                TRANSFER_CREATE, TRANSACTIONS_SEARCH_READ, TRANSACTION_READ);
     }
 }
