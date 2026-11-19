@@ -2,6 +2,8 @@
 
 <p align="center">
   <strong>A mini Banking Platform simulation with Core Banking, Internet Banking Channel, ATM/POS Switching, and Centralized Identity & Access Management.</strong>
+  <br>
+  <strong>This repository aggregates source code from multiple independent repositories using Git subtrees. Each application retains its original repository history.</strong>
 </p>
 
 <p align="center">
