@@ -10,9 +10,11 @@ import java.util.Optional;
 public interface CoreBankingService {
     CoreBankingWithdrawalResult withdraw(SwitchTransactionSummary transaction, Long accountId, Long currencyId, String idempotencyKey);
 
-    Optional<CoreBankingTransactionResponse> findTransactionByIdempotencyKey(String idempotencyKey);
+    CoreBankingFundTransferResult transfer(SwitchTransactionSummary transaction, Long accountId, Long destinationAccountId, Long currencyId, String idempotencyKey);
 
     CoreBankingReversalResult reverseTransaction(SwitchTransactionSummary originalTransaction, String reversalReference);
+
+    Optional<CoreBankingTransactionResponse> findTransactionByIdempotencyKey(String idempotencyKey);
 
     CoreBankingTransactionPage findTransactions(CoreBankingTransactionsSearch search);
 

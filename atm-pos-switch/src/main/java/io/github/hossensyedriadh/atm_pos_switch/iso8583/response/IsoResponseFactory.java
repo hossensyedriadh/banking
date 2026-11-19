@@ -27,6 +27,7 @@ public class IsoResponseFactory {
             this.copyField(request, response, 37);
             this.copyField(request, response, 41);
             this.copyField(request, response, 49);
+            this.copyField(request, response, 103);
 
             if ("0400".equals(request.getMTI())) {
                 this.copyField(request, response, 90);
