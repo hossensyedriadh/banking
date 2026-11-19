@@ -23,6 +23,8 @@ public class SecurityConfiguration {
                         ).hasAuthority(AtmOAuth2Scopes.BALANCE_READ)
                         .pathMatchers(HttpMethod.GET, AtmEndpoints.BASE + "/accounts/*"
                         ).hasAuthority(AtmOAuth2Scopes.ACCOUNT_INFO_READ)
+                        .pathMatchers(HttpMethod.GET, AtmEndpoints.BASE + "/accounts/account-number/*"
+                        ).hasAuthority(AtmOAuth2Scopes.ACCOUNT_INFO_READ)
                         .pathMatchers(HttpMethod.GET, AtmEndpoints.BASE + "/account-products/*"
                         ).hasAuthority(AtmOAuth2Scopes.ACCOUNT_PRODUCT_INFO_READ)
                         .pathMatchers(HttpMethod.GET, AtmEndpoints.BASE + "/currencies/*"
@@ -39,6 +41,8 @@ public class SecurityConfiguration {
                         ).hasAuthority(AtmOAuth2Scopes.WITHDRAW_CREATE)
                         .pathMatchers(HttpMethod.POST, AtmEndpoints.TRANSACTION_REVERSAL
                         ).hasAuthority(AtmOAuth2Scopes.REVERSAL_CREATE)
+                        .pathMatchers(HttpMethod.POST, AtmEndpoints.TRANSACTION_TRANSFER
+                        ).hasAuthority(AtmOAuth2Scopes.TRANSFER_CREATE)
                         .pathMatchers(AtmEndpoints.BASE + "/**").denyAll()
 
                         .pathMatchers(HttpMethod.GET, InternetBankingEndpoints.BASE + "/accounts/*/balance"

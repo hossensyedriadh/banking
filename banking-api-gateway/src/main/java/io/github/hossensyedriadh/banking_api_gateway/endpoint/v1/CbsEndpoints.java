@@ -18,6 +18,9 @@ public final class CbsEndpoints {
     public static final String ACCOUNT_INFO = BASE + "/accounts/v1/{id}";
     public static final String ACCOUNT_INFO_REWRITE = BASE + "/accounts/v1/${id}";
 
+    public static final String ACCOUNT_INFO_BY_ACCOUNT_NUMBER = BASE + "/accounts/v1/account-number/{number}";
+    public static final String ACCOUNT_INFO_BY_ACCOUNT_NUMBER_REWRITE = BASE + "/accounts/v1/account-number/${number}";
+
     public static final String PRINCIPAL_ACCOUNT_INFO = BASE + "/accounts/v1/principal/{id}";
     public static final String PRINCIPAL_ACCOUNT_INFO_REWRITE = BASE + "/accounts/v1/principal/${id}";
 

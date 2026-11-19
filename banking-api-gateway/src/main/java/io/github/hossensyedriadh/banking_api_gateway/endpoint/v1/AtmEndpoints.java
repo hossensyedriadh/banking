@@ -12,6 +12,9 @@ public final class AtmEndpoints {
     public static final String ACCOUNT_INFO = BASE + "/accounts/{id}";
     public static final String ACCOUNT_INFO_REWRITE = BASE + "/accounts/(?<id>[^/]+)";
 
+    public static final String ACCOUNT_INFO_BY_ACCOUNT_NUMBER = BASE + "/accounts/account-number/{number}";
+    public static final String ACCOUNT_INFO_BY_ACCOUNT_NUMBER_REWRITE = BASE + "/accounts/account-number/(?<number>[^/]+)";
+
     public static final String ACCOUNT_PRODUCT_INFO = BASE + "/account-products/{id}";
     public static final String ACCOUNT_PRODUCT_INFO_REWRITE = BASE + "/account-products/(?<id>[^/]+)";
 
@@ -35,4 +38,7 @@ public final class AtmEndpoints {
 
     public static final String TRANSACTION_REVERSAL = BASE + "/transactions/reversals";
     public static final String TRANSACTION_REVERSAL_REWRITE = BASE + "/transactions/reversals";
+
+    public static final String TRANSACTION_TRANSFER = BASE + "/transactions/transfers";
+    public static final String TRANSACTION_TRANSFER_REWRITE = BASE + "/transactions/transfers";
 }

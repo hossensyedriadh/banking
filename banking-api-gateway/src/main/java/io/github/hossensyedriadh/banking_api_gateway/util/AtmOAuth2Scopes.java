@@ -12,6 +12,7 @@ public final class AtmOAuth2Scopes {
     public static final String ACCOUNT_PRODUCT_INFO_READ = "SCOPE_atm.account-product-info.read";
     public static final String WITHDRAW_CREATE = "SCOPE_atm.withdraw.create";
     public static final String REVERSAL_CREATE = "SCOPE_atm.reversal.create";
+    public static final String TRANSFER_CREATE = "SCOPE_atm.transfer.create";
     public static final String TRANSACTIONS_SEARCH_READ = "SCOPE_atm.transactions-search.read";
     public static final String TRANSACTION_READ = "SCOPE_atm.transaction.read";
 }
