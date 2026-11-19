@@ -31,4 +31,8 @@
               class="org.jpos.iso.IFA_LLLCHAR"/>
     <isofield id="90" length="42" name="Original Data Elements"
               class="org.jpos.iso.IFA_NUMERIC"/>
+    <isofield id="102" length="28" name="Account Identification 1"
+              class="org.jpos.iso.IFA_LLNUM"/>
+    <isofield id="103" length="28" name="Account Identification 2"
+              class="org.jpos.iso.IFA_LLNUM"/>
 </isopackager>

@@ -64,8 +64,8 @@ public class WithdrawalService {
         ISOMsg response = this.isoTcpClient.send(request);
 
         if (response == null) {
-            log.error("No response received from the ATM switch");
-            throw new IllegalStateException("No response received from the ATM switch");
+            log.error("No response received from the ATM switch for withdrawal");
+            throw new IllegalStateException("No response received from the ATM switch for withdrawal");
         }
 
         if (!"0210".equals(response.getMTI())) {
