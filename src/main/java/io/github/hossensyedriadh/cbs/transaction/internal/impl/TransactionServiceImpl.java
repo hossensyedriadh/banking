@@ -88,7 +88,7 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     public Page<TransactionView> getTransactionsInDateRange(OffsetDateTime startDate, OffsetDateTime endDate, @Nullable TransactionType type,
                                                             @Nullable TransactionStatus status, @Nullable Long accountId, Pageable pageable) {
-        return this.transactionRepository.findAllByCreatedAtBetweenAndAccountIdAndStatusAndTransactionType(startDate, endDate, accountId, status, type, pageable).map(this.transactionMapper::toView);
+        return this.transactionRepository.findTransactions(startDate, endDate, accountId, status, type, pageable).map(this.transactionMapper::toView);
     }
 
     @Override

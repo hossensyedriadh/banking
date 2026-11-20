@@ -18,8 +18,16 @@ import java.util.Optional;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
-    Page<Transaction> findAllByCreatedAtBetweenAndAccountIdAndStatusAndTransactionType(OffsetDateTime createdAtAfter, OffsetDateTime createdAtBefore, Long accountId,
-                                                                                       TransactionStatus status, TransactionType transactionType, Pageable pageable);
+    @Query("""
+            SELECT t FROM Transaction t
+            WHERE t.createdAt BETWEEN :createdAtAfter AND :createdAtBefore
+            AND (:accountId IS NULL OR t.accountId = :accountId)
+            AND (:status IS NULL OR t.status = :status)
+            AND (:transactionType IS NULL OR t.transactionType = :transactionType)
+            """)
+    Page<Transaction> findTransactions(@Param("createdAtAfter") OffsetDateTime createdAtAfter, @Param("createdAtBefore") OffsetDateTime createdAtBefore,
+                                       @Param("accountId") Long accountId, @Param("status") TransactionStatus status, @Param("transactionType") TransactionType transactionType,
+                                       Pageable pageable);
 
     Page<Transaction> findAllByAccountId(Long accountId, Pageable pageable);
 
