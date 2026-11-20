@@ -46,7 +46,7 @@ public final class CbsEndpoints {
     public static final String TRANSACTIONS_SEARCH_REWRITE = BASE + "/transactions/v1";
 
     public static final String TRANSACTION_BY_ID = BASE + "/transactions/v1/{id}";
-    public static final String TRANSACTION_BY_ID_REWRITE = BASE + "/transactions/${id}";
+    public static final String TRANSACTION_BY_ID_REWRITE = BASE + "/transactions/v1/${id}";
 
     public static final String TRANSACTION_BY_IDEMPOTENCY = BASE + "/transactions/v1/idempotency/{key}";
     public static final String TRANSACTION_BY_IDEMPOTENCY_REWRITE = BASE + "/transactions/v1/idempotency/${key}";
