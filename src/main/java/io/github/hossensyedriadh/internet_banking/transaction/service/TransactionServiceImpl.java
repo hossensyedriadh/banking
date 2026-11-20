@@ -74,8 +74,8 @@ class TransactionServiceImpl implements TransactionService {
     @Override
     public TransactionModel fetchTransaction(Long id) {
         CbsTransactionResponse transactionResponse = this.coreBankingSolutionService.fetchTransaction(id);
-        CbsAccountResponse accountResponse = this.coreBankingSolutionService.fetchAccountInfo(id);
-        CbsCurrencyResponse currencyResponse = this.coreBankingSolutionService.fetchCurrencyInfo(id);
+        CbsAccountResponse accountResponse = this.coreBankingSolutionService.fetchAccountInfo(transactionResponse.getAccountId());
+        CbsCurrencyResponse currencyResponse = this.coreBankingSolutionService.fetchCurrencyInfo(transactionResponse.getCurrencyId());
 
         return this.prepareTransactionModel(transactionResponse, accountResponse, currencyResponse);
     }
