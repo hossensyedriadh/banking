@@ -22,7 +22,7 @@ spring:
   data:
     web:
       pageable:
-        max-page-size: 30
+        max-page-size: 24
         default-page-size: 10
     redis:
       host: "${REDIS_HOST}"

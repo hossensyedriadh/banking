@@ -1,6 +1,11 @@
 package io.github.hossensyedriadh.internet_banking.account.service;
 
-import io.github.hossensyedriadh.internet_banking.account.model.*;
+import io.github.hossensyedriadh.internet_banking.account.model.AccountBalanceModel;
+import io.github.hossensyedriadh.internet_banking.account.model.AccountOverviewModel;
+import io.github.hossensyedriadh.internet_banking.account.model.AccountProductModel;
+import io.github.hossensyedriadh.internet_banking.common.AccountModel;
+import io.github.hossensyedriadh.internet_banking.common.BranchModel;
+import io.github.hossensyedriadh.internet_banking.common.CurrencyModel;
 import io.github.hossensyedriadh.internet_banking.http.cbs.CoreBankingSolutionService;
 import io.github.hossensyedriadh.internet_banking.http.cbs.model.*;
 import org.jspecify.annotations.NonNull;
@@ -64,11 +69,14 @@ class AccountServiceImpl implements AccountService {
         branchModel.setPhone(branchResponse.getPhone());
         branchModel.setAddress(branchResponse.getAddress());
 
+        AccountModel accountModel = new AccountModel();
+        accountModel.setAccountId(account.getId());
+        accountModel.setAccountNumber(account.getAccountNumber());
+        accountModel.setStatus(account.getStatus());
+        accountModel.setOpenedAt(account.getOpenedAt());
+
         AccountOverviewModel accountOverview = new AccountOverviewModel();
-        accountOverview.setAccountId(account.getId());
-        accountOverview.setAccountNumber(account.getAccountNumber());
-        accountOverview.setStatus(account.getStatus());
-        accountOverview.setOpenedAt(account.getOpenedAt());
+        accountOverview.setAccount(accountModel);
         accountOverview.setBalance(balanceModel);
         accountOverview.setCurrency(currencyModel);
         accountOverview.setAccountProduct(productModel);

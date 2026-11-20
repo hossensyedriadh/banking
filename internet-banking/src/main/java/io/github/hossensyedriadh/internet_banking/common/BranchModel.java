@@ -1,4 +1,4 @@
-package io.github.hossensyedriadh.internet_banking.account.model;
+package io.github.hossensyedriadh.internet_banking.common;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -11,17 +11,17 @@ import java.io.Serializable;
 @Getter
 @Setter
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class CurrencyModel implements Serializable {
+public class BranchModel implements Serializable {
     @Serial
-    private static final long serialVersionUID = 1129842132131400974L;
+    private static final long serialVersionUID = 6012444283228569839L;
 
     private Long id;
 
-    private String code;
+    private String branchCode;
 
     private String name;
 
-    private String symbol;
+    private String address;
 
-    private Short decimalPlaces;
+    private String phone;
 }
