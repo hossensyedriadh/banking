@@ -63,6 +63,8 @@ public class SecurityConfiguration {
                         ).hasAuthority(InternetBankingOAuth2Scopes.CARD_PIN_VERIFY)
                         .pathMatchers(HttpMethod.GET, InternetBankingEndpoints.TRANSACTIONS_SEARCH
                         ).hasAuthority(InternetBankingOAuth2Scopes.TRANSACTIONS_SEARCH_READ)
+                        .pathMatchers(HttpMethod.GET, InternetBankingEndpoints.BASE + "/transactions/*"
+                        ).hasAuthority(InternetBankingOAuth2Scopes.TRANSACTION_READ)
                         .pathMatchers(HttpMethod.GET, InternetBankingEndpoints.BASE + "/transactions/idempotency/*"
                         ).hasAuthority(InternetBankingOAuth2Scopes.TRANSACTION_READ)
                         .pathMatchers(HttpMethod.POST, InternetBankingEndpoints.TRANSACTION_TRANSFER
