@@ -224,7 +224,7 @@ public class CoreBankingSolutionService {
         try {
             String token = this.getAccessToken();
 
-            CbsTransactionResponse response = this.restClient.get().uri(this.coreBankingApiGatewayBaseUrl + INTERNET_BANKING_BASE_URL + "/transaction/" + id)
+            CbsTransactionResponse response = this.restClient.get().uri(this.coreBankingApiGatewayBaseUrl + INTERNET_BANKING_BASE_URL + "/transactions/" + id)
                     .headers(headers -> headers.setBearerAuth(token))
                     .retrieve().body(CbsTransactionResponse.class);
 
