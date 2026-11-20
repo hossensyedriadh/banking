@@ -36,6 +36,9 @@ public final class InternetBankingEndpoints {
     public static final String TRANSACTIONS_SEARCH = BASE + "/transactions";
     public static final String TRANSACTIONS_SEARCH_REWRITE = BASE + "/transactions";
 
+    public static final String TRANSACTION_BY_ID = BASE + "/transactions/{id}";
+    public static final String TRANSACTION_BY_ID_REWRITE = BASE + "/transactions/(?<id>[^/]+)";
+
     public static final String TRANSACTION_BY_IDEMPOTENCY = BASE + "/transactions/idempotency/{key}";
     public static final String TRANSACTION_BY_IDEMPOTENCY_REWRITE = BASE + "/transactions/idempotency/(?<key>[^/]+)";
 

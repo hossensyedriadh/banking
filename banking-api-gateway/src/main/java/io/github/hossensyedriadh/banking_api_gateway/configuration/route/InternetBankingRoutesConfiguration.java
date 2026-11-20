@@ -96,7 +96,15 @@ public class InternetBankingRoutesConfiguration {
                                 .filter(this.delegatedTokenGatewayFilterFactory
                                         .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.INTERNET_BANKING, InternetBankingOAuth2Scopes.TRANSACTIONS_SEARCH_READ))))
                         .uri(cbsBaseUrl))
-                .route("internet-banking-transactions-by-idempotency", r -> r.path(InternetBankingEndpoints.TRANSACTION_BY_IDEMPOTENCY)
+                .route("internet-banking-transaction-by-id", r -> r.path(InternetBankingEndpoints.TRANSACTION_BY_ID)
+                        .and().method(HttpMethod.GET)
+                        .filters(f -> f.rewritePath(
+                                        InternetBankingEndpoints.TRANSACTION_BY_ID_REWRITE,
+                                        CbsEndpoints.TRANSACTION_BY_ID_REWRITE)
+                                .filter(this.delegatedTokenGatewayFilterFactory
+                                        .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.INTERNET_BANKING, InternetBankingOAuth2Scopes.TRANSACTION_READ))))
+                        .uri(cbsBaseUrl))
+                .route("internet-banking-transaction-by-idempotency", r -> r.path(InternetBankingEndpoints.TRANSACTION_BY_IDEMPOTENCY)
                         .and().method(HttpMethod.GET).filters(f -> f.rewritePath(
                                         InternetBankingEndpoints.TRANSACTION_BY_IDEMPOTENCY_REWRITE,
                                         CbsEndpoints.TRANSACTION_BY_IDEMPOTENCY_REWRITE)
