@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
+import org.springframework.security.task.DelegatingSecurityContextAsyncTaskExecutor;
 
 import java.util.Arrays;
 import java.util.concurrent.Executor;
@@ -15,19 +16,19 @@ import java.util.concurrent.Executor;
 @Log4j2
 @Configuration
 public class AsyncConfiguration implements AsyncConfigurer {
-    @Bean
+    @Bean("iBankingTaskExecutor")
     public TaskExecutor taskExecutor(MdcTaskDecorator mdcTaskDecorator) {
         SimpleAsyncTaskExecutor executor = new SimpleAsyncTaskExecutor("ibanking-async-");
         executor.setVirtualThreads(true);
         executor.setConcurrencyLimit(100);
         executor.setTaskDecorator(mdcTaskDecorator);
 
-        return executor;
+        return new DelegatingSecurityContextAsyncTaskExecutor(executor);
     }
 
     @Override
     public Executor getAsyncExecutor() {
-        return taskExecutor(mdcTaskDecorator());
+        return this.taskExecutor(this.mdcTaskDecorator());
     }
 
     @Override

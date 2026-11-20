@@ -1,6 +1,9 @@
 package io.github.hossensyedriadh.internet_banking.account.model;
 
 import io.github.hossensyedriadh.internet_banking.account.enumerator.AccountStatus;
+import io.github.hossensyedriadh.internet_banking.common.AccountModel;
+import io.github.hossensyedriadh.internet_banking.common.BranchModel;
+import io.github.hossensyedriadh.internet_banking.common.CurrencyModel;
 import lombok.Getter;
 import lombok.Setter;
 import tools.jackson.databind.PropertyNamingStrategies;
@@ -17,13 +20,7 @@ public class AccountOverviewModel implements Serializable {
     @Serial
     private static final long serialVersionUID = -6077439021751685236L;
 
-    private Long accountId;
-
-    private String accountNumber;
-
-    private AccountStatus status;
-
-    private OffsetDateTime openedAt;
+    private AccountModel account;
 
     private AccountBalanceModel balance;
 

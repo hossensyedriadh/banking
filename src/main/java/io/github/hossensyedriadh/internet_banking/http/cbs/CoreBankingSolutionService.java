@@ -20,8 +20,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 @Log4j2
 @Service
@@ -184,6 +187,62 @@ public class CoreBankingSolutionService {
         }
     }
 
+    public CbsTransactionPage fetchTransactions(CbsTransactionsSearch search) {
+        URI uri = UriComponentsBuilder.fromUriString(this.coreBankingApiGatewayBaseUrl + INTERNET_BANKING_BASE_URL + "/transactions")
+                .queryParam("from", search.from().toString())
+                .queryParam("to", search.to().toString())
+                .queryParam("page", search.page())
+                .queryParam("size", search.size())
+                .queryParam("accountId", search.accountId())
+                .queryParamIfPresent("type", Optional.ofNullable(search.type()))
+                .queryParamIfPresent("status", Optional.ofNullable(search.status()))
+                .build().encode()
+                .toUri();
+
+        try {
+            String token = this.getAccessToken();
+
+            CbsTransactionPage response = this.restClient.get().uri(uri).headers(headers -> headers.setBearerAuth(token))
+                    .retrieve().body(CbsTransactionPage.class);
+
+            if (response == null || response.getContent() == null) {
+                log.error("CBS/Gateway returned an empty transactions response");
+                throw new CoreBankingException("CBS/Gateway returned an empty transactions response");
+            }
+
+            return response;
+        } catch (RestClientResponseException e) {
+            log.error("CBS/Gateway returned HTTP {} while trying to fetch transactions", e.getStatusCode().value(), e);
+            throw new CoreBankingCommunicationException("Failed to fetch transactions", HttpStatus.resolve(e.getStatusCode().value()), e);
+        } catch (RestClientException e) {
+            log.error("CBS/Gateway returned invalid response for transactions fetch", e);
+            throw new CoreBankingException("Failed to fetch transactions", e);
+        }
+    }
+
+    public CbsTransactionResponse fetchTransaction(Long id) {
+        try {
+            String token = this.getAccessToken();
+
+            CbsTransactionResponse response = this.restClient.get().uri(this.coreBankingApiGatewayBaseUrl + INTERNET_BANKING_BASE_URL + "/transaction/" + id)
+                    .headers(headers -> headers.setBearerAuth(token))
+                    .retrieve().body(CbsTransactionResponse.class);
+
+            if (response == null) {
+                log.error("CBS/Gateway returned an empty transaction response");
+                throw new CoreBankingException("CBS/Gateway returned an empty transaction response");
+            }
+
+            return response;
+        } catch (RestClientResponseException e) {
+            log.error("CBS/Gateway returned HTTP {} while trying to fetch transaction [ID: {}]", e.getStatusCode().value(), id, e);
+            throw new CoreBankingCommunicationException("Failed to fetch transaction", HttpStatus.resolve(e.getStatusCode().value()), e);
+        } catch (RestClientException e) {
+            log.error("CBS/Gateway returned invalid response for transaction [ID: {}] fetch", id, e);
+            throw new CoreBankingException("Failed to fetch transaction", e);
+        }
+    }
+
     private String getAccessToken() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -193,7 +252,7 @@ public class CoreBankingSolutionService {
         }
 
         OAuth2AuthorizeRequest authorizeRequest = OAuth2AuthorizeRequest.withClientRegistrationId(this.iamClientId)
-                        .principal(authentication).build();
+                .principal(authentication).build();
 
         OAuth2AuthorizedClient authorizedClient = this.authorizedClientManager.authorize(authorizeRequest);
 
