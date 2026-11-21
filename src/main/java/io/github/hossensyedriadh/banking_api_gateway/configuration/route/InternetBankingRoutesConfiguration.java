@@ -105,7 +105,7 @@ public class InternetBankingRoutesConfiguration {
                                         .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.INTERNET_BANKING, InternetBankingOAuth2Scopes.TRANSACTION_READ))))
                         .uri(cbsBaseUrl))
                 .route("internet-banking-transaction-by-idempotency", r -> r.path(InternetBankingEndpoints.TRANSACTION_BY_IDEMPOTENCY)
-                        .and().method(HttpMethod.GET).filters(f -> f.rewritePath(
+                        .and().method(HttpMethod.GET).and().query("accountId").filters(f -> f.rewritePath(
                                         InternetBankingEndpoints.TRANSACTION_BY_IDEMPOTENCY_REWRITE,
                                         CbsEndpoints.TRANSACTION_BY_IDEMPOTENCY_REWRITE)
                                 .filter(this.delegatedTokenGatewayFilterFactory
