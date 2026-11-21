@@ -49,5 +49,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     Optional<Transaction> findByIdempotencyKey(String idempotencyKey);
 
+    Optional<Transaction> findByIdempotencyKeyAndAccountId(String idempotencyKey, Long accountId);
+
     boolean existsByReversalOfTransactionId(Long transactionId);
 }

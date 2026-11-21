@@ -114,7 +114,11 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public Optional<TransactionView> getTransactionByIdempotencyKey(String idempotencyKey) {
+    public Optional<TransactionView> getTransactionByIdempotencyKey(String idempotencyKey, @Nullable Long accountId) {
+        if (accountId != null) {
+            return this.transactionRepository.findByIdempotencyKeyAndAccountId(idempotencyKey, accountId).map(this.transactionMapper::toView);
+        }
+
         return this.transactionRepository.findByIdempotencyKey(idempotencyKey).map(this.transactionMapper::toView);
     }
 

@@ -126,8 +126,8 @@ public class TransactionController {
             })
     @PreAuthorize("hasAuthority(T(io.github.hossensyedriadh.cbs.util.OAuth2Scopes).TRANSACTION_READ)")
     @GetMapping("/idempotency/{key}")
-    public ResponseEntity<TransactionView> getTransactionByIdempotencyKey(@PathVariable("key") String key) {
-        Optional<TransactionView> transaction = this.transactionService.getTransactionByIdempotencyKey(key);
+    public ResponseEntity<TransactionView> getTransactionByIdempotencyKey(@PathVariable("key") String key, @RequestParam(value = "accountId", required = false) Long accountId) {
+        Optional<TransactionView> transaction = this.transactionService.getTransactionByIdempotencyKey(key, accountId);
 
         return transaction.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }

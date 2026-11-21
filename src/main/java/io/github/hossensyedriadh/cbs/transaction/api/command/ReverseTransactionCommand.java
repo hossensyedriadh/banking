@@ -26,5 +26,6 @@ public class ReverseTransactionCommand implements Serializable {
     private String idempotencyKey;
 
     @NotBlank
+    @Size(max = 255)
     private String description;
 }

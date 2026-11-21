@@ -26,7 +26,7 @@ public interface TransactionService {
 
     Optional<TransactionView> getTransactionByReference(String reference);
 
-    Optional<TransactionView> getTransactionByIdempotencyKey(String idempotencyKey);
+    Optional<TransactionView> getTransactionByIdempotencyKey(String idempotencyKey, @Nullable Long accountId);
 
     TransactionView deposit(@Valid CreateDepositCommand command);
 
