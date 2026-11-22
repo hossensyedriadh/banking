@@ -89,7 +89,7 @@ public class InternetBankingRoutesConfiguration {
                                         .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.INTERNET_BANKING, InternetBankingOAuth2Scopes.CARD_PIN_VERIFY))))
                         .uri(cbsBaseUrl))
                 .route("internet-banking-transactions-search", r -> r.path(InternetBankingEndpoints.TRANSACTIONS_SEARCH)
-                        .and().method(HttpMethod.GET).and().query("from").and().query("to")
+                        .and().method(HttpMethod.GET).and().query("from").and().query("to").and().query("accountId")
                         .filters(f -> f.rewritePath(
                                         InternetBankingEndpoints.TRANSACTIONS_SEARCH_REWRITE,
                                         CbsEndpoints.TRANSACTIONS_SEARCH_REWRITE)
