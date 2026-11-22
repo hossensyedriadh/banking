@@ -118,13 +118,6 @@ public class InternetBankingRoutesConfiguration {
                                 .filter(this.delegatedTokenGatewayFilterFactory
                                         .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.INTERNET_BANKING, InternetBankingOAuth2Scopes.TRANSFER_CREATE))))
                         .uri(cbsBaseUrl))
-                .route("internet-banking-reversal", r -> r.path(InternetBankingEndpoints.TRANSACTION_REVERSAL)
-                        .and().method(HttpMethod.POST).filters(f -> f.rewritePath(
-                                        InternetBankingEndpoints.TRANSACTION_REVERSAL_REWRITE,
-                                        CbsEndpoints.TRANSACTION_REVERSAL_REWRITE)
-                                .filter(this.delegatedTokenGatewayFilterFactory
-                                        .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.INTERNET_BANKING, InternetBankingOAuth2Scopes.REVERSAL_CREATE))))
-                        .uri(cbsBaseUrl))
                 .build();
     }
 }

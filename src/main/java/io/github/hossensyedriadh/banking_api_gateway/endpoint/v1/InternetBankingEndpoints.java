@@ -44,7 +44,4 @@ public final class InternetBankingEndpoints {
 
     public static final String TRANSACTION_TRANSFER = BASE + "/transactions/transfers";
     public static final String TRANSACTION_TRANSFER_REWRITE = BASE + "/transactions/transfers";
-
-    public static final String TRANSACTION_REVERSAL = BASE + "/transactions/reversals";
-    public static final String TRANSACTION_REVERSAL_REWRITE = BASE + "/transactions/reversals";
 }

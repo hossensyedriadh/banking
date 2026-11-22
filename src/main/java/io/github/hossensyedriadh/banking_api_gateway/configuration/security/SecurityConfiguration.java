@@ -18,7 +18,7 @@ public class SecurityConfiguration {
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http.csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchange -> exchange.pathMatchers("/error", "/actuator/health/**",
-                                "/actuator/info",  "/cbs/docs", "/cbs/docs/**").permitAll()
+                                "/actuator/info", "/cbs/docs", "/cbs/docs/**").permitAll()
                         .pathMatchers(HttpMethod.GET, AtmEndpoints.BASE + "/accounts/*/cards/*/balance").hasAuthority(AtmOAuth2Scopes.BALANCE_READ)
                         .pathMatchers(HttpMethod.GET, AtmEndpoints.BASE + "/accounts/*").hasAuthority(AtmOAuth2Scopes.ACCOUNT_INFO_READ)
                         .pathMatchers(HttpMethod.GET, AtmEndpoints.BASE + "/accounts/account-number/*").hasAuthority(AtmOAuth2Scopes.ACCOUNT_INFO_READ)
@@ -45,7 +45,6 @@ public class SecurityConfiguration {
                         .pathMatchers(HttpMethod.GET, InternetBankingEndpoints.BASE + "/transactions/*").hasAuthority(InternetBankingOAuth2Scopes.TRANSACTION_READ)
                         .pathMatchers(HttpMethod.GET, InternetBankingEndpoints.BASE + "/transactions/idempotency/*").hasAuthority(InternetBankingOAuth2Scopes.TRANSACTION_READ)
                         .pathMatchers(HttpMethod.POST, InternetBankingEndpoints.TRANSACTION_TRANSFER).hasAuthority(InternetBankingOAuth2Scopes.TRANSFER_CREATE)
-                        .pathMatchers(HttpMethod.POST, InternetBankingEndpoints.TRANSACTION_REVERSAL).hasAuthority(InternetBankingOAuth2Scopes.REVERSAL_CREATE)
                         .pathMatchers(InternetBankingEndpoints.BASE + "/**").denyAll()
 
                         .anyExchange().authenticated()
