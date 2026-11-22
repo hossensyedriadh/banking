@@ -42,6 +42,7 @@ public class AccessTokenConfiguration {
                 final String SWITCH_CLIENT_ID = "atm-pos-switch";
                 final String GATEWAY_CLIENT_ID = "banking-api-gateway";
                 final String INTERNET_BANKING_CLIENT_ID = "internet-banking";
+                final String INTERNET_BANKING_SERVICE_CLIENT_ID = "internet-banking-service";
 
                 final String GATEWAY_AUDIENCE = "banking-api-gateway";
                 final String CBS_AUDIENCE = "cbs";
@@ -50,7 +51,7 @@ public class AccessTokenConfiguration {
                 AuthorizationGrantType grantType = context.getAuthorizationGrantType();
 
                 if (AuthorizationGrantType.CLIENT_CREDENTIALS.equals(grantType)) {
-                    if (SWITCH_CLIENT_ID.equals(clientId) || GATEWAY_CLIENT_ID.equals(clientId)) {
+                    if (SWITCH_CLIENT_ID.equals(clientId) || GATEWAY_CLIENT_ID.equals(clientId) | INTERNET_BANKING_SERVICE_CLIENT_ID.equals(clientId)) {
                         context.getClaims().audience(new ArrayList<>(List.of(GATEWAY_AUDIENCE)));
                     }
 

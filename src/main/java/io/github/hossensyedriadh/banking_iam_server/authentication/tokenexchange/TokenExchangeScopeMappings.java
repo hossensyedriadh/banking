@@ -36,8 +36,12 @@ public final class TokenExchangeScopeMappings {
             Map.entry(InternetBankingOAuth2Scopes.CURRENCY_INFO_READ, CbsOAuth2Scopes.CURRENCY_READ),
             Map.entry(InternetBankingOAuth2Scopes.ACCOUNT_PRODUCT_INFO_READ, CbsOAuth2Scopes.ACCOUNT_PRODUCT_READ),
             Map.entry(InternetBankingOAuth2Scopes.TRANSFER_CREATE, CbsOAuth2Scopes.TRANSFER_CREATE),
-            Map.entry(InternetBankingOAuth2Scopes.REVERSAL_CREATE, CbsOAuth2Scopes.REVERSAL_CREATE),
             Map.entry(InternetBankingOAuth2Scopes.TRANSACTIONS_SEARCH_READ, CbsOAuth2Scopes.TRANSACTIONS_SEARCH_READ),
+            Map.entry(InternetBankingOAuth2Scopes.TRANSACTION_READ, CbsOAuth2Scopes.TRANSACTION_READ)
+    );
+
+    public static final Map<String, String> INTERNET_BANKING_SERVICE_TO_CBS = Map.ofEntries(
+            Map.entry(InternetBankingOAuth2Scopes.TRANSFER_CREATE, CbsOAuth2Scopes.TRANSFER_CREATE),
             Map.entry(InternetBankingOAuth2Scopes.TRANSACTION_READ, CbsOAuth2Scopes.TRANSACTION_READ)
     );
 
@@ -45,6 +49,7 @@ public final class TokenExchangeScopeMappings {
         Map<String, String> scopeMappings = switch (channelType) {
             case SWITCH -> ATM_TO_CBS;
             case INTERNET_BANKING -> INTERNET_BANKING_TO_CBS;
+            case INTERNET_BANKING_SERVICE -> INTERNET_BANKING_SERVICE_TO_CBS;
         };
 
         return subjectScopes.stream().map(scopeMappings::get).filter(java.util.Objects::nonNull)
