@@ -89,7 +89,7 @@ public class MachineClientConfiguration {
                     .clientName("Internet Banking Service")
                     .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                     .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-                    .scopes(scopes -> scopes.addAll(InternetBankingOAuth2Scopes.forService()))
+                    .scopes(scopes -> scopes.addAll(InternetBankingOAuth2Scopes.forMachineClient()))
                     .clientSecret(passwordEncoder.encode(clientSecret))
                     .tokenSettings(TokenSettings.builder()
                             .accessTokenTimeToLive(accessTokenTtl)
