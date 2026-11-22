@@ -17,9 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
-import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -167,19 +165,15 @@ public class CoreBankingSolutionService {
     }
 
     public CbsTransactionPage fetchTransactions(CbsTransactionsSearch search) {
-        URI uri = UriComponentsBuilder.fromUriString("/transactions")
-                .queryParam("from", search.from().toString())
-                .queryParam("to", search.to().toString())
-                .queryParam("page", search.page())
-                .queryParam("size", search.size())
-                .queryParam("accountId", search.accountId())
-                .queryParamIfPresent("type", Optional.ofNullable(search.type()))
-                .queryParamIfPresent("status", Optional.ofNullable(search.status()))
-                .build().encode()
-                .toUri();
-
         try {
-            CbsTransactionPage response = this.restClient.get().uri(uri).retrieve().body(CbsTransactionPage.class);
+            CbsTransactionPage response = this.restClient.get().uri(uriBuilder -> uriBuilder.path("/transactions")
+                    .queryParam("from", search.from().toString()).queryParam("to", search.to().toString())
+                    .queryParam("page", search.page()).queryParam("size", search.size())
+                    .queryParam("accountId", search.accountId())
+                    .queryParamIfPresent("type", Optional.ofNullable(search.type()))
+                    .queryParamIfPresent("status", Optional.ofNullable(search.status()))
+                    .build())
+                    .retrieve().body(CbsTransactionPage.class);
 
             if (response == null || response.getContent() == null) {
                 log.error("CBS/Gateway returned an empty transactions response");

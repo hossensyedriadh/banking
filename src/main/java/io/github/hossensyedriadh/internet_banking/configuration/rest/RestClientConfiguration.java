@@ -1,5 +1,7 @@
 package io.github.hossensyedriadh.internet_banking.configuration.rest;
 
+import io.github.hossensyedriadh.internet_banking.context.GatewayAuthenticationContext;
+import io.github.hossensyedriadh.internet_banking.context.GatewayAuthenticationType;
 import io.github.hossensyedriadh.internet_banking.exception.CoreBankingException;
 import lombok.extern.log4j.Log4j2;
 import org.apache.hc.client5.http.config.ConnectionConfig;
@@ -24,8 +26,6 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Log4j2
 @Configuration
@@ -77,16 +77,16 @@ public class RestClientConfiguration {
         return RestClient.builder().baseUrl(this.coreBankingApiGatewayBaseUrl + INTERNET_BANKING_BASE_URL).requestFactory(requestFactory)
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .requestInterceptor((request, body, execution) -> {
-                    String accessToken;
+                    GatewayAuthenticationType type = GatewayAuthenticationContext.get();
 
-                    if (RequestContextHolder.getRequestAttributes() != null
-                            && RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes) {
-                        //An HTTP request invoked this
-                        accessToken = this.getAccessToken();
-                    } else {
-                        //A background/scheduler request invoked this
-                        accessToken = this.getBackgroundAccessToken();
+                    if (type == null) {
+                        throw new IllegalStateException("Gateway authentication context is missing");
                     }
+
+                    String accessToken = switch (type) {
+                        case CUSTOMER -> this.getAccessToken();
+                        case SERVICE -> this.getBackgroundAccessToken();
+                    };
 
                     request.getHeaders().setBearerAuth(accessToken);
 
@@ -122,8 +122,6 @@ public class RestClientConfiguration {
                 .build();
 
         OAuth2AuthorizedClient authorizedClient = this.backgroundAuthorizedClientManager.authorize(authorizeRequest);
-
-        System.out.println("Client ID: " + this.iBankingServiceClientId);
 
         if (authorizedClient == null) {
             log.error("Unable to authorize Internet Banking Service OAuth2 client [ID: {}]", this.iBankingClientId);

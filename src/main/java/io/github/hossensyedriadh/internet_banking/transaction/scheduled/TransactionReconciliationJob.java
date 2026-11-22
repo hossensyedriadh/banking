@@ -1,5 +1,7 @@
 package io.github.hossensyedriadh.internet_banking.transaction.scheduled;
 
+import io.github.hossensyedriadh.internet_banking.context.GatewayAuthenticationContext;
+import io.github.hossensyedriadh.internet_banking.context.GatewayAuthenticationType;
 import io.github.hossensyedriadh.internet_banking.transaction.service.ChannelTransactionService;
 import io.github.hossensyedriadh.internet_banking.transaction.service.TransactionReconciliationService;
 import lombok.extern.log4j.Log4j2;
@@ -25,14 +27,25 @@ public class TransactionReconciliationJob {
     @Scheduled(fixedDelayString = "${ibanking.transaction.reconciliation.fixed-delay:300000}",
             initialDelayString = "${ibanking.transaction.reconciliation.initial-delay:60000}")
     public void reconcileUnknownTransactions() {
-        List<Long> transactionIds = this.channelTransactionService.findUnknownTransactionIds(100);
+        log.info("Transactions reconciliation started...");
 
-        transactionIds.forEach(transactionId -> {
-            try {
-                this.transactionReconciliationService.reconcile(transactionId);
-            } catch (Exception e) {
-                log.error("Failed to reconcile transaction [ID: {}]", transactionId, e);
-            }
-        });
+        GatewayAuthenticationContext.set(GatewayAuthenticationType.SERVICE);
+
+        try {
+            List<Long> transactionIds = this.channelTransactionService.findUnknownTransactionIds(100);
+
+            log.info("Found {} unknown transactions", transactionIds.size());
+
+            transactionIds.forEach(transactionId -> {
+                try {
+                    this.transactionReconciliationService.reconcile(transactionId);
+                } catch (Exception e) {
+                    log.error("Failed to reconcile transaction [ID: {}]", transactionId, e);
+                }
+            });
+        } finally {
+            GatewayAuthenticationContext.clear();
+            log.info("Transaction reconciliations finished");
+        }
     }
 }
