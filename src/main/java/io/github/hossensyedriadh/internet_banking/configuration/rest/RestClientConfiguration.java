@@ -11,6 +11,7 @@ import org.apache.hc.client5.http.io.HttpClientConnectionManager;
 import org.apache.hc.core5.util.TimeValue;
 import org.apache.hc.core5.util.Timeout;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,19 +24,27 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Log4j2
 @Configuration
 public class RestClientConfiguration {
     private final OAuth2AuthorizedClientManager authorizedClientManager;
+    private final OAuth2AuthorizedClientManager backgroundAuthorizedClientManager;
 
     @Autowired
-    public RestClientConfiguration(OAuth2AuthorizedClientManager authorizedClientManager) {
+    public RestClientConfiguration(@Qualifier("oAuth2AuthorizedClientManager") OAuth2AuthorizedClientManager authorizedClientManager,
+                                   @Qualifier("backgroundAuthorizedClientManager") OAuth2AuthorizedClientManager backgroundAuthorizedClientManager) {
         this.authorizedClientManager = authorizedClientManager;
+        this.backgroundAuthorizedClientManager = backgroundAuthorizedClientManager;
     }
 
-    @Value("${iam.client-id}")
-    private String iamClientId;
+    @Value("${spring.security.oauth2.client.registration.internet-banking.client-id}")
+    private String iBankingClientId;
+
+    @Value("${spring.security.oauth2.client.registration.internet-banking-service.client-id}")
+    private String iBankingServiceClientId;
 
     @Value("${core-banking.api-gateway.base-url}")
     private String coreBankingApiGatewayBaseUrl;
@@ -68,7 +77,17 @@ public class RestClientConfiguration {
         return RestClient.builder().baseUrl(this.coreBankingApiGatewayBaseUrl + INTERNET_BANKING_BASE_URL).requestFactory(requestFactory)
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .requestInterceptor((request, body, execution) -> {
-                    String accessToken = this.getAccessToken();
+                    String accessToken;
+
+                    if (RequestContextHolder.getRequestAttributes() != null
+                            && RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes) {
+                        //An HTTP request invoked this
+                        accessToken = this.getAccessToken();
+                    } else {
+                        //A background/scheduler request invoked this
+                        accessToken = this.getBackgroundAccessToken();
+                    }
+
                     request.getHeaders().setBearerAuth(accessToken);
 
                     return execution.execute(request, body);
@@ -84,14 +103,31 @@ public class RestClientConfiguration {
             throw new IllegalStateException("No authenticated customer");
         }
 
-        OAuth2AuthorizeRequest authorizeRequest = OAuth2AuthorizeRequest.withClientRegistrationId(this.iamClientId)
+        OAuth2AuthorizeRequest authorizeRequest = OAuth2AuthorizeRequest.withClientRegistrationId(this.iBankingClientId)
                 .principal(authentication).build();
 
         OAuth2AuthorizedClient authorizedClient = this.authorizedClientManager.authorize(authorizeRequest);
 
         if (authorizedClient == null) {
-            log.error("Unable to authorize Internet Banking OAuth2 client [ID: {}]", this.iamClientId);
+            log.error("Unable to authorize Internet Banking OAuth2 client [ID: {}]", this.iBankingClientId);
             throw new CoreBankingException("Unable to authorize Internet Banking OAuth2 client");
+        }
+
+        return authorizedClient.getAccessToken().getTokenValue();
+    }
+
+    private String getBackgroundAccessToken() {
+        OAuth2AuthorizeRequest authorizeRequest = OAuth2AuthorizeRequest.withClientRegistrationId(this.iBankingServiceClientId)
+                .principal("internet-banking-service")
+                .build();
+
+        OAuth2AuthorizedClient authorizedClient = this.backgroundAuthorizedClientManager.authorize(authorizeRequest);
+
+        System.out.println("Client ID: " + this.iBankingServiceClientId);
+
+        if (authorizedClient == null) {
+            log.error("Unable to authorize Internet Banking Service OAuth2 client [ID: {}]", this.iBankingClientId);
+            throw new CoreBankingException("Unable to authorize Internet Banking service");
         }
 
         return authorizedClient.getAccessToken().getTokenValue();

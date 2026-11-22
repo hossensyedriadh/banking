@@ -6,8 +6,10 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
+@EnableScheduling
 @EnableAsync
 @EnableJpaAuditing(dateTimeProviderRef = "dateTimeProvider", modifyOnCreate = false)
 @EnableJpaRepositories(basePackages = {"io.github.hossensyedriadh.internet_banking.customer.repository",

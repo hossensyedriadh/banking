@@ -3,6 +3,7 @@ package io.github.hossensyedriadh.internet_banking.transaction.repository;
 import io.github.hossensyedriadh.internet_banking.transaction.entity.IbankingTransaction;
 import io.github.hossensyedriadh.internet_banking.transaction.enumerator.ChannelTransactionStatus;
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
@@ -11,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -69,4 +71,22 @@ public interface IbankingTransactionRepository extends JpaRepository<IbankingTra
                                @Param("processing") ChannelTransactionStatus processing, @Param("startedAt") OffsetDateTime startedAt);
 
     Optional<IbankingTransaction> findByCbsAccountIdAndIdempotencyKey(Long accountId, UUID idempotencyKey);
+
+    @Modifying
+    @Query("""
+            update IbankingTransaction t
+            set t.status = :unknown,
+                t.processingStartedAt = null
+            where t.id = :transactionId
+              and t.status = :processing
+            """)
+    int markTransactionUnknown(@Param("transactionId") Long transactionId, @Param("processing") ChannelTransactionStatus processing, @Param("unknown") ChannelTransactionStatus unknown);
+
+    @Query("""
+            select t.id
+            from IbankingTransaction t
+            where t.status = :status
+            order by t.receivedAt asc
+            """)
+    List<Long> findUnknownTransactionIds(@Param("status") ChannelTransactionStatus status, Pageable pageable);
 }

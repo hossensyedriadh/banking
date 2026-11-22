@@ -9,6 +9,7 @@ import io.github.hossensyedriadh.internet_banking.transaction.model.TransactionA
 import io.github.hossensyedriadh.internet_banking.transaction.repository.IbankingTransactionRepository;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -80,11 +82,10 @@ class ChannelTransactionServiceImpl implements ChannelTransactionService {
     @Transactional
     @Override
     public void recordCbsResult(Long transactionId, CbsTransactionResponse cbsResponse) {
-        IbankingTransaction transaction = this.ibankingTransactionRepository.findById(transactionId)
-                .orElseThrow(() -> {
-                    log.warn("Channel transaction not found: {}", transactionId);
-                    return new ResourceException("Channel transaction not found: " + transactionId, HttpStatus.NOT_FOUND);
-                });
+        IbankingTransaction transaction = this.ibankingTransactionRepository.findByIdForUpdate(transactionId).orElseThrow(() -> {
+            log.warn("Channel transaction not found: {}", transactionId);
+            return new ResourceException("Channel transaction not found: " + transactionId, HttpStatus.NOT_FOUND);
+        });
 
         if (transaction.getStatus() != ChannelTransactionStatus.PROCESSING) {
             log.warn("Failed to record CBS result for transaction [ID: {}] in status: {}", transactionId, transaction.getStatus().toString());
@@ -111,25 +112,13 @@ class ChannelTransactionServiceImpl implements ChannelTransactionService {
     @Transactional
     @Override
     public void markTransactionUnknown(Long id) {
-        Optional<IbankingTransaction> transactionOptional = this.ibankingTransactionRepository.findByIdForUpdate(id);
+        int updated = this.ibankingTransactionRepository.markTransactionUnknown(id, ChannelTransactionStatus.PROCESSING, ChannelTransactionStatus.UNKNOWN);
 
-        if (transactionOptional.isEmpty()) {
-            log.warn("IBanking transaction not found with ID: {}", id);
-            throw new ResourceException("IBanking transaction not found");
+        if (updated == 1) {
+            log.info("Marked IBanking transaction [ID: {}] as UNKNOWN", id);
+        } else {
+            log.warn("Could not mark IBanking transaction [ID: {}] as UNKNOWN; it may no longer be PROCESSING", id);
         }
-
-        IbankingTransaction transaction = transactionOptional.get();
-        transaction.setStatus(ChannelTransactionStatus.UNKNOWN);
-
-        this.ibankingTransactionRepository.save(transaction);
-
-        log.info("Marked IBanking transaction [ID: {}] as UNKNOWN", id);
-    }
-
-    @Transactional
-    @Override
-    public void reverseTransaction(Long id) {
-
     }
 
     @Transactional
@@ -144,6 +133,12 @@ class ChannelTransactionServiceImpl implements ChannelTransactionService {
     public boolean claimForReconciliation(Long transactionId) {
         return this.ibankingTransactionRepository.claimForReconciliation(transactionId, ChannelTransactionStatus.UNKNOWN,
                 ChannelTransactionStatus.PROCESSING, OffsetDateTime.now(ZoneOffset.UTC)) == 1;
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<Long> findUnknownTransactionIds(int limit) {
+        return this.ibankingTransactionRepository.findUnknownTransactionIds(ChannelTransactionStatus.UNKNOWN, PageRequest.of(0, limit));
     }
 
     private byte[] generateRequestHash(FundTransferRequest request) {

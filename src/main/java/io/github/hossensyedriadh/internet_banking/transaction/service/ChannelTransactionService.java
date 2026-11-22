@@ -5,6 +5,7 @@ import io.github.hossensyedriadh.internet_banking.transaction.entity.IbankingTra
 import io.github.hossensyedriadh.internet_banking.transaction.model.FundTransferRequest;
 import io.github.hossensyedriadh.internet_banking.transaction.model.TransactionAcquisition;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -21,9 +22,9 @@ public interface ChannelTransactionService {
 
     void markTransactionUnknown(Long id);
 
-    void reverseTransaction(Long id);
-
     boolean claimForProcessing(Long transactionId);
 
     boolean claimForReconciliation(Long transactionId);
+
+    List<Long> findUnknownTransactionIds(int limit);
 }

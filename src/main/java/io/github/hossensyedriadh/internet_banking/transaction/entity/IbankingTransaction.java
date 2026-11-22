@@ -50,12 +50,6 @@ public class IbankingTransaction {
     @Column(name = "cbs_transaction_id")
     private Long cbsTransactionId;
 
-    @Column(name = "cbs_reversal_transaction_id")
-    private Long cbsReversalTransactionId;
-
-    @Column(name = "reversal_of_transaction_id")
-    private Long reversalOfTransactionId;
-
     @Column(name = "cbs_account_id")
     private Long cbsAccountId;
 

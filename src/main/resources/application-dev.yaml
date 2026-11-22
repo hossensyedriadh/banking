@@ -56,12 +56,19 @@ spring:
         registration:
           internet-banking:
             provider: "banking-iam-server"
-            client-id: "${IAM_CLIENT_ID}"
-            client-secret: "${IAM_CLIENT_SECRET}"
+            client-id: "${IBANKING_CLIENT_ID}"
+            client-secret: "${IBANKING_CLIENT_SECRET}"
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             client-name: "Internet Banking"
-            scope: [openid, profile, email, phone, offline_access, ibanking.balance.read, ibanking.branch-info.read, ibanking.account-info.list, ibanking.account-info.read, ibanking.card-info.read, ibanking.card-pin.verify, ibanking.currency-info.read, ibanking.account-product-info.read, ibanking.transfer.create, ibanking.reversal.create, ibanking.transactions-search.read, ibanking.transaction.read]
+            scope: [openid, profile, email, phone, offline_access, ibanking.balance.read, ibanking.branch-info.read, ibanking.account-info.list, ibanking.account-info.read, ibanking.card-info.read, ibanking.card-pin.verify, ibanking.currency-info.read, ibanking.account-product-info.read, ibanking.transfer.create, ibanking.transactions-search.read, ibanking.transaction.read]
+          internet-banking-service:
+            provider: "banking-iam-server"
+            client-id: "${IBANKING_SERVICE_CLIENT_ID}"
+            client-secret: "${IBANKING_SERVICE_CLIENT_SECRET}"
+            authorization-grant-type: client_credentials
+            client-name: "Internet Banking Service"
+            scope: [ibanking.transaction.read, ibanking.transfer.create]
         provider:
           banking-iam-server:
             issuer-uri: "${BANKING_IAM_SERVER_ISSUER_URI}"
@@ -101,3 +108,8 @@ core-banking:
 security:
   oauth2:
     token-encryption-key: ${OAUTH2_TOKEN_ENCRYPTION_KEY}
+ibanking:
+  transaction:
+    reconciliation:
+      fixed-delay: "${TRANSACTION_RECONCILIATION_FIXED_DELAY}"
+      initial-delay: "${TRANSACTION_RECONCILIATION_INIT_DELAY}"
