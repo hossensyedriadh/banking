@@ -10,7 +10,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @EnableAsync
 @EnableJpaAuditing(dateTimeProviderRef = "dateTimeProvider", modifyOnCreate = false)
-@EnableJpaRepositories(basePackages = {"io.github.hossensyedriadh.internet_banking.customer.repository", "io.github.hossensyedriadh.internet_banking.beneficiary.repository"})
+@EnableJpaRepositories(basePackages = {"io.github.hossensyedriadh.internet_banking.customer.repository",
+        "io.github.hossensyedriadh.internet_banking.beneficiary.repository", "io.github.hossensyedriadh.internet_banking.transaction.repository"})
 @EnableTransactionManagement
 @EnableSpringDataWebSupport(pageSerializationMode = EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO)
 @SpringBootApplication

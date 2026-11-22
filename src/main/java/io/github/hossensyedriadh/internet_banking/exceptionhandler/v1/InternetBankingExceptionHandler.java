@@ -91,20 +91,20 @@ public class InternetBankingExceptionHandler {
 
     @ExceptionHandler({CoreBankingException.class})
     public ResponseEntity<?> handleCoreBankingException(CoreBankingException e) {
+        InternetBankingErrorResponse errorResponse = new InternetBankingErrorResponse(this.httpServletRequest, e.getHttpStatus().value(),
+                e.getHttpStatus().getReasonPhrase(), e.getMessage());
+
+        return new ResponseEntity<>(errorResponse, e.getHttpStatus());
+    }
+
+    @ExceptionHandler({CoreBankingCommunicationException.class})
+    public ResponseEntity<?> handleCoreBankingCommunicationException(CoreBankingCommunicationException e) {
         HttpStatus httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
 
         InternetBankingErrorResponse errorResponse = new InternetBankingErrorResponse(this.httpServletRequest, httpStatus.value(),
                 httpStatus.getReasonPhrase(), e.getMessage());
 
         return new ResponseEntity<>(errorResponse, httpStatus);
-    }
-
-    @ExceptionHandler({CoreBankingCommunicationException.class})
-    public ResponseEntity<?> handleCoreBankingCommunicationException(CoreBankingCommunicationException e) {
-        InternetBankingErrorResponse errorResponse = new InternetBankingErrorResponse(this.httpServletRequest, e.getHttpStatus().value(),
-                e.getHttpStatus().getReasonPhrase(), e.getMessage());
-
-        return new ResponseEntity<>(errorResponse, e.getHttpStatus());
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
