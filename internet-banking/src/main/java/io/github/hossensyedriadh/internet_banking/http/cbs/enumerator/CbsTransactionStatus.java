@@ -1,6 +1,6 @@
 package io.github.hossensyedriadh.internet_banking.http.cbs.enumerator;
 
-public enum TransactionStatus {
+public enum CbsTransactionStatus {
     PENDING,
     COMPLETED,
     FAILED,

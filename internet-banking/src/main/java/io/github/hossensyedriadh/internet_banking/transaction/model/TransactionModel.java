@@ -3,7 +3,7 @@ package io.github.hossensyedriadh.internet_banking.transaction.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.github.hossensyedriadh.internet_banking.common.AccountModel;
 import io.github.hossensyedriadh.internet_banking.common.CurrencyModel;
-import io.github.hossensyedriadh.internet_banking.http.cbs.enumerator.TransactionStatus;
+import io.github.hossensyedriadh.internet_banking.http.cbs.enumerator.CbsTransactionStatus;
 import io.github.hossensyedriadh.internet_banking.http.cbs.enumerator.TransactionType;
 import lombok.Getter;
 import lombok.Setter;
@@ -35,7 +35,7 @@ public class TransactionModel implements Serializable {
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private BigDecimal amount;
 
-    private TransactionStatus status;
+    private CbsTransactionStatus status;
 
     private String description;
 

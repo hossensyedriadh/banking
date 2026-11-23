@@ -1,7 +1,7 @@
 package io.github.hossensyedriadh.internet_banking.http.cbs.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.github.hossensyedriadh.internet_banking.http.cbs.enumerator.TransactionStatus;
+import io.github.hossensyedriadh.internet_banking.http.cbs.enumerator.CbsTransactionStatus;
 import io.github.hossensyedriadh.internet_banking.http.cbs.enumerator.TransactionType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -37,7 +37,7 @@ public class CbsTransactionResponse implements Serializable {
 
     private BigDecimal amount;
 
-    private TransactionStatus status;
+    private CbsTransactionStatus status;
 
     private String description;
 
