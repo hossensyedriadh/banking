@@ -101,3 +101,7 @@ banking:
           ttl: "${INTERNET_BANKING_CLIENT_ACCESS_TOKEN_TTL:5m}"
         refresh-token:
           ttl: "${INTERNET_BANKING_CLIENT_REFRESH_TOKEN_TTL:3d}"
+      internet-banking-service:
+        secret: "${INTERNET_BANKING_SERVICE_CLIENT_SECRET}"
+        access-token:
+          ttl: "${INTERNET_BANKING_SERVICE_CLIENT_ACCESS_TOKEN_TTL:10m}"

@@ -164,6 +164,7 @@ public class TokenExchangePolicy {
         return switch (clientId) {
             case "atm-pos-switch" -> ChannelType.SWITCH;
             case "internet-banking" -> ChannelType.INTERNET_BANKING;
+            case "internet-banking-service" -> ChannelType.INTERNET_BANKING_SERVICE;
             default -> throw this.error(
                     OAuth2ErrorCodes.INVALID_GRANT,
                     "Unsupported subject client: " + clientId

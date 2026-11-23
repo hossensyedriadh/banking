@@ -57,7 +57,7 @@ public class UserClientConfiguration {
                         scopes.add(OidcScopes.EMAIL);
                         scopes.add(OidcScopes.PHONE);
                         scopes.add("offline_access");
-                        scopes.addAll(InternetBankingOAuth2Scopes.all());
+                        scopes.addAll(InternetBankingOAuth2Scopes.forUserClient());
                     })
                     .clientSecret(passwordEncoder.encode(clientSecret))
                     .clientSettings(ClientSettings.builder().requireProofKey(true)
