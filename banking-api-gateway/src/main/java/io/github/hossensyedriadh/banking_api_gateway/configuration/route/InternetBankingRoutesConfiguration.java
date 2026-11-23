@@ -89,7 +89,7 @@ public class InternetBankingRoutesConfiguration {
                                         .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.INTERNET_BANKING, InternetBankingOAuth2Scopes.CARD_PIN_VERIFY))))
                         .uri(cbsBaseUrl))
                 .route("internet-banking-transactions-search", r -> r.path(InternetBankingEndpoints.TRANSACTIONS_SEARCH)
-                        .and().method(HttpMethod.GET).and().query("from").and().query("to")
+                        .and().method(HttpMethod.GET).and().query("from").and().query("to").and().query("accountId")
                         .filters(f -> f.rewritePath(
                                         InternetBankingEndpoints.TRANSACTIONS_SEARCH_REWRITE,
                                         CbsEndpoints.TRANSACTIONS_SEARCH_REWRITE)
@@ -105,7 +105,7 @@ public class InternetBankingRoutesConfiguration {
                                         .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.INTERNET_BANKING, InternetBankingOAuth2Scopes.TRANSACTION_READ))))
                         .uri(cbsBaseUrl))
                 .route("internet-banking-transaction-by-idempotency", r -> r.path(InternetBankingEndpoints.TRANSACTION_BY_IDEMPOTENCY)
-                        .and().method(HttpMethod.GET).filters(f -> f.rewritePath(
+                        .and().method(HttpMethod.GET).and().query("accountId").filters(f -> f.rewritePath(
                                         InternetBankingEndpoints.TRANSACTION_BY_IDEMPOTENCY_REWRITE,
                                         CbsEndpoints.TRANSACTION_BY_IDEMPOTENCY_REWRITE)
                                 .filter(this.delegatedTokenGatewayFilterFactory
@@ -117,13 +117,6 @@ public class InternetBankingRoutesConfiguration {
                                         CbsEndpoints.TRANSACTION_TRANSFER_REWRITE)
                                 .filter(this.delegatedTokenGatewayFilterFactory
                                         .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.INTERNET_BANKING, InternetBankingOAuth2Scopes.TRANSFER_CREATE))))
-                        .uri(cbsBaseUrl))
-                .route("internet-banking-reversal", r -> r.path(InternetBankingEndpoints.TRANSACTION_REVERSAL)
-                        .and().method(HttpMethod.POST).filters(f -> f.rewritePath(
-                                        InternetBankingEndpoints.TRANSACTION_REVERSAL_REWRITE,
-                                        CbsEndpoints.TRANSACTION_REVERSAL_REWRITE)
-                                .filter(this.delegatedTokenGatewayFilterFactory
-                                        .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.INTERNET_BANKING, InternetBankingOAuth2Scopes.REVERSAL_CREATE))))
                         .uri(cbsBaseUrl))
                 .build();
     }

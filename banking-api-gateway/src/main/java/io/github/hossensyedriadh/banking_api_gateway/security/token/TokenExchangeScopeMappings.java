@@ -34,7 +34,6 @@ public final class TokenExchangeScopeMappings {
             Map.entry(InternetBankingOAuth2Scopes.CURRENCY_INFO_READ, CbsOAuth2Scopes.CURRENCY_READ),
             Map.entry(InternetBankingOAuth2Scopes.ACCOUNT_PRODUCT_INFO_READ, CbsOAuth2Scopes.ACCOUNT_PRODUCT_READ),
             Map.entry(InternetBankingOAuth2Scopes.TRANSFER_CREATE, CbsOAuth2Scopes.TRANSFER_CREATE),
-            Map.entry(InternetBankingOAuth2Scopes.REVERSAL_CREATE, CbsOAuth2Scopes.REVERSAL_CREATE),
             Map.entry(InternetBankingOAuth2Scopes.TRANSACTIONS_SEARCH_READ, CbsOAuth2Scopes.TRANSACTIONS_SEARCH_READ),
             Map.entry(InternetBankingOAuth2Scopes.TRANSACTION_READ, CbsOAuth2Scopes.TRANSACTION_READ)
     );

@@ -13,7 +13,6 @@ public final class InternetBankingOAuth2Scopes {
     public static final String CURRENCY_INFO_READ = "SCOPE_ibanking.currency-info.read";
     public static final String ACCOUNT_PRODUCT_INFO_READ = "SCOPE_ibanking.account-product-info.read";
     public static final String TRANSFER_CREATE = "SCOPE_ibanking.transfer.create";
-    public static final String REVERSAL_CREATE = "SCOPE_ibanking.reversal.create";
     public static final String TRANSACTIONS_SEARCH_READ = "SCOPE_ibanking.transactions-search.read";
     public static final String TRANSACTION_READ = "SCOPE_ibanking.transaction.read";
 }
