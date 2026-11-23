@@ -39,5 +39,7 @@ public class CreateTransferCommand implements Serializable {
     @JsonProperty("idempotency_key")
     private String idempotencyKey;
 
+    @NotBlank
+    @Size(max = 255)
     private String description;
 }

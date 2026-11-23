@@ -39,5 +39,6 @@ public class PostInterestCommand implements Serializable {
     @JsonProperty("idempotency_key")
     private String idempotencyKey;
 
+    @Size(max = 255)
     private String description;
 }
