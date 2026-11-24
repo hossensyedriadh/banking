@@ -52,6 +52,9 @@ spring:
       table-name: core.spring_session
   security:
     oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: "${BANKING_IAM_SERVER_ISSUER_URI}"
       client:
         registration:
           internet-banking:
