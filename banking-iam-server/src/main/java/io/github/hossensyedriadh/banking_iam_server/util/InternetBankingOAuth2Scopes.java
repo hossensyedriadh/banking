@@ -24,6 +24,6 @@ public final class InternetBankingOAuth2Scopes {
     }
 
     public static Set<String> forMachineClient() {
-        return Set.of(TRANSFER_CREATE, TRANSACTION_READ);
+        return Set.of(ACCOUNT_INFO_READ, TRANSFER_CREATE, TRANSACTION_READ);
     }
 }
