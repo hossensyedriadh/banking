@@ -41,6 +41,7 @@ public final class TokenExchangeScopeMappings {
     );
 
     public static final Map<String, String> INTERNET_BANKING_SERVICE_TO_CBS = Map.ofEntries(
+            Map.entry(InternetBankingOAuth2Scopes.ACCOUNT_INFO_READ, CbsOAuth2Scopes.ACCOUNT_READ),
             Map.entry(InternetBankingOAuth2Scopes.TRANSFER_CREATE, CbsOAuth2Scopes.TRANSFER_CREATE),
             Map.entry(InternetBankingOAuth2Scopes.TRANSACTION_READ, CbsOAuth2Scopes.TRANSACTION_READ)
     );
