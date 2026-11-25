@@ -1,9 +1,15 @@
 package io.github.hossensyedriadh.internet_banking.transaction.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.hossensyedriadh.internet_banking.account.enumerator.AccountStatus;
+import io.github.hossensyedriadh.internet_banking.beneficiary.model.BeneficiaryModel;
+import io.github.hossensyedriadh.internet_banking.beneficiary.service.BeneficiaryService;
 import io.github.hossensyedriadh.internet_banking.exception.CoreBankingCommunicationException;
+import io.github.hossensyedriadh.internet_banking.exception.CoreBankingException;
 import io.github.hossensyedriadh.internet_banking.exception.CoreBankingTransactionNotFoundException;
+import io.github.hossensyedriadh.internet_banking.exception.ResourceException;
 import io.github.hossensyedriadh.internet_banking.http.cbs.CoreBankingSolutionService;
+import io.github.hossensyedriadh.internet_banking.http.cbs.model.CbsAccountResponse;
 import io.github.hossensyedriadh.internet_banking.http.cbs.model.CbsFundTransferRequest;
 import io.github.hossensyedriadh.internet_banking.http.cbs.model.CbsTransactionResponse;
 import io.github.hossensyedriadh.internet_banking.transaction.entity.IbankingTransaction;
@@ -19,13 +25,15 @@ import java.io.IOException;
 public class TransactionReconciliationServiceImpl implements TransactionReconciliationService {
     private final ChannelTransactionService channelTransactionService;
     private final CoreBankingSolutionService coreBankingSolutionService;
+    private final BeneficiaryService beneficiaryService;
     private final ObjectMapper objectMapper;
 
     @Autowired
     public TransactionReconciliationServiceImpl(ChannelTransactionService channelTransactionService, CoreBankingSolutionService coreBankingSolutionService,
-                                                ObjectMapper objectMapper) {
+                                                BeneficiaryService beneficiaryService, ObjectMapper objectMapper) {
         this.channelTransactionService = channelTransactionService;
         this.coreBankingSolutionService = coreBankingSolutionService;
+        this.beneficiaryService = beneficiaryService;
         this.objectMapper = objectMapper;
     }
 
@@ -51,9 +59,15 @@ public class TransactionReconciliationServiceImpl implements TransactionReconcil
             } catch (CoreBankingTransactionNotFoundException e) {
                 log.warn("CBS transaction not found; resubmitting original transaction request [Channel transaction ID: {}, Idempotency Key: {}]", channelTransactionId,
                         transaction.getIdempotencyKey().toString());
+                try {
+                    CbsFundTransferRequest fundTransferRequest = this.buildCbsFundTransferRequest(transaction);
 
-                CbsFundTransferRequest fundTransferRequest = this.buildCbsFundTransferRequest(transaction);
-                cbsTransactionResponse = this.coreBankingSolutionService.fundTransfer(fundTransferRequest);
+                    cbsTransactionResponse = this.coreBankingSolutionService.fundTransfer(fundTransferRequest);
+                } catch (CoreBankingException cbe) {
+                    this.channelTransactionService.markTransactionFailed(channelTransactionId);
+                    log.warn("CBS definitively rejected fund transfer during reconciliation [Channel Transaction ID: {}]", channelTransactionId, e);
+                    return;
+                }
             }
 
             this.channelTransactionService.recordCbsResult(channelTransactionId, cbsTransactionResponse);
@@ -79,9 +93,21 @@ public class TransactionReconciliationServiceImpl implements TransactionReconcil
             throw new IllegalStateException("Unable to deserialize original fund transfer request", e);
         }
 
+        BeneficiaryModel beneficiary = this.beneficiaryService.findById(originalRequest.getBeneficiaryId()).orElseThrow(() -> {
+            log.warn("Beneficiary not found with ID: {} for fund transfer transaction with ID: {}", originalRequest.getBeneficiaryId(), transaction.getId());
+            return new ResourceException("Beneficiary not found for fund transfer transaction");
+        });
+
+        CbsAccountResponse destinationAccount = this.coreBankingSolutionService.fetchAccountInfo(beneficiary.getAccountNumber());
+
+        if (destinationAccount.getStatus() != AccountStatus.ACTIVE) {
+            log.warn("Fund transfer transaction [ID: {}] destination account [ID: {}] is not in active state", transaction.getId(), destinationAccount.getId());
+            throw new ResourceException("Fund transfer destination account is not active");
+        }
+
         CbsFundTransferRequest cbsRequest = new CbsFundTransferRequest();
         cbsRequest.setAccountId(originalRequest.getAccountId());
-        cbsRequest.setDestinationAccountId(originalRequest.getDestinationAccountId());
+        cbsRequest.setDestinationAccountId(destinationAccount.getId());
         cbsRequest.setCurrencyId(originalRequest.getCurrencyId());
         cbsRequest.setAmount(originalRequest.getAmount());
         cbsRequest.setDescription(originalRequest.getDescription());

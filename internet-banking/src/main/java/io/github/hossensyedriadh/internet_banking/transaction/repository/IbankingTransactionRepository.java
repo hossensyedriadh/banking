@@ -89,4 +89,14 @@ public interface IbankingTransactionRepository extends JpaRepository<IbankingTra
             order by t.receivedAt asc
             """)
     List<Long> findUnknownTransactionIds(@Param("status") ChannelTransactionStatus status, Pageable pageable);
+
+    @Modifying
+    @Query("""
+            update IbankingTransaction t
+            set t.status = :failed,
+                t.processingStartedAt = null
+            where t.id = :transactionId
+              and t.status = :processing
+            """)
+    int markTransactionFailed(@Param("transactionId") Long transactionId, @Param("processing") ChannelTransactionStatus processing, @Param("failed") ChannelTransactionStatus failed);
 }

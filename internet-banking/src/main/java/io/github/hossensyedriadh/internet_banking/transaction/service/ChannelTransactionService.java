@@ -22,6 +22,8 @@ public interface ChannelTransactionService {
 
     void markTransactionUnknown(Long id);
 
+    void markTransactionFailed(Long id);
+
     boolean claimForProcessing(Long transactionId);
 
     boolean claimForReconciliation(Long transactionId);

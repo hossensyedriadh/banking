@@ -52,6 +52,9 @@ spring:
       table-name: core.spring_session
   security:
     oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: "${BANKING_IAM_SERVER_ISSUER_URI}"
       client:
         registration:
           internet-banking:
@@ -68,7 +71,7 @@ spring:
             client-secret: "${IBANKING_SERVICE_CLIENT_SECRET}"
             authorization-grant-type: client_credentials
             client-name: "Internet Banking Service"
-            scope: [ibanking.transaction.read, ibanking.transfer.create]
+            scope: [ibanking.account-info.read, ibanking.transaction.read, ibanking.transfer.create]
         provider:
           banking-iam-server:
             issuer-uri: "${BANKING_IAM_SERVER_ISSUER_URI}"

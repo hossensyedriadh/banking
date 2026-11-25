@@ -47,7 +47,7 @@ public class TransactionController {
         return ResponseEntity.ok(transaction);
     }
 
-    @GetMapping(value = "/transfers", consumes = {MediaType.APPLICATION_JSON_VALUE}, headers = {CustomAttributes.TRANSACTION_IDEMPOTENCY_KEY_HEADER})
+    @PostMapping(value = "/transfers", consumes = {MediaType.APPLICATION_JSON_VALUE}, headers = {CustomAttributes.TRANSACTION_IDEMPOTENCY_KEY_HEADER})
     public ResponseEntity<TransactionModel> transfer(@RequestHeader(CustomAttributes.TRANSACTION_IDEMPOTENCY_KEY_HEADER) UUID idempotencyKey, @RequestBody FundTransferRequest request) {
         TransactionModel transfer = this.transactionService.transfer(idempotencyKey, request);
 

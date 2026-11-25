@@ -8,6 +8,7 @@ import org.springframework.security.authorization.AuthorizationResult;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 import org.springframework.stereotype.Component;
 
@@ -19,8 +20,9 @@ public class OidcUserAuthorizationManager implements AuthorizationManager<Reques
     public @Nullable AuthorizationResult authorize(@NonNull Supplier<? extends @Nullable Authentication> authenticationSupplier, RequestAuthorizationContext object) {
         Authentication authentication = authenticationSupplier.get();
 
-        boolean authorized = authentication instanceof OAuth2AuthenticationToken && authentication.isAuthenticated()
-                && authentication.getPrincipal() instanceof OidcUser;
+        boolean authorized = authentication.isAuthenticated()
+                && ((authentication instanceof OAuth2AuthenticationToken && authentication.getPrincipal() instanceof OidcUser)
+                || authentication instanceof JwtAuthenticationToken);
 
         return new AuthorizationDecision(authorized);
     }

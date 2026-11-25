@@ -10,12 +10,14 @@ import io.github.hossensyedriadh.internet_banking.exception.ResourceException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Objects;
 import java.util.Optional;
 
 @Log4j2
@@ -32,23 +34,22 @@ class CustomerIdentityServiceImpl implements CustomerIdentityService {
 
     @Override
     public PrincipalIdentityModel getPrincipal() {
-        OidcUser oidcUser = (OidcUser) Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getPrincipal();
-
-        Optional<CustomerIdentity> customerIdentityOptional = this.customerIdentityRepository.findByIamSubject(Objects.requireNonNull(oidcUser).getSubject());
+        Optional<CustomerIdentity> customerIdentityOptional = this.customerIdentityRepository.findByIamSubject(this.getSubject());
 
         if (customerIdentityOptional.isEmpty()) {
-            log.warn("Customer identity not found for IAM subject {}", oidcUser.getSubject());
+            log.warn("Customer identity not found for IAM subject {}", this.getSubject());
             throw new ResourceException("Customer identity not found", HttpStatus.NOT_FOUND);
         }
 
-        CustomerIdentityModel customerIdentityModel = this.customerIdentityMapper.toModel(customerIdentityOptional.get());
+        CustomerIdentityModel customerIdentityModel =
+                this.customerIdentityMapper.toModel(customerIdentityOptional.get());
 
         PrincipalIdentityModel model = new PrincipalIdentityModel();
-        model.setName(oidcUser.getName());
-        model.setEmail(oidcUser.getEmail());
-        model.setEmailVerified(oidcUser.getEmailVerified());
-        model.setPhoneNumber(oidcUser.getPhoneNumber());
-        model.setPhoneNumberVerified(oidcUser.getPhoneNumberVerified());
+        model.setName(this.getClaim("name"));
+        model.setEmail(this.getClaim("email"));
+        model.setEmailVerified(this.getBooleanClaim("email_verified"));
+        model.setPhoneNumber(this.getClaim("phone_number"));
+        model.setPhoneNumberVerified(this.getBooleanClaim("phone_number_verified"));
         model.setCustomerIdentity(customerIdentityModel);
 
         return model;
@@ -75,9 +76,7 @@ class CustomerIdentityServiceImpl implements CustomerIdentityService {
             this.customerIdentityRepository.save(identity);
 
             log.info("Customer identity with ID {} has been blocked.", id);
-        }, () -> {
-            log.warn("Customer identity with ID {} does not exist, failed to block", id);
-        });
+        }, () -> log.warn("Customer identity with ID {} does not exist, failed to block", id));
     }
 
     @Transactional
@@ -96,9 +95,7 @@ class CustomerIdentityServiceImpl implements CustomerIdentityService {
             this.customerIdentityRepository.save(identity);
 
             log.info("Customer identity with ID {} has been unblocked.", id);
-        }, () -> {
-            log.warn("Customer identity with ID {} does not exist, failed to unblock.", id);
-        });
+        }, () -> log.warn("Customer identity with ID {} does not exist, failed to unblock.", id));
     }
 
     @Transactional
@@ -117,8 +114,58 @@ class CustomerIdentityServiceImpl implements CustomerIdentityService {
             this.customerIdentityRepository.save(identity);
 
             log.info("Customer identity with ID {} has been closed.", id);
-        }, () -> {
-            log.warn("Customer identity with ID {} does not exist, failed to close", id);
-        });
+        }, () -> log.warn("Customer identity with ID {} does not exist, failed to close", id));
+    }
+
+    private Authentication getAuthentication() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new IllegalStateException("User is not authenticated");
+        }
+
+        return authentication;
+    }
+
+    public String getSubject() {
+        Authentication authentication = this.getAuthentication();
+
+        if (authentication instanceof OAuth2AuthenticationToken oauth2) {
+            return ((OidcUser) oauth2.getPrincipal()).getSubject();
+        }
+
+        if (authentication instanceof JwtAuthenticationToken jwt) {
+            return jwt.getToken().getSubject();
+        }
+
+        throw new IllegalStateException("Unsupported authentication type");
+    }
+
+    private String getClaim(String claimName) {
+        Authentication authentication = this.getAuthentication();
+
+        if (authentication instanceof OAuth2AuthenticationToken oauth2) {
+            return oauth2.getPrincipal().getAttribute(claimName);
+        }
+
+        if (authentication instanceof JwtAuthenticationToken jwt) {
+            return jwt.getToken().getClaimAsString(claimName);
+        }
+
+        throw new IllegalStateException("Unsupported authentication type");
+    }
+
+    private Boolean getBooleanClaim(String claimName) {
+        Authentication authentication = this.getAuthentication();
+
+        if (authentication instanceof OAuth2AuthenticationToken oauth2) {
+            return oauth2.getPrincipal().getAttribute(claimName);
+        }
+
+        if (authentication instanceof JwtAuthenticationToken jwt) {
+            return jwt.getToken().getClaim(claimName);
+        }
+
+        throw new IllegalStateException("Unsupported authentication type");
     }
 }

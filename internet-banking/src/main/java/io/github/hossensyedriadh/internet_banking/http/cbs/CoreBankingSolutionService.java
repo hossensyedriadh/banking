@@ -80,6 +80,27 @@ public class CoreBankingSolutionService {
         }
     }
 
+    public CbsAccountResponse fetchAccountInfo(@NonNull String accountNumber) {
+        try {
+            CbsAccountResponse accountResponse = this.restClient.get().uri(uriBuilder -> uriBuilder.path("/accounts/account-number/{number}")
+                            .build(accountNumber))
+                    .retrieve().body(CbsAccountResponse.class);
+
+            if (accountResponse == null) {
+                log.error("CBS/Gateway returned empty response for Account [Account Number: {}] information fetch", accountNumber);
+                throw new CoreBankingException("Failed to fetch account information");
+            }
+
+            return accountResponse;
+        } catch (RestClientResponseException e) {
+            log.error("CBS/Gateway returned HTTP {} while trying to fetch Account [Account Number: {}] information", e.getStatusCode().value(), accountNumber, e);
+            throw new CoreBankingException("Failed to fetch account information", HttpStatus.resolve(e.getStatusCode().value()), e);
+        } catch (RestClientException e) {
+            log.error("CBS/Gateway returned invalid response for Account [Account Number: {}] information fetch", accountNumber, e);
+            throw new CoreBankingCommunicationException("Failed to fetch account information", e);
+        }
+    }
+
     public CbsAccountBalanceResponse fetchAccountBalance(@NonNull Long accountId) {
         try {
             CbsAccountBalanceResponse balanceResponse = this.restClient.get().uri(uriBuilder -> uriBuilder.path("/accounts/{accountId}/balance")
@@ -167,12 +188,12 @@ public class CoreBankingSolutionService {
     public CbsTransactionPage fetchTransactions(CbsTransactionsSearch search) {
         try {
             CbsTransactionPage response = this.restClient.get().uri(uriBuilder -> uriBuilder.path("/transactions")
-                    .queryParam("from", search.from().toString()).queryParam("to", search.to().toString())
-                    .queryParam("page", search.page()).queryParam("size", search.size())
-                    .queryParam("accountId", search.accountId())
-                    .queryParamIfPresent("type", Optional.ofNullable(search.type()))
-                    .queryParamIfPresent("status", Optional.ofNullable(search.status()))
-                    .build())
+                            .queryParam("from", search.from().toString()).queryParam("to", search.to().toString())
+                            .queryParam("page", search.page()).queryParam("size", search.size())
+                            .queryParam("accountId", search.accountId())
+                            .queryParamIfPresent("type", Optional.ofNullable(search.type()))
+                            .queryParamIfPresent("status", Optional.ofNullable(search.status()))
+                            .build())
                     .retrieve().body(CbsTransactionPage.class);
 
             if (response == null || response.getContent() == null) {

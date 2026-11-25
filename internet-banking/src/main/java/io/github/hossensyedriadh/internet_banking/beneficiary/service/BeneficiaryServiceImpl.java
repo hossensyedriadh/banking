@@ -3,7 +3,6 @@ package io.github.hossensyedriadh.internet_banking.beneficiary.service;
 import io.github.hossensyedriadh.internet_banking.beneficiary.entity.Beneficiary;
 import io.github.hossensyedriadh.internet_banking.beneficiary.entity.BeneficiaryBankBranch;
 import io.github.hossensyedriadh.internet_banking.beneficiary.enumerator.BeneficiaryBankBranchStatus;
-import io.github.hossensyedriadh.internet_banking.beneficiary.enumerator.BeneficiaryBankStatus;
 import io.github.hossensyedriadh.internet_banking.beneficiary.enumerator.BeneficiaryStatus;
 import io.github.hossensyedriadh.internet_banking.beneficiary.mapper.BeneficiaryMapper;
 import io.github.hossensyedriadh.internet_banking.beneficiary.model.BeneficiaryModel;
@@ -25,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Log4j2
 @Service
@@ -45,24 +43,40 @@ class BeneficiaryServiceImpl implements BeneficiaryService {
     }
 
     @Override
-    public List<BeneficiaryModel> findAll() {
-        return this.beneficiaryRepository.findAllByStatus(BeneficiaryStatus.ACTIVE).stream().map(this.beneficiaryMapper::toModel).collect(Collectors.toList());
+    public List<BeneficiaryModel> findAll(BeneficiaryStatus status) {
+        CustomerIdentity customerIdentity = this.getCustomerIdentity();
+
+        if (status != null) {
+            return this.beneficiaryRepository.findAllByStatusAndCustomerIdentityId(status, customerIdentity.getId()).stream()
+                    .map(this.beneficiaryMapper::toModel).toList();
+        }
+
+        return this.beneficiaryRepository.findAllByCustomerIdentityId(customerIdentity.getId()).stream()
+                .map(this.beneficiaryMapper::toModel).toList();
     }
 
     @Override
     public Optional<BeneficiaryModel> findById(UUID id) {
-        return this.beneficiaryRepository.findByIdAndStatus(id, BeneficiaryStatus.ACTIVE).map(this.beneficiaryMapper::toModel);
+        return this.beneficiaryRepository.findById(id).map(this.beneficiaryMapper::toModel);
+    }
+
+    @Override
+    public Optional<BeneficiaryModel> findByIdForPrincipal(UUID id) {
+        CustomerIdentity customerIdentity = this.getCustomerIdentity();
+
+        return this.beneficiaryRepository.findByIdAndCustomerIdentityId(id, customerIdentity.getId()).map(this.beneficiaryMapper::toModel);
     }
 
     @Transactional
     @Override
     public BeneficiaryModel create(@Valid CreateBeneficiaryRequest request) {
-        PrincipalIdentityModel principal = this.customerIdentityService.getPrincipal();
-        Optional<CustomerIdentity> customerIdentity = this.customerIdentityService.getById(principal.getCustomerIdentity().getId());
+        CustomerIdentity customerIdentity = this.getCustomerIdentity();
 
-        if (customerIdentity.isEmpty()) {
-            log.warn("Customer identity not found, failed to create beneficiary");
-            throw new ResourceException("Customer identity not found", HttpStatus.BAD_REQUEST);
+        boolean exists = this.beneficiaryRepository.beneficiaryExists(customerIdentity.getId(), request.getAccountNumber(), request.getBankBranchId());
+
+        if (exists) {
+            log.warn("Beneficiary already exists for customer [ID: {}]", customerIdentity.getId());
+            throw new ResourceException("Beneficiary already exists", HttpStatus.CONFLICT);
         }
 
         Optional<BeneficiaryBankBranch> bankBranchOptional = this.beneficiaryBankBranchRepository.findById(request.getBankBranchId());
@@ -74,18 +88,13 @@ class BeneficiaryServiceImpl implements BeneficiaryService {
 
         BeneficiaryBankBranch bankBranch = bankBranchOptional.get();
 
-        if (bankBranch.getBank().getStatus() != BeneficiaryBankStatus.ACTIVE) {
-            log.warn("Bank with ID {} is not active, failed to create beneficiary", bankBranch.getBank().getId());
-            throw new ResourceException("Bank is not active", HttpStatus.BAD_REQUEST);
-        }
-
         if (bankBranch.getStatus() != BeneficiaryBankBranchStatus.ACTIVE) {
             log.warn("Bank branch with ID {} is not active, failed to create beneficiary", bankBranch.getId());
             throw new ResourceException("Bank branch is not active", HttpStatus.BAD_REQUEST);
         }
 
         Beneficiary beneficiary = new Beneficiary();
-        beneficiary.setCustomerIdentity(customerIdentity.get());
+        beneficiary.setCustomerIdentityId(customerIdentity.getId());
         beneficiary.setBankBranch(bankBranch);
         beneficiary.setBeneficiaryName(request.getBeneficiaryName());
         beneficiary.setAccountNumber(request.getAccountNumber());
@@ -102,7 +111,9 @@ class BeneficiaryServiceImpl implements BeneficiaryService {
     @Transactional
     @Override
     public BeneficiaryModel update(UUID id, @Valid UpdateBeneficiaryRequest request) {
-        Optional<Beneficiary> beneficiaryOptional = this.beneficiaryRepository.findByIdForUpdate(id);
+        Long customerIdentityId = this.getCustomerIdentity().getId();
+
+        Optional<Beneficiary> beneficiaryOptional = this.beneficiaryRepository.findByIdAndCustomerIdentityForUpdate(id, customerIdentityId);
 
         if (beneficiaryOptional.isEmpty()) {
             log.warn("Beneficiary with ID {} not found", id);
@@ -120,10 +131,31 @@ class BeneficiaryServiceImpl implements BeneficiaryService {
         return this.beneficiaryMapper.toModel(updated);
     }
 
+    @Override
+    public void activate(UUID id) {
+        Long customerIdentityId = this.getCustomerIdentity().getId();
+
+        Optional<Beneficiary> beneficiary = this.beneficiaryRepository.findByIdAndCustomerIdentityForUpdate(id, customerIdentityId);
+
+        beneficiary.ifPresentOrElse(b -> {
+            if (b.getStatus() == BeneficiaryStatus.ACTIVE) {
+                log.warn("Beneficiary with ID {} is already active.", id);
+                throw new ResourceException("Beneficiary is already active", HttpStatus.CONFLICT);
+            }
+
+            b.setStatus(BeneficiaryStatus.ACTIVE);
+            this.beneficiaryRepository.save(b);
+
+            log.info("Beneficiary with ID {} has been activated.", id);
+        }, () -> log.warn("Beneficiary with ID {} does not exist.", id));
+    }
+
     @Transactional
     @Override
     public void deactivate(UUID id) {
-        Optional<Beneficiary> beneficiary = this.beneficiaryRepository.findByIdForUpdate(id);
+        Long customerIdentityId = this.getCustomerIdentity().getId();
+
+        Optional<Beneficiary> beneficiary = this.beneficiaryRepository.findByIdAndCustomerIdentityForUpdate(id, customerIdentityId);
 
         beneficiary.ifPresentOrElse(b -> {
             if (b.getStatus() == BeneficiaryStatus.INACTIVE) {
@@ -135,8 +167,18 @@ class BeneficiaryServiceImpl implements BeneficiaryService {
             this.beneficiaryRepository.save(b);
 
             log.info("Beneficiary with ID {} has been deactivated.", id);
-        }, () -> {
-            log.warn("Beneficiary with ID {} does not exist.", id);
-        });
+        }, () -> log.warn("Beneficiary with ID {} does not exist.", id));
+    }
+
+    private CustomerIdentity getCustomerIdentity() {
+        PrincipalIdentityModel principal = this.customerIdentityService.getPrincipal();
+        Optional<CustomerIdentity> customerIdentity = this.customerIdentityService.getById(principal.getCustomerIdentity().getId());
+
+        if (customerIdentity.isEmpty()) {
+            log.warn("Customer identity not found, failed to create beneficiary");
+            throw new ResourceException("Customer identity not found", HttpStatus.BAD_REQUEST);
+        }
+
+        return customerIdentity.get();
     }
 }

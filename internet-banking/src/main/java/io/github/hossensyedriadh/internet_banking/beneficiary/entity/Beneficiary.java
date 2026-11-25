@@ -1,7 +1,6 @@
 package io.github.hossensyedriadh.internet_banking.beneficiary.entity;
 
 import io.github.hossensyedriadh.internet_banking.beneficiary.enumerator.BeneficiaryStatus;
-import io.github.hossensyedriadh.internet_banking.customer.entity.CustomerIdentity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -29,18 +28,17 @@ public class Beneficiary {
     @Column(name = "id", nullable = false)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "customer_identity_id", updatable = false, nullable = false)
-    private CustomerIdentity customerIdentity;
+    @Column(name = "customer_identity_id", updatable = false, nullable = false)
+    private Long customerIdentityId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "bank_branch_id", updatable = false, nullable = false)
     private BeneficiaryBankBranch bankBranch;
 
-    @Column(name = "beneficiary_name", nullable = false, length = 150)
+    @Column(name = "beneficiary_name", updatable = false, nullable = false, length = 150)
     private String beneficiaryName;
 
-    @Column(name = "account_number", nullable = false, length = 50)
+    @Column(name = "account_number", updatable = false, nullable = false, length = 50)
     private String accountNumber;
 
     @Column(name = "nickname", length = 100)

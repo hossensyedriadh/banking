@@ -2,8 +2,8 @@ package io.github.hossensyedriadh.internet_banking.common;
 
 import lombok.Getter;
 import lombok.Setter;
-import tools.jackson.databind.PropertyNamingStrategies;
-import tools.jackson.databind.annotation.JsonNaming;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
 import java.io.Serial;
 import java.io.Serializable;

@@ -1,5 +1,6 @@
 package io.github.hossensyedriadh.internet_banking.beneficiary.controller.v1;
 
+import io.github.hossensyedriadh.internet_banking.beneficiary.enumerator.BeneficiaryStatus;
 import io.github.hossensyedriadh.internet_banking.beneficiary.model.BeneficiaryModel;
 import io.github.hossensyedriadh.internet_banking.beneficiary.model.CreateBeneficiaryRequest;
 import io.github.hossensyedriadh.internet_banking.beneficiary.model.UpdateBeneficiaryRequest;
@@ -25,9 +26,9 @@ public class BeneficiaryController {
         this.beneficiaryService = beneficiaryService;
     }
 
-    @GetMapping("/")
-    public ResponseEntity<List<BeneficiaryModel>> beneficiaries() {
-        List<BeneficiaryModel> beneficiaries = this.beneficiaryService.findAll();
+    @GetMapping
+    public ResponseEntity<List<BeneficiaryModel>> beneficiaries(@RequestParam(value = "status", required = false) BeneficiaryStatus status) {
+        List<BeneficiaryModel> beneficiaries = this.beneficiaryService.findAll(status);
 
         if (beneficiaries.isEmpty()) {
             return ResponseEntity.noContent().build();
@@ -38,7 +39,7 @@ public class BeneficiaryController {
 
     @GetMapping("/{id}")
     public ResponseEntity<BeneficiaryModel> beneficiary(@PathVariable("id") UUID id) {
-        Optional<BeneficiaryModel> beneficiaryModel = this.beneficiaryService.findById(id);
+        Optional<BeneficiaryModel> beneficiaryModel = this.beneficiaryService.findByIdForPrincipal(id);
 
         return beneficiaryModel.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
@@ -60,7 +61,14 @@ public class BeneficiaryController {
         return ResponseEntity.ok(updated);
     }
 
-    @DeleteMapping("/{id}")
+    @PostMapping("/activation/{id}")
+    public ResponseEntity<Void> activate(@PathVariable("id") UUID id) {
+        this.beneficiaryService.activate(id);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/deactivation/{id}")
     public ResponseEntity<Void> deactivate(@PathVariable("id") UUID id) {
         this.beneficiaryService.deactivate(id);
 

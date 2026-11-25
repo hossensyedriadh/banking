@@ -33,6 +33,9 @@ public class SecurityConfiguration {
                                 "/actuator/info", "/v3/api-docs/**", "/swagger-ui/**", "/ui-docs.html").permitAll()
                         .anyRequest().access(this.oidcUserAuthorizationManager))
                 .oauth2Login(Customizer.withDefaults())
+                .oauth2ResourceServer(oauth2 ->
+                        oauth2.jwt(Customizer.withDefaults())
+                )
                 .logout(logoutConfigurer -> logoutConfigurer.logoutUrl("/logout")
                         .invalidateHttpSession(true)
                         .clearAuthentication(true)
