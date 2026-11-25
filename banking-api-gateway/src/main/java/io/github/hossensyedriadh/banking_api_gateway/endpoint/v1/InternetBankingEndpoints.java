@@ -12,6 +12,9 @@ public final class InternetBankingEndpoints {
     public static final String ACCOUNT_INFO = BASE + "/accounts/{id}";
     public static final String ACCOUNT_INFO_REWRITE = BASE + "/accounts/(?<id>[^/]+)";
 
+    public static final String ACCOUNT_INFO_BY_ACCOUNT_NUMBER = BASE + "/accounts/account-number/{number}";
+    public static final String ACCOUNT_INFO_BY_ACCOUNT_NUMBER_REWRITE = BASE + "/accounts/account-number/(?<number>[^/]+)";
+
     public static final String ACCOUNT_LIST = BASE + "/accounts/customer/{customerId}/list";
     public static final String ACCOUNT_LIST_REWRITE = BASE + "/accounts/customer/(?<customerId>[^/]+)/list";
 

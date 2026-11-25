@@ -36,6 +36,7 @@ public class SecurityConfiguration {
                         .pathMatchers(HttpMethod.GET, InternetBankingEndpoints.BASE + "/accounts/*/balance").hasAuthority(InternetBankingOAuth2Scopes.BALANCE_READ)
                         .pathMatchers(HttpMethod.GET, InternetBankingEndpoints.BASE + "/accounts/customer/*/list").hasAuthority(InternetBankingOAuth2Scopes.ACCOUNT_INFO_LIST)
                         .pathMatchers(HttpMethod.GET, InternetBankingEndpoints.BASE + "/accounts/*").hasAuthority(InternetBankingOAuth2Scopes.ACCOUNT_INFO_READ)
+                        .pathMatchers(HttpMethod.GET, InternetBankingEndpoints.BASE + "/accounts/account-number/*").hasAuthority(InternetBankingOAuth2Scopes.ACCOUNT_INFO_READ)
                         .pathMatchers(HttpMethod.GET, InternetBankingEndpoints.BASE + "/branches/*").hasAuthority(InternetBankingOAuth2Scopes.BRANCH_INFO_READ)
                         .pathMatchers(HttpMethod.GET, InternetBankingEndpoints.BASE + "/account-products/*").hasAuthority(InternetBankingOAuth2Scopes.ACCOUNT_PRODUCT_INFO_READ)
                         .pathMatchers(HttpMethod.GET, InternetBankingEndpoints.BASE + "/currencies/*").hasAuthority(InternetBankingOAuth2Scopes.CURRENCY_INFO_READ)

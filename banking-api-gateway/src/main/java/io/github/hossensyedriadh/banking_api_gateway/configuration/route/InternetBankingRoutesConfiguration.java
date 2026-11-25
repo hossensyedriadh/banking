@@ -46,6 +46,13 @@ public class InternetBankingRoutesConfiguration {
                                 .filter(this.delegatedTokenGatewayFilterFactory
                                         .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.INTERNET_BANKING, InternetBankingOAuth2Scopes.ACCOUNT_INFO_READ))))
                         .uri(cbsBaseUrl))
+                .route("internet-banking-account-info-account-number", r -> r.path(InternetBankingEndpoints.ACCOUNT_INFO_BY_ACCOUNT_NUMBER)
+                        .and().method(HttpMethod.GET).filters(f -> f.rewritePath(
+                                        InternetBankingEndpoints.ACCOUNT_INFO_BY_ACCOUNT_NUMBER_REWRITE,
+                                        CbsEndpoints.ACCOUNT_INFO_BY_ACCOUNT_NUMBER_REWRITE)
+                                .filter(this.delegatedTokenGatewayFilterFactory
+                                        .apply(new DelegatedTokenGatewayFilterFactory.Config(ChannelType.INTERNET_BANKING, InternetBankingOAuth2Scopes.ACCOUNT_INFO_READ))))
+                        .uri(cbsBaseUrl))
                 .route("internet-banking-account-product-info", r -> r.path(InternetBankingEndpoints.ACCOUNT_PRODUCT_INFO)
                         .and().method(HttpMethod.GET).filters(f -> f.rewritePath(
                                         InternetBankingEndpoints.ACCOUNT_PRODUCT_INFO_REWRITE,
