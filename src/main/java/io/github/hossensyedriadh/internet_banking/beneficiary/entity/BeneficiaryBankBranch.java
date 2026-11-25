@@ -28,10 +28,6 @@ public class BeneficiaryBankBranch {
     @Column(name = "id", nullable = false)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "bank_id", updatable = false, nullable = false)
-    private BeneficiaryBank bank;
-
     @Column(name = "branch_name", nullable = false, length = 150)
     private String branchName;
 

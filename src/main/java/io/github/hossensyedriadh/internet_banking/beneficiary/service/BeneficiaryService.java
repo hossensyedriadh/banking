@@ -1,5 +1,6 @@
 package io.github.hossensyedriadh.internet_banking.beneficiary.service;
 
+import io.github.hossensyedriadh.internet_banking.beneficiary.enumerator.BeneficiaryStatus;
 import io.github.hossensyedriadh.internet_banking.beneficiary.model.BeneficiaryModel;
 import io.github.hossensyedriadh.internet_banking.beneficiary.model.CreateBeneficiaryRequest;
 import io.github.hossensyedriadh.internet_banking.beneficiary.model.UpdateBeneficiaryRequest;
@@ -10,13 +11,17 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface BeneficiaryService {
-    List<BeneficiaryModel> findAll();
+    List<BeneficiaryModel> findAll(BeneficiaryStatus status);
 
     Optional<BeneficiaryModel> findById(UUID id);
+
+    Optional<BeneficiaryModel> findByIdForPrincipal(UUID id);
 
     BeneficiaryModel create(@Valid CreateBeneficiaryRequest request);
 
     BeneficiaryModel update(UUID id, @Valid UpdateBeneficiaryRequest request);
+
+    void activate(UUID id);
 
     void deactivate(UUID id);
 }

@@ -121,6 +121,17 @@ class ChannelTransactionServiceImpl implements ChannelTransactionService {
         }
     }
 
+    @Override
+    public void markTransactionFailed(Long id) {
+        int updated = this.ibankingTransactionRepository.markTransactionFailed(id, ChannelTransactionStatus.PROCESSING, ChannelTransactionStatus.FAILED);
+
+        if (updated == 1) {
+            log.info("Marked IBanking transaction [ID: {}] as FAILED", id);
+        } else {
+            log.warn("Could not mark IBanking transaction [ID: {}] as FAILED; it may no longer be PROCESSING", id);
+        }
+    }
+
     @Transactional
     @Override
     public boolean claimForProcessing(Long transactionId) {
@@ -145,7 +156,7 @@ class ChannelTransactionServiceImpl implements ChannelTransactionService {
         try {
             String canonicalRequest = String.join("|",
                     request.getAccountId().toString(),
-                    request.getDestinationAccountId().toString(),
+                    request.getBeneficiaryId().toString(),
                     request.getCurrencyId().toString(),
                     request.getAmount().stripTrailingZeros().toPlainString(),
                     request.getDescription()

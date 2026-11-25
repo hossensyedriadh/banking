@@ -1,6 +1,8 @@
 package io.github.hossensyedriadh.internet_banking.transaction.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.hossensyedriadh.internet_banking.beneficiary.model.BeneficiaryModel;
+import io.github.hossensyedriadh.internet_banking.beneficiary.service.BeneficiaryService;
 import io.github.hossensyedriadh.internet_banking.common.AccountModel;
 import io.github.hossensyedriadh.internet_banking.common.CurrencyModel;
 import io.github.hossensyedriadh.internet_banking.exception.CoreBankingCommunicationException;
@@ -25,10 +27,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -39,14 +38,16 @@ import java.util.stream.Stream;
 class TransactionServiceImpl implements TransactionService {
     private final CoreBankingSolutionService coreBankingSolutionService;
     private final ChannelTransactionService channelTransactionService;
+    private final BeneficiaryService beneficiaryService;
     private final TaskExecutor taskExecutor;
     private final ObjectMapper objectMapper;
 
     @Autowired
     public TransactionServiceImpl(CoreBankingSolutionService coreBankingSolutionService, ChannelTransactionService channelTransactionService,
-                                  @Qualifier("iBankingTaskExecutor") TaskExecutor taskExecutor, ObjectMapper objectMapper) {
+                                  BeneficiaryService beneficiaryService, @Qualifier("iBankingTaskExecutor") TaskExecutor taskExecutor, ObjectMapper objectMapper) {
         this.coreBankingSolutionService = coreBankingSolutionService;
         this.channelTransactionService = channelTransactionService;
+        this.beneficiaryService = beneficiaryService;
         this.taskExecutor = taskExecutor;
         this.objectMapper = objectMapper;
     }
@@ -113,9 +114,12 @@ class TransactionServiceImpl implements TransactionService {
             throw new ResourceException("Unable to acquire transaction for processing", HttpStatus.CONFLICT);
         }
 
+        BeneficiaryModel beneficiary = this.getBeneficiary(request.getBeneficiaryId());
+        CbsAccountResponse destinationAccount = this.coreBankingSolutionService.fetchAccountInfo(beneficiary.getAccountNumber());
+
         CbsFundTransferRequest cbsRequest = new CbsFundTransferRequest();
         cbsRequest.setAccountId(request.getAccountId());
-        cbsRequest.setDestinationAccountId(request.getDestinationAccountId());
+        cbsRequest.setDestinationAccountId(destinationAccount.getId());
         cbsRequest.setCurrencyId(request.getCurrencyId());
         cbsRequest.setAmount(request.getAmount());
         cbsRequest.setIdempotencyKey(channelTransaction.getIdempotencyKey().toString());
@@ -219,9 +223,12 @@ class TransactionServiceImpl implements TransactionService {
             try {
                 FundTransferRequest originalRequest = this.objectMapper.readValue(transaction.getRequestPayload(), FundTransferRequest.class);
 
+                BeneficiaryModel beneficiary = this.getBeneficiary(originalRequest.getBeneficiaryId());
+                CbsAccountResponse destinationAccount = this.coreBankingSolutionService.fetchAccountInfo(beneficiary.getAccountNumber());
+
                 CbsFundTransferRequest cbsRequest = new CbsFundTransferRequest();
                 cbsRequest.setAccountId(transaction.getCbsAccountId());
-                cbsRequest.setDestinationAccountId(originalRequest.getDestinationAccountId());
+                cbsRequest.setDestinationAccountId(destinationAccount.getId());
                 cbsRequest.setCurrencyId(originalRequest.getCurrencyId());
                 cbsRequest.setAmount(originalRequest.getAmount());
                 cbsRequest.setDescription(originalRequest.getDescription());
@@ -260,5 +267,16 @@ class TransactionServiceImpl implements TransactionService {
         CbsCurrencyResponse currencyResponse = this.coreBankingSolutionService.fetchCurrencyInfo(cbsResponse.getCurrencyId());
 
         return this.prepareTransactionModel(cbsResponse, accountResponse, currencyResponse);
+    }
+
+    private BeneficiaryModel getBeneficiary(UUID id) {
+        Optional<BeneficiaryModel> beneficiaryModel = this.beneficiaryService.findByIdForPrincipal(id);
+
+        if (beneficiaryModel.isEmpty()) {
+            log.warn("Beneficiary [ID: {}] not found", id);
+            throw new ResourceException("Beneficiary not found", HttpStatus.NOT_FOUND);
+        }
+
+        return beneficiaryModel.get();
     }
 }
